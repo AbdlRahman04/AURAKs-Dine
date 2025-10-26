@@ -7,10 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(amount: number | string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('ar-AE', {
-    style: 'currency',
-    currency: 'AED',
-  }).format(num);
+  return `${num.toFixed(2)} د.إ`;
 }
 
 export function formatDate(date: Date | string): string {
