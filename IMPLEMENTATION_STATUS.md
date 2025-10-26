@@ -79,6 +79,7 @@
 - ✅ NFR-17: Easy-to-use for first-time users
 - ✅ NFR-18: Responsive design (mobile, tablet, desktop)
 - ✅ NFR-20: Readable text with proper contrast
+- ✅ NFR-21: Arabic language interface support with RTL layout
 
 ### Security
 - ✅ NFR-22: Password encryption (handled by Replit Auth)
@@ -135,6 +136,26 @@
 ### WebSocket Real-Time Updates
 - Infrastructure for real-time order status updates
 - Kitchen display updates automatically when orders placed
+
+### Language & Theme Features (NEW)
+- **Arabic Language Support**:
+  - Complete English ↔ Arabic translation system
+  - 180+ translated terms covering all UI elements
+  - Automatic RTL (right-to-left) layout for Arabic
+  - Language toggle button in student and admin interfaces
+  - Translation framework ready for easy extension
+  
+- **Dark/Light Mode**:
+  - Complete theme switching system
+  - Theme persistence via localStorage
+  - Theme toggle button in student and admin interfaces
+  - Smooth transitions between themes
+  - All components support both modes
+  
+- **UAE Dirham Currency Symbol (د.إ)**:
+  - Replaced all "AED" references with proper UAE Dirham symbol
+  - Consistent currency formatting across all price displays
+  - Works seamlessly in both English and Arabic modes
 
 ## ❌ Not Implemented (Out of Scope)
 
