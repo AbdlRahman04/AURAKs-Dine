@@ -16,10 +16,12 @@ import { useCart } from '@/contexts/CartContext';
 import ShoppingCart from './ShoppingCart';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function StudentHeader() {
   const { user } = useAuth();
   const { getItemCount } = useCart();
+  const { t } = useLanguage();
   const [location] = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
 
@@ -58,7 +60,7 @@ export default function StudentHeader() {
                 }`}
                 data-testid="link-menu"
               >
-                Menu
+                {t('menu')}
               </Link>
               <Link 
                 href="/orders"
@@ -67,7 +69,7 @@ export default function StudentHeader() {
                 }`}
                 data-testid="link-orders"
               >
-                Orders
+                {t('orders')}
               </Link>
               <Link 
                 href="/favorites"
@@ -76,7 +78,7 @@ export default function StudentHeader() {
                 }`}
                 data-testid="link-favorites"
               >
-                Favorites
+                {t('favorites')}
               </Link>
               <Link 
                 href="/feedback"
@@ -85,7 +87,7 @@ export default function StudentHeader() {
                 }`}
                 data-testid="link-feedback"
               >
-                Feedback
+                {t('feedback')}
               </Link>
             </nav>
 
@@ -145,26 +147,26 @@ export default function StudentHeader() {
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center w-full" data-testid="link-profile">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                      <span>{t('profile')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/orders" className="flex items-center w-full" data-testid="link-orders-menu">
                       <Package className="mr-2 h-4 w-4" />
-                      <span>My Orders</span>
+                      <span>{t('myOrders')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/favorites" className="flex items-center w-full" data-testid="link-favorites-menu">
                       <Heart className="mr-2 h-4 w-4" />
-                      <span>Favorites</span>
+                      <span>{t('favorites')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <a href="/api/logout" className="flex items-center w-full" data-testid="link-logout">
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                      <span>{t('logout')}</span>
                     </a>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -180,7 +182,7 @@ export default function StudentHeader() {
                 location === '/menu' ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              <span>Menu</span>
+              <span>{t('menu')}</span>
             </Link>
             <Link 
               href="/orders"
@@ -189,7 +191,7 @@ export default function StudentHeader() {
               }`}
             >
               <Package className="w-5 h-5" />
-              <span>Orders</span>
+              <span>{t('orders')}</span>
             </Link>
             <Link 
               href="/favorites"
@@ -198,7 +200,7 @@ export default function StudentHeader() {
               }`}
             >
               <Heart className="w-5 h-5" />
-              <span>Favorites</span>
+              <span>{t('favorites')}</span>
             </Link>
             <Link 
               href="/feedback"
@@ -207,7 +209,7 @@ export default function StudentHeader() {
               }`}
             >
               <MessageSquare className="w-5 h-5" />
-              <span>Feedback</span>
+              <span>{t('feedback')}</span>
             </Link>
             <Link 
               href="/profile"
@@ -216,7 +218,7 @@ export default function StudentHeader() {
               }`}
             >
               <User className="w-5 h-5" />
-              <span>Profile</span>
+              <span>{t('profile')}</span>
             </Link>
           </div>
         </div>

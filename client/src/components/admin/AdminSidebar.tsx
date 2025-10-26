@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const navItems = [
   { href: '/admin', label: 'Kitchen Display', icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navItems = [
 export default function AdminSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const getInitials = () => {
     if (!user) return 'A';
@@ -87,7 +89,7 @@ export default function AdminSidebar() {
           data-testid="button-logout"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Log out
+          {t('logout')}
         </Button>
       </div>
     </div>
