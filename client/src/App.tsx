@@ -11,6 +11,7 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import OrdersPage from "@/pages/OrdersPage";
 import FavoritesPage from "@/pages/FavoritesPage";
 import ProfilePage from "@/pages/ProfilePage";
+import FeedbackPage from "@/pages/FeedbackPage";
 import KitchenDisplayPage from "@/pages/admin/KitchenDisplayPage";
 import { CartProvider } from "@/contexts/CartContext";
 
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/checkout" component={CheckoutPage} />
           <Route path="/orders" component={OrdersPage} />
           <Route path="/favorites" component={FavoritesPage} />
+          <Route path="/feedback" component={FeedbackPage} />
           <Route path="/profile" component={ProfilePage} />
           
           {/* Admin Routes */}

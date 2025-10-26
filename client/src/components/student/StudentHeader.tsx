@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart } from 'lucide-react';
+import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -75,6 +75,15 @@ export default function StudentHeader() {
                 data-testid="link-favorites"
               >
                 Favorites
+              </Link>
+              <Link 
+                href="/feedback"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location === '/feedback' ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+                data-testid="link-feedback"
+              >
+                Feedback
               </Link>
             </nav>
 
@@ -182,6 +191,15 @@ export default function StudentHeader() {
             >
               <Heart className="w-5 h-5" />
               <span>Favorites</span>
+            </Link>
+            <Link 
+              href="/feedback"
+              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                location === '/feedback' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span>Feedback</span>
             </Link>
             <Link 
               href="/profile"
