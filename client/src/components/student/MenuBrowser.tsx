@@ -25,6 +25,7 @@ export default function MenuBrowser() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [customizations, setCustomizations] = useState('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const { addItem } = useCart();
 
   const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
@@ -53,10 +54,11 @@ export default function MenuBrowser() {
 
   const handleAddToCart = () => {
     if (selectedItem) {
-      addItem(selectedItem, quantity, customizations || undefined);
+      addItem(selectedItem, quantity, customizations || undefined, selectedSize || undefined);
       setSelectedItem(null);
       setQuantity(1);
       setCustomizations('');
+      setSelectedSize('');
     }
   };
 
@@ -267,6 +269,37 @@ export default function MenuBrowser() {
                   </div>
                 )}
 
+                {/* Size Selection */}
+                {selectedItem.sizeVariants && Array.isArray(selectedItem.sizeVariants) && selectedItem.sizeVariants.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium">Select Size</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(selectedItem.sizeVariants as Array<{ name: string; priceModifier: string }>).map((variant) => {
+                        const priceModifier = parseFloat(variant.priceModifier);
+                        const basePrice = parseFloat(selectedItem.isSpecial && selectedItem.specialPrice
+                          ? selectedItem.specialPrice
+                          : selectedItem.price);
+                        const sizePrice = basePrice + priceModifier;
+                        
+                        return (
+                          <Button
+                            key={variant.name}
+                            variant={selectedSize === variant.name ? 'default' : 'outline'}
+                            className="flex flex-col h-auto py-3"
+                            onClick={() => setSelectedSize(variant.name)}
+                            data-testid={`button-size-${variant.name.toLowerCase()}`}
+                          >
+                            <span className="font-semibold">{variant.name}</span>
+                            <span className="text-xs opacity-80">
+                              {formatCurrency(sizePrice)}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Quantity and Customizations */}
                 <div className="space-y-4">
                   <div>
@@ -310,11 +343,24 @@ export default function MenuBrowser() {
                   <div>
                     <p className="text-sm text-muted-foreground">Total</p>
                     <p className="text-2xl font-bold">
-                      {formatCurrency(
-                        parseFloat(selectedItem.isSpecial && selectedItem.specialPrice
+                      {(() => {
+                        const basePrice = parseFloat(selectedItem.isSpecial && selectedItem.specialPrice
                           ? selectedItem.specialPrice
-                          : selectedItem.price) * quantity
-                      )}
+                          : selectedItem.price);
+                        
+                        let finalPrice = basePrice;
+                        
+                        // Add size modifier if size is selected
+                        if (selectedSize && selectedItem.sizeVariants) {
+                          const sizeVariants = selectedItem.sizeVariants as Array<{ name: string; priceModifier: string }>;
+                          const selectedVariant = sizeVariants.find(v => v.name === selectedSize);
+                          if (selectedVariant) {
+                            finalPrice += parseFloat(selectedVariant.priceModifier);
+                          }
+                        }
+                        
+                        return formatCurrency(finalPrice * quantity);
+                      })()}
                     </p>
                   </div>
                   <Button size="lg" onClick={handleAddToCart} data-testid="button-add-to-cart">
