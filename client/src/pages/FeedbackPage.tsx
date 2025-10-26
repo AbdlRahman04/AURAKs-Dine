@@ -43,10 +43,7 @@ export default function FeedbackPage() {
 
   const submitFeedbackMutation = useMutation({
     mutationFn: async (data: FeedbackFormData) => {
-      return await apiRequest("/api/feedback", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/feedback", data);
     },
     onSuccess: () => {
       setShowSuccess(true);

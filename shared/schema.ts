@@ -147,10 +147,11 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export const feedback = pgTable("feedback", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  category: varchar("category", { length: 50 }).notNull(), // menu_suggestion, complaint, compliment, other
-  subject: varchar("subject", { length: 255 }).notNull(),
+  orderId: integer("order_id").references(() => orders.id, { onDelete: 'set null' }),
+  category: varchar("category", { length: 50 }).notNull(), // food_quality, service, menu_suggestion, general
   message: text("message").notNull(),
-  status: varchar("status", { length: 20 }).notNull().default('pending'), // pending, reviewed, resolved
+  rating: integer("rating"), // 1-5 stars (optional)
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // pending, reviewed, resolved, dismissed
   adminResponse: text("admin_response"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
