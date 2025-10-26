@@ -160,6 +160,7 @@ export default function CheckoutPage() {
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
           customizations: item.customizations,
+          selectedSize: item.selectedSize,
         })),
         pickupTime: pickupTime.toISOString(),
         specialInstructions,
@@ -194,6 +195,7 @@ export default function CheckoutPage() {
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
           customizations: item.customizations,
+          selectedSize: item.selectedSize,
         })),
         pickupTime: pickupTime.toISOString(),
         specialInstructions,
@@ -413,8 +415,21 @@ export default function CheckoutPage() {
                     <div key={`${item.menuItem.id}-${index}`} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
                         {item.quantity}x {item.menuItem.name}
+                        {item.selectedSize && ` (${item.selectedSize})`}
                       </span>
-                      <span>{formatCurrency(parseFloat(item.menuItem.price) * item.quantity)}</span>
+                      <span>
+                        {(() => {
+                          let price = parseFloat(item.menuItem.price);
+                          if (item.selectedSize && item.menuItem.sizeVariants) {
+                            const sizeVariants = item.menuItem.sizeVariants as Array<{ name: string; priceModifier: string }>;
+                            const selectedVariant = sizeVariants.find(v => v.name === item.selectedSize);
+                            if (selectedVariant) {
+                              price += parseFloat(selectedVariant.priceModifier);
+                            }
+                          }
+                          return formatCurrency(price * item.quantity);
+                        })()}
+                      </span>
                     </div>
                   ))}
                 </div>

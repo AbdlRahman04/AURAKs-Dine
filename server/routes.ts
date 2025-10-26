@@ -305,13 +305,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const menuItem = await storage.getMenuItemById(item.menuItemId);
           if (!menuItem) throw new Error(`Menu item ${item.menuItemId} not found`);
 
+          // Calculate price with size modifier if applicable
+          let unitPrice = parseFloat(menuItem.price);
+          if (item.selectedSize && menuItem.sizeVariants) {
+            const sizeVariants = menuItem.sizeVariants as Array<{ name: string; priceModifier: string }>;
+            const selectedVariant = sizeVariants.find((v: any) => v.name === item.selectedSize);
+            if (selectedVariant) {
+              unitPrice += parseFloat(selectedVariant.priceModifier);
+            }
+          }
+
           return {
             menuItemId: item.menuItemId,
             menuItemName: menuItem.name,
             quantity: item.quantity,
-            unitPrice: menuItem.price,
+            unitPrice: unitPrice.toFixed(2),
+            selectedSize: item.selectedSize,
             customizations: item.customizations,
-            subtotal: (parseFloat(menuItem.price) * item.quantity).toFixed(2),
+            subtotal: (unitPrice * item.quantity).toFixed(2),
           };
         })
       );
@@ -374,13 +385,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const menuItem = await storage.getMenuItemById(item.menuItemId);
           if (!menuItem) throw new Error(`Menu item ${item.menuItemId} not found`);
 
+          // Calculate price with size modifier if applicable
+          let unitPrice = parseFloat(menuItem.price);
+          if (item.selectedSize && menuItem.sizeVariants) {
+            const sizeVariants = menuItem.sizeVariants as Array<{ name: string; priceModifier: string }>;
+            const selectedVariant = sizeVariants.find((v: any) => v.name === item.selectedSize);
+            if (selectedVariant) {
+              unitPrice += parseFloat(selectedVariant.priceModifier);
+            }
+          }
+
           return {
             menuItemId: item.menuItemId,
             menuItemName: menuItem.name,
             quantity: item.quantity,
-            unitPrice: menuItem.price,
+            unitPrice: unitPrice.toFixed(2),
+            selectedSize: item.selectedSize,
             customizations: item.customizations,
-            subtotal: (parseFloat(menuItem.price) * item.quantity).toFixed(2),
+            subtotal: (unitPrice * item.quantity).toFixed(2),
           };
         })
       );
