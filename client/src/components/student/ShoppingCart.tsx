@@ -5,6 +5,8 @@ import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/utils';
 import { useLocation } from 'wouter';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { MenuItem } from '@shared/schema';
 
 interface ShoppingCartProps {
   open: boolean;
@@ -14,6 +16,15 @@ interface ShoppingCartProps {
 export default function ShoppingCart({ open, onOpenChange }: ShoppingCartProps) {
   const { items, updateQuantity, removeItem, getSubtotal, getTax, getTotal, getItemCount } = useCart();
   const [, setLocation] = useLocation();
+  const { language } = useLanguage();
+
+  // Helper functions to get localized item names
+  const getItemName = (item: MenuItem) => {
+    if (language === 'ar' && item.nameAr) {
+      return item.nameAr;
+    }
+    return item.name;
+  };
 
   const handleCheckout = () => {
     onOpenChange(false);
@@ -56,7 +67,7 @@ export default function ShoppingCart({ open, onOpenChange }: ShoppingCartProps) 
                     {item.menuItem.imageUrl ? (
                       <img
                         src={item.menuItem.imageUrl}
-                        alt={item.menuItem.name}
+                        alt={getItemName(item.menuItem)}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -68,7 +79,7 @@ export default function ShoppingCart({ open, onOpenChange }: ShoppingCartProps) 
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold truncate">{item.menuItem.name}</h4>
+                    <h4 className="font-semibold truncate">{getItemName(item.menuItem)}</h4>
                     <p className="text-sm text-muted-foreground">
                       {formatCurrency(item.menuItem.price)}
                     </p>

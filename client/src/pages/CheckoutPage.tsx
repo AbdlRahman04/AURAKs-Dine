@@ -14,7 +14,8 @@ import { formatCurrency, formatTime, generatePickupTimeSlots } from '@/lib/utils
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
-import type { OrderWithItems } from '@shared/schema';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { OrderWithItems, MenuItem } from '@shared/schema';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -102,6 +103,15 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<'pickup' | 'payment'>('pickup');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const { toast } = useToast();
+  const { language } = useLanguage();
+
+  // Helper function to get localized item name
+  const getItemName = (item: MenuItem) => {
+    if (language === 'ar' && item.nameAr) {
+      return item.nameAr;
+    }
+    return item.name;
+  };
 
   // Check if user is a first-time customer (10% discount)
   const { data: orders, isLoading: isLoadingOrders } = useQuery<OrderWithItems[]>({
@@ -414,7 +424,7 @@ export default function CheckoutPage() {
                   {items.map((item, index) => (
                     <div key={`${item.menuItem.id}-${index}`} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        {item.quantity}x {item.menuItem.name}
+                        {item.quantity}x {getItemName(item.menuItem)}
                         {item.selectedSize && ` (${item.selectedSize})`}
                       </span>
                       <span>
