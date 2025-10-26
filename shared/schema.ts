@@ -75,7 +75,7 @@ export type MenuItem = typeof menuItems.$inferSelect;
 export const orders = pgTable("orders", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  orderNumber: varchar("order_number", { length: 20 }).notNull().unique(), // FR-16: unique order number
+  orderNumber: varchar("order_number", { length: 50 }).notNull().unique(), // FR-16: unique order number
   status: varchar("status", { length: 20 }).notNull().default('received'), // received, preparing, ready, completed, cancelled
   pickupTime: timestamp("pickup_time").notNull(), // FR-13: pickup time slot
   specialInstructions: text("special_instructions"), // FR-15: special instructions

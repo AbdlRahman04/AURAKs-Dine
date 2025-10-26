@@ -62,7 +62,15 @@ function CheckoutForm({ pickupTime, onSuccess }: { pickupTime: Date; onSuccess: 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
+      <PaymentElement 
+        options={{
+          fields: {
+            billingDetails: {
+              address: 'never'
+            }
+          }
+        }}
+      />
       <Button
         type="submit"
         className="w-full"
