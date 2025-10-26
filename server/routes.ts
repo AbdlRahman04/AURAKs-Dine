@@ -7,11 +7,15 @@ import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import { z } from "zod";
 import { insertMenuItemSchema } from "@shared/schema";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+const stripeSecretKey = process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY or TESTING_STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+console.log('[Stripe] Using key starting with:', stripeSecretKey.substring(0, 7), '...');
+console.log('[Stripe] Key type:', stripeSecretKey.startsWith('sk_') ? 'SECRET KEY' : 'PUBLISHABLE KEY (ERROR!)');
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2024-11-20.acacia",
 });
 
