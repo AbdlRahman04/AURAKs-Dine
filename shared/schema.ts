@@ -49,7 +49,9 @@ export type User = typeof users.$inferSelect;
 export const menuItems = pgTable("menu_items", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
+  nameAr: varchar("name_ar", { length: 255 }), // Arabic name for bilingual support
   description: text("description"),
+  descriptionAr: text("description_ar"), // Arabic description for bilingual support
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   category: varchar("category", { length: 50 }).notNull(), // breakfast, lunch, snacks, beverages
   imageUrl: text("image_url"),

@@ -9,7 +9,9 @@ async function seed() {
     // Breakfast Items
     {
       name: 'Avocado Toast',
+      nameAr: 'توست الأفوكادو',
       description: 'Whole grain toast topped with mashed avocado, cherry tomatoes, and feta cheese',
+      descriptionAr: 'توست الحبوب الكاملة مع الأفوكادو المهروس والطماطم الكرزية وجبنة الفيتا',
       category: 'Breakfast',
       price: '25.99',
       imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d',
@@ -22,7 +24,9 @@ async function seed() {
     },
     {
       name: 'Pancake Stack',
+      nameAr: 'فطائر البان كيك',
       description: 'Fluffy buttermilk pancakes served with maple syrup and butter',
+      descriptionAr: 'فطائر الحليب الطرية مع شراب القيقب والزبدة',
       category: 'Breakfast',
       price: '21.99',
       imageUrl: 'https://images.unsplash.com/photo-1528207776546-365bb710ee93',
@@ -35,7 +39,9 @@ async function seed() {
     },
     {
       name: 'Shakshuka',
+      nameAr: 'شكشوكة',
       description: 'Traditional Middle Eastern dish with poached eggs in spiced tomato sauce',
+      descriptionAr: 'طبق شرق أوسطي تقليدي مع البيض المسلوق في صلصة الطماطم المتبلة',
       category: 'Breakfast',
       price: '29.99',
       imageUrl: 'https://images.unsplash.com/photo-1587486936454-369b70ac6a26',
@@ -49,7 +55,9 @@ async function seed() {
     },
     {
       name: 'Labneh & Zaatar Platter',
+      nameAr: 'صحن اللبنة والزعتر',
       description: 'Creamy labneh topped with zaatar, olive oil, olives, and fresh vegetables',
+      descriptionAr: 'لبنة كريمية مع الزعتر وزيت الزيتون والزيتون والخضروات الطازجة',
       category: 'Breakfast',
       price: '24.99',
       imageUrl: 'https://images.unsplash.com/photo-1625944230945-1b7dd3b949ab',
@@ -62,7 +70,9 @@ async function seed() {
     },
     {
       name: 'Manakish Zaatar',
+      nameAr: 'مناقيش زعتر',
       description: 'Traditional Lebanese flatbread topped with zaatar and olive oil',
+      descriptionAr: 'خبز لبناني تقليدي مع الزعتر وزيت الزيتون',
       category: 'Breakfast',
       price: '18.99',
       imageUrl: 'https://images.unsplash.com/photo-1619985801859-2d0a26a2b041',
@@ -77,7 +87,9 @@ async function seed() {
     // Lunch Items
     {
       name: 'Chicken Shawarma Wrap',
+      nameAr: 'لفة شاورما الدجاج',
       description: 'Marinated chicken with tahini sauce, pickles, and fresh vegetables in warm pita',
+      descriptionAr: 'دجاج متبل مع صلصة الطحينة والمخللات والخضروات الطازجة في خبز البيتا الدافئ',
       category: 'Lunch',
       price: '32.99',
       imageUrl: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783',
@@ -91,7 +103,9 @@ async function seed() {
     },
     {
       name: 'Falafel Wrap',
+      nameAr: 'لفة الفلافل',
       description: 'Crispy falafel with hummus, tahini, tomatoes, and lettuce in pita bread',
+      descriptionAr: 'فلافل مقرمشة مع الحمص والطحينة والطماطم والخس في خبز البيتا',
       category: 'Lunch',
       price: '27.99',
       imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950',
@@ -104,7 +118,9 @@ async function seed() {
     },
     {
       name: 'Classic Cheeseburger',
+      nameAr: 'برجر الجبنة الكلاسيكي',
       description: 'Juicy beef patty with cheddar cheese, lettuce, tomato, and our special sauce',
+      descriptionAr: 'لحم بقري مع جبنة الشيدر والخس والطماطم وصلصتنا الخاصة',
       category: 'Lunch',
       price: '32.99',
       imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd',
@@ -118,7 +134,9 @@ async function seed() {
     },
     {
       name: 'Caesar Salad',
+      nameAr: 'سلطة سيزر',
       description: 'Fresh romaine lettuce with parmesan cheese, croutons, and caesar dressing',
+      descriptionAr: 'خس روماني طازج مع جبنة البارميزان والخبز المحمص وصلصة السيزر',
       category: 'Lunch',
       price: '29.99',
       imageUrl: 'https://images.unsplash.com/photo-1546793665-c74683f339c1',
@@ -131,7 +149,9 @@ async function seed() {
     },
     {
       name: 'Grilled Chicken Wrap',
+      nameAr: 'لفة الدجاج المشوي',
       description: 'Grilled chicken with vegetables wrapped in tortilla',
+      descriptionAr: 'دجاج مشوي مع الخضروات ملفوف في التورتيلا',
       category: 'Lunch',
       price: '36.99',
       imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f',
@@ -144,7 +164,9 @@ async function seed() {
     },
     {
       name: 'Vegetarian Pizza',
+      nameAr: 'بيتزا نباتية',
       description: 'Thin crust pizza with fresh vegetables and mozzarella',
+      descriptionAr: 'بيتزا رقيقة مع الخضروات الطازجة وجبنة الموتزاريلا',
       category: 'Lunch',
       price: '39.99',
       imageUrl: 'https://images.unsplash.com/photo-1511689660979-10d2b1aada49',
@@ -157,7 +179,9 @@ async function seed() {
     },
     {
       name: 'Chicken Machboos',
+      nameAr: 'مجبوس الدجاج',
       description: 'Traditional Emirati spiced rice dish with tender chicken',
+      descriptionAr: 'طبق أرز إماراتي تقليدي متبل مع دجاج طري',
       category: 'Lunch',
       price: '42.99',
       imageUrl: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0',
@@ -170,7 +194,9 @@ async function seed() {
     },
     {
       name: 'Lamb Kofta Plate',
+      nameAr: 'صحن كفتة الخروف',
       description: 'Grilled lamb kofta with rice, grilled vegetables, and tahini sauce',
+      descriptionAr: 'كفتة خروف مشوية مع الأرز والخضروات المشوية وصلصة الطحينة',
       category: 'Lunch',
       price: '45.99',
       imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468',
@@ -185,7 +211,9 @@ async function seed() {
     // Beverages
     {
       name: 'Fresh Orange Juice',
+      nameAr: 'عصير برتقال طازج',
       description: 'Freshly squeezed orange juice',
+      descriptionAr: 'عصير برتقال طازج معصور',
       category: 'Beverages',
       price: '14.99',
       imageUrl: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba',
@@ -203,7 +231,9 @@ async function seed() {
     },
     {
       name: 'Iced Latte',
+      nameAr: 'لاتيه مثلج',
       description: 'Espresso with cold milk and ice',
+      descriptionAr: 'إسبريسو مع حليب بارد وثلج',
       category: 'Beverages',
       price: '18.99',
       imageUrl: 'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7',
@@ -221,7 +251,9 @@ async function seed() {
     },
     {
       name: 'Mint Lemonade',
+      nameAr: 'عصير ليمون بالنعناع',
       description: 'Refreshing homemade lemonade with fresh mint',
+      descriptionAr: 'عصير ليمون منعش محضر منزلياً مع النعناع الطازج',
       category: 'Beverages',
       price: '12.99',
       imageUrl: 'https://images.unsplash.com/photo-1523677011781-c91d1bbe2f9c',
@@ -239,7 +271,9 @@ async function seed() {
     },
     {
       name: 'Arabic Coffee',
+      nameAr: 'قهوة عربية',
       description: 'Traditional cardamom-infused Arabic coffee',
+      descriptionAr: 'قهوة عربية تقليدية بنكهة الهيل',
       category: 'Beverages',
       price: '9.99',
       imageUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
@@ -257,7 +291,9 @@ async function seed() {
     },
     {
       name: 'Jallab',
+      nameAr: 'جلاب',
       description: 'Traditional Middle Eastern drink with dates, grape molasses, and rose water',
+      descriptionAr: 'مشروب شرق أوسطي تقليدي مع التمر ودبس العنب وماء الورد',
       category: 'Beverages',
       price: '16.99',
       imageUrl: 'https://images.unsplash.com/photo-1544145945-f90425340c7e',
@@ -275,7 +311,9 @@ async function seed() {
     },
     {
       name: 'Mango Smoothie',
+      nameAr: 'سموذي المانجو',
       description: 'Fresh mango blended with yogurt and honey',
+      descriptionAr: 'مانجو طازجة ممزوجة مع الزبادي والعسل',
       category: 'Beverages',
       price: '19.99',
       imageUrl: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625',
@@ -295,7 +333,9 @@ async function seed() {
     // Snacks
     {
       name: 'Hummus & Pita',
+      nameAr: 'حمص مع خبز البيتا',
       description: 'Creamy chickpea hummus served with warm pita bread',
+      descriptionAr: 'حمص الحمص الكريمي يقدم مع خبز البيتا الدافئ',
       category: 'Snacks',
       price: '16.99',
       imageUrl: 'https://images.unsplash.com/photo-1600328979904-bd2d13b0b8de',
@@ -308,7 +348,9 @@ async function seed() {
     },
     {
       name: 'French Fries',
+      nameAr: 'بطاطس مقلية',
       description: 'Crispy golden fries with sea salt',
+      descriptionAr: 'بطاطس ذهبية مقرمشة مع ملح البحر',
       category: 'Snacks',
       price: '14.99',
       imageUrl: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877',
@@ -326,7 +368,9 @@ async function seed() {
     },
     {
       name: 'Cheese Sambousek',
+      nameAr: 'سمبوسك الجبنة',
       description: 'Crispy pastry filled with melted cheese',
+      descriptionAr: 'معجنات مقرمشة محشوة بالجبنة المذابة',
       category: 'Snacks',
       price: '17.99',
       imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93',
@@ -339,7 +383,9 @@ async function seed() {
     },
     {
       name: 'Chocolate Chip Cookie',
+      nameAr: 'كوكيز برقائق الشوكولاتة',
       description: 'Warm chocolate chip cookie',
+      descriptionAr: 'كوكيز دافئة برقائق الشوكولاتة',
       category: 'Snacks',
       price: '10.99',
       imageUrl: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e',
@@ -352,7 +398,9 @@ async function seed() {
     },
     {
       name: 'Mixed Nuts',
+      nameAr: 'مكسرات مشكلة',
       description: 'Premium roasted nuts with sea salt',
+      descriptionAr: 'مكسرات محمصة فاخرة مع ملح البحر',
       category: 'Snacks',
       price: '13.99',
       imageUrl: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32',
@@ -365,7 +413,9 @@ async function seed() {
     },
     {
       name: 'Dates with Arabic Coffee',
+      nameAr: 'تمر مع قهوة عربية',
       description: 'Premium Ajwa dates served with traditional Arabic coffee',
+      descriptionAr: 'تمر عجوة فاخر يقدم مع قهوة عربية تقليدية',
       category: 'Snacks',
       price: '15.99',
       imageUrl: 'https://images.unsplash.com/photo-1618897996318-5a901fa6ca71',

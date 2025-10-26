@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { formatCurrency, getCategoryColor } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const CATEGORIES = ['All', 'Breakfast', 'Lunch', 'Snacks', 'Beverages'];
@@ -27,6 +28,17 @@ export default function MenuBrowser() {
   const [customizations, setCustomizations] = useState('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const { addItem } = useCart();
+  const { language } = useLanguage();
+  
+  // Helper function to get localized item name with fallback
+  const getItemName = (item: MenuItem) => {
+    return language === 'ar' && item.nameAr ? item.nameAr : item.name;
+  };
+  
+  // Helper function to get localized item description with fallback
+  const getItemDescription = (item: MenuItem) => {
+    return language === 'ar' && item.descriptionAr ? item.descriptionAr : item.description;
+  };
 
   const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu'],
@@ -40,9 +52,12 @@ export default function MenuBrowser() {
     if (!menuItems) return [];
 
     return menuItems.filter(item => {
+      const itemName = getItemName(item);
+      const itemDesc = getItemDescription(item);
+      
       const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        itemDesc?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
         selectedCategory === 'All' ||
@@ -50,7 +65,7 @@ export default function MenuBrowser() {
 
       return matchesSearch && matchesCategory && item.isAvailable;
     });
-  }, [menuItems, searchQuery, selectedCategory]);
+  }, [menuItems, searchQuery, selectedCategory, language]);
 
   const handleAddToCart = () => {
     if (selectedItem) {
@@ -135,7 +150,7 @@ export default function MenuBrowser() {
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}
-                    alt={item.name}
+                    alt={getItemName(item)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -155,13 +170,13 @@ export default function MenuBrowser() {
 
               <CardHeader className="gap-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-lg font-semibold line-clamp-1">{item.name}</h3>
+                  <h3 className="text-lg font-semibold line-clamp-1">{getItemName(item)}</h3>
                   <Badge className={getCategoryColor(item.category)} variant="secondary">
                     {item.category}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {item.description}
+                  {getItemDescription(item)}
                 </p>
               </CardHeader>
 
@@ -207,8 +222,8 @@ export default function MenuBrowser() {
           {selectedItem && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedItem.name}</DialogTitle>
-                <DialogDescription>{selectedItem.description}</DialogDescription>
+                <DialogTitle className="text-2xl">{getItemName(selectedItem)}</DialogTitle>
+                <DialogDescription>{getItemDescription(selectedItem)}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-6">
@@ -217,7 +232,7 @@ export default function MenuBrowser() {
                   <div className="relative h-64 rounded-lg overflow-hidden bg-muted">
                     <img
                       src={selectedItem.imageUrl}
-                      alt={selectedItem.name}
+                      alt={getItemName(selectedItem)}
                       className="w-full h-full object-cover"
                     />
                   </div>
