@@ -40,43 +40,41 @@ export default function StudentHeader() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 sm:h-20 items-center justify-between">
             {/* Logo */}
-            <Link href="/menu">
-              <a className="text-xl sm:text-2xl font-bold text-foreground hover:text-primary transition-colors">
-                AURAK Cafeteria
-              </a>
+            <Link 
+              href="/menu" 
+              className="text-xl sm:text-2xl font-bold text-foreground hover:text-primary transition-colors"
+            >
+              AURAK Cafeteria
             </Link>
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/menu">
-                <a
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    location === '/menu' ? 'text-foreground' : 'text-muted-foreground'
-                  }`}
-                  data-testid="link-menu"
-                >
-                  Menu
-                </a>
+              <Link 
+                href="/menu"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location === '/menu' ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+                data-testid="link-menu"
+              >
+                Menu
               </Link>
-              <Link href="/orders">
-                <a
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    location === '/orders' ? 'text-foreground' : 'text-muted-foreground'
-                  }`}
-                  data-testid="link-orders"
-                >
-                  Orders
-                </a>
+              <Link 
+                href="/orders"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location === '/orders' ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+                data-testid="link-orders"
+              >
+                Orders
               </Link>
-              <Link href="/favorites">
-                <a
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    location === '/favorites' ? 'text-foreground' : 'text-muted-foreground'
-                  }`}
-                  data-testid="link-favorites"
-                >
-                  Favorites
-                </a>
+              <Link 
+                href="/favorites"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location === '/favorites' ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+                data-testid="link-favorites"
+              >
+                Favorites
               </Link>
             </nav>
 
@@ -128,27 +126,21 @@ export default function StudentHeader() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <a className="flex items-center w-full" data-testid="link-profile">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </a>
+                    <Link href="/profile" className="flex items-center w-full" data-testid="link-profile">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/orders">
-                      <a className="flex items-center w-full" data-testid="link-orders-menu">
-                        <Package className="mr-2 h-4 w-4" />
-                        <span>My Orders</span>
-                      </a>
+                    <Link href="/orders" className="flex items-center w-full" data-testid="link-orders-menu">
+                      <Package className="mr-2 h-4 w-4" />
+                      <span>My Orders</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/favorites">
-                      <a className="flex items-center w-full" data-testid="link-favorites-menu">
-                        <Heart className="mr-2 h-4 w-4" />
-                        <span>Favorites</span>
-                      </a>
+                    <Link href="/favorites" className="flex items-center w-full" data-testid="link-favorites-menu">
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Favorites</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -165,44 +157,40 @@ export default function StudentHeader() {
 
           {/* Mobile Navigation */}
           <div className="flex md:hidden items-center justify-around pb-3 border-t pt-3 -mx-4 px-4">
-            <Link href="/menu">
-              <a
-                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                  location === '/menu' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <span>Menu</span>
-              </a>
+            <Link 
+              href="/menu"
+              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                location === '/menu' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <span>Menu</span>
             </Link>
-            <Link href="/orders">
-              <a
-                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                  location === '/orders' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <Package className="w-5 h-5" />
-                <span>Orders</span>
-              </a>
+            <Link 
+              href="/orders"
+              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                location === '/orders' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <Package className="w-5 h-5" />
+              <span>Orders</span>
             </Link>
-            <Link href="/favorites">
-              <a
-                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                  location === '/favorites' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <Heart className="w-5 h-5" />
-                <span>Favorites</span>
-              </a>
+            <Link 
+              href="/favorites"
+              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                location === '/favorites' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <Heart className="w-5 h-5" />
+              <span>Favorites</span>
             </Link>
-            <Link href="/profile">
-              <a
-                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                  location === '/profile' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <User className="w-5 h-5" />
-                <span>Profile</span>
-              </a>
+            <Link 
+              href="/profile"
+              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                location === '/profile' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <User className="w-5 h-5" />
+              <span>Profile</span>
             </Link>
           </div>
         </div>
