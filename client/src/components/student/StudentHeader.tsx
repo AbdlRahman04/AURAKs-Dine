@@ -14,6 +14,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/contexts/CartContext';
 import ShoppingCart from './ShoppingCart';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function StudentHeader() {
   const { user } = useAuth();
@@ -89,6 +91,12 @@ export default function StudentHeader() {
 
             {/* Actions */}
             <div className="flex items-center gap-2 sm:gap-4">
+              {/* Language and Theme Toggles */}
+              <div className="flex items-center gap-1">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
+              
               {/* Cart Button */}
               <Button
                 variant="ghost"

@@ -3,6 +3,8 @@ import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, MessageSquare, Lo
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { href: '/admin', label: 'Kitchen Display', icon: LayoutDashboard },
@@ -27,9 +29,15 @@ export default function AdminSidebar() {
   return (
     <div className="w-64 border-r bg-card flex flex-col h-full">
       {/* Header */}
-      <div className="p-6 border-b">
-        <h2 className="text-xl font-bold">Admin Panel</h2>
-        <p className="text-sm text-muted-foreground">AURAK Cafeteria</p>
+      <div className="p-6 border-b space-y-3">
+        <div>
+          <h2 className="text-xl font-bold">Admin Panel</h2>
+          <p className="text-sm text-muted-foreground">AURAK Cafeteria</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
       </div>
 
       {/* Navigation */}
