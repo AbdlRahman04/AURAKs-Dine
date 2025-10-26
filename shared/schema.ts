@@ -84,7 +84,8 @@ export const orders = pgTable("orders", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(), // FR-14: total with taxes
-  paymentIntentId: varchar("payment_intent_id"), // Stripe payment intent ID
+  paymentMethod: varchar("payment_method", { length: 20 }).notNull().default('card'), // card or cash
+  paymentIntentId: varchar("payment_intent_id"), // Stripe payment intent ID (null for cash)
   paymentStatus: varchar("payment_status", { length: 20 }).notNull().default('pending'), // pending, completed, failed
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

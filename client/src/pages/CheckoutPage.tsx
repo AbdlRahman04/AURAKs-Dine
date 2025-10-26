@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Clock, CreditCard, Package } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
+import { Clock, CreditCard, Package, Wallet, Banknote, Sparkles } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency, formatTime, generatePickupTimeSlots } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
+import type { OrderWithItems } from '@shared/schema';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -68,6 +72,10 @@ function CheckoutForm({ pickupTime, onSuccess }: { pickupTime: Date; onSuccess: 
             billingDetails: {
               address: 'never'
             }
+          },
+          wallets: {
+            applePay: 'auto',
+            googlePay: 'auto',
           }
         }}
       />
@@ -89,9 +97,37 @@ export default function CheckoutPage() {
   const { items, getSubtotal, getTax, getTotal, clearCart } = useCart();
   const [pickupTime, setPickupTime] = useState<Date | null>(null);
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [clientSecret, setClientSecret] = useState('');
   const [step, setStep] = useState<'pickup' | 'payment'>('pickup');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const { toast } = useToast();
+
+  // Check if user is a first-time customer (10% discount)
+  const { data: orders, isLoading: isLoadingOrders } = useQuery<OrderWithItems[]>({
+    queryKey: ['/api/orders'],
+  });
+
+  // Only apply discount after orders have loaded and confirmed count is 0
+  const isFirstTimeCustomer = !isLoadingOrders && (!orders || orders.length === 0);
+  const FIRST_TIME_DISCOUNT = 0.10; // 10%
+
+  const getDiscountAmount = () => {
+    return isFirstTimeCustomer ? getSubtotal() * FIRST_TIME_DISCOUNT : 0;
+  };
+
+  // Calculate tax on post-discount subtotal
+  const getDiscountedSubtotal = () => {
+    return getSubtotal() - getDiscountAmount();
+  };
+
+  const getDiscountedTax = () => {
+    return getDiscountedSubtotal() * 0.08; // 8% tax rate
+  };
+
+  const getDiscountedTotal = () => {
+    return getDiscountedSubtotal() + getDiscountedTax();
+  };
 
   const timeSlots = generatePickupTimeSlots();
 
@@ -111,6 +147,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    // If cash payment, skip payment step and go directly to confirmation
+    if (paymentMethod === 'cash') {
+      setStep('payment');
+      return;
+    }
+
+    // If card payment, create payment intent
     try {
       const orderData = {
         items: items.map(item => ({
@@ -121,8 +164,10 @@ export default function CheckoutPage() {
         pickupTime: pickupTime.toISOString(),
         specialInstructions,
         subtotal: getSubtotal(),
-        tax: getTax(),
-        total: getTotal(),
+        discount: getDiscountAmount(),
+        tax: getDiscountedTax(),
+        total: getDiscountedTotal(),
+        paymentMethod: 'card',
       };
 
       const response = await apiRequest('POST', '/api/create-payment-intent', orderData);
@@ -135,6 +180,47 @@ export default function CheckoutPage() {
         description: 'Failed to initialize payment',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleCashPayment = async () => {
+    if (!pickupTime) return;
+
+    setIsPlacingOrder(true);
+
+    try {
+      const orderData = {
+        items: items.map(item => ({
+          menuItemId: item.menuItem.id,
+          quantity: item.quantity,
+          customizations: item.customizations,
+        })),
+        pickupTime: pickupTime.toISOString(),
+        specialInstructions,
+        subtotal: getSubtotal(),
+        discount: getDiscountAmount(),
+        tax: getDiscountedTax(),
+        total: getDiscountedTotal(),
+        paymentMethod: 'cash',
+      };
+
+      await apiRequest('POST', '/api/orders/cash', orderData);
+
+      toast({
+        title: 'Order Placed Successfully',
+        description: 'Pay cash when you pick up your order',
+      });
+
+      clearCart();
+      setLocation('/orders');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to place order',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPlacingOrder(false);
     }
   };
 
@@ -196,6 +282,41 @@ export default function CheckoutPage() {
 
                 <Card>
                   <CardHeader>
+                    <CardTitle>Payment Method</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RadioGroup value={paymentMethod} onValueChange={(value: 'card' | 'cash') => setPaymentMethod(value)}>
+                      <div className="flex items-center space-x-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => setPaymentMethod('card')}>
+                        <RadioGroupItem value="card" id="card" data-testid="radio-payment-card" />
+                        <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
+                            <Wallet className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Card Payment</p>
+                            <p className="text-sm text-muted-foreground">Pay with credit/debit card or Apple Pay</p>
+                          </div>
+                        </Label>
+                      </div>
+
+                      <div className="flex items-center space-x-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => setPaymentMethod('cash')}>
+                        <RadioGroupItem value="cash" id="cash" data-testid="radio-payment-cash" />
+                        <Label htmlFor="cash" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-green-500/10">
+                            <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Cash on Pickup</p>
+                            <p className="text-sm text-muted-foreground">Pay when you collect your order</p>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
                     <CardTitle>Special Instructions</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -224,18 +345,46 @@ export default function CheckoutPage() {
               </>
             )}
 
-            {step === 'payment' && clientSecret && (
+            {step === 'payment' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="w-5 h-5" />
-                    Payment Details
+                    {paymentMethod === 'card' ? (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        Payment Details
+                      </>
+                    ) : (
+                      <>
+                        <Banknote className="w-5 h-5" />
+                        Confirm Cash Payment
+                      </>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckoutForm pickupTime={pickupTime!} onSuccess={handleOrderSuccess} />
-                  </Elements>
+                  {paymentMethod === 'card' && clientSecret ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <CheckoutForm pickupTime={pickupTime!} onSuccess={handleOrderSuccess} />
+                    </Elements>
+                  ) : paymentMethod === 'cash' ? (
+                    <div className="space-y-4">
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                        <p className="text-sm text-amber-900 dark:text-amber-100">
+                          Please have the exact amount ready when you pick up your order.
+                        </p>
+                      </div>
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        onClick={handleCashPayment}
+                        disabled={isPlacingOrder}
+                        data-testid="button-confirm-cash-order"
+                      >
+                        {isPlacingOrder ? 'Placing Order...' : 'Confirm Order'}
+                      </Button>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             )}
@@ -245,9 +394,17 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Order Summary
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Order Summary
+                  </div>
+                  {isFirstTimeCustomer && (
+                    <Badge variant="secondary" className="bg-vibrant-orange/10 text-vibrant-orange border-vibrant-orange/20">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      10% OFF
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -267,9 +424,18 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatCurrency(getSubtotal())}</span>
                   </div>
+                  {isFirstTimeCustomer && getDiscountAmount() > 0 && (
+                    <div className="flex justify-between text-sm text-vibrant-orange">
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        First-Time Discount (10%)
+                      </span>
+                      <span>-{formatCurrency(getDiscountAmount())}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tax</span>
-                    <span>{formatCurrency(getTax())}</span>
+                    <span>{formatCurrency(getDiscountedTax())}</span>
                   </div>
                   {pickupTime && (
                     <div className="flex justify-between text-sm">
@@ -277,10 +443,23 @@ export default function CheckoutPage() {
                       <span className="font-medium">{formatTime(pickupTime)}</span>
                     </div>
                   )}
+                  {step === 'payment' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Payment Method</span>
+                      <span className="font-medium">{paymentMethod === 'card' ? 'Card' : 'Cash on Pickup'}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Total</span>
-                    <span>{formatCurrency(getTotal())}</span>
+                    <span>{formatCurrency(getDiscountedTotal())}</span>
                   </div>
+                  {isFirstTimeCustomer && (
+                    <div className="bg-vibrant-orange/10 border border-vibrant-orange/20 rounded-md p-3 mt-2">
+                      <p className="text-xs text-vibrant-orange font-medium">
+                        Welcome! Enjoy 10% off your first order 🎉
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

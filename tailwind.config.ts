@@ -51,6 +51,13 @@ export default {
           foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
           border: "var(--destructive-border)",
         },
+        "brand-red": {
+          DEFAULT: "hsl(var(--brand-red) / <alpha-value>)",
+          foreground: "hsl(var(--brand-red-foreground) / <alpha-value>)",
+        },
+        "vibrant-blue": "hsl(var(--vibrant-blue) / <alpha-value>)",
+        "vibrant-orange": "hsl(var(--vibrant-orange) / <alpha-value>)",
+        "vibrant-purple": "hsl(var(--vibrant-purple) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",

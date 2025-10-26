@@ -68,6 +68,17 @@
 
   --destructive-foreground: 0 84% 97%;
 
+  /* Custom AURAK branding colors */
+  --brand-red: 0 85% 50%;
+
+  --brand-red-foreground: 0 0% 100%;
+
+  --vibrant-blue: 221 83% 53%;
+
+  --vibrant-orange: 24 95% 53%;
+
+  --vibrant-purple: 280 70% 60%;
+
   --input: 220 13% 75%;
   --ring: 142 76% 36%;
   --chart-1: 142 76% 36%;
@@ -185,6 +196,17 @@
   --destructive: 0 84% 42%;
 
   --destructive-foreground: 0 84% 97%;
+
+  /* Custom AURAK branding colors - dark mode */
+  --brand-red: 0 85% 55%;
+
+  --brand-red-foreground: 0 0% 100%;
+
+  --vibrant-blue: 221 83% 65%;
+
+  --vibrant-orange: 24 95% 65%;
+
+  --vibrant-purple: 280 70% 70%;
 
   --input: 220 13% 35%;
   --ring: 142 76% 36%;
@@ -315,6 +337,25 @@
   .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
   .active-elevate-2:active:not(.no-default-active-elevate)::after {
     background-color: var(--elevate-2);
+  }
+
+  /* Add subtle scale transform on hover for enhanced button responsiveness */
+  button:hover:not(:disabled),
+  [role="button"]:hover:not(:disabled) {
+    transform: scale(1.01);
+  }
+
+  /* Add subtle press-down effect on active state */
+  button:active:not(:disabled),
+  [role="button"]:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* Smooth transitions for all interactive elements */
+  button,
+  [role="button"],
+  a {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */

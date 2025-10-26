@@ -42,7 +42,7 @@ export default function StudentHeader() {
             {/* Logo */}
             <Link 
               href="/menu" 
-              className="text-xl sm:text-2xl font-bold text-foreground hover:text-primary transition-colors"
+              className="text-xl sm:text-2xl font-bold text-brand-red hover:opacity-90 transition-opacity"
             >
               AURAK Cafeteria
             </Link>

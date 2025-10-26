@@ -290,6 +290,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cash payment route - create order without Stripe
+  app.post('/api/orders/cash', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { items, pickupTime, specialInstructions, subtotal, tax, total } = req.body;
+
+      // Create order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+      // Create order items from cart
+      const orderItemsData = await Promise.all(
+        items.map(async (item: any) => {
+          const menuItem = await storage.getMenuItemById(item.menuItemId);
+          if (!menuItem) throw new Error(`Menu item ${item.menuItemId} not found`);
+
+          return {
+            menuItemId: item.menuItemId,
+            menuItemName: menuItem.name,
+            quantity: item.quantity,
+            unitPrice: menuItem.price,
+            customizations: item.customizations,
+            subtotal: (parseFloat(menuItem.price) * item.quantity).toFixed(2),
+          };
+        })
+      );
+
+      // Create order in database with cash payment method
+      const order = await storage.createOrder(
+        {
+          userId,
+          orderNumber,
+          status: 'received',
+          pickupTime: new Date(pickupTime),
+          specialInstructions,
+          subtotal: subtotal.toFixed(2),
+          tax: tax.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: 'cash',
+          paymentIntentId: null, // No Stripe payment for cash
+          paymentStatus: 'pending', // Will be marked as completed when paid at pickup
+        },
+        orderItemsData
+      );
+
+      // Broadcast new order via WebSocket
+      const message = JSON.stringify({ type: 'NEW_ORDER', orderId: order.id });
+      wsClients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(message);
+        }
+      });
+
+      res.json({ success: true, orderNumber: order.orderNumber });
+    } catch (error: any) {
+      console.error("Error creating cash order:", error);
+      res.status(500).json({ message: "Error creating cash order: " + error.message });
+    }
+  });
+
   // Stripe payment route
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
     try {
@@ -301,8 +360,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create payment intent
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(parseFloat(total) * 100), // Convert to cents
-        currency: "usd",
+        amount: Math.round(parseFloat(total) * 100), // Convert to fils (smallest unit of AED)
+        currency: "aed",
         metadata: {
           userId,
           orderNumber,
@@ -337,6 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subtotal: subtotal.toFixed(2),
           tax: tax.toFixed(2),
           total: total.toFixed(2),
+          paymentMethod: 'card',
           paymentIntentId: paymentIntent.id,
           paymentStatus: 'pending',
         },
