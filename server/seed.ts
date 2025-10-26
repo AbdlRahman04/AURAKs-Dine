@@ -195,6 +195,11 @@ async function seed() {
       allergens: [],
       dietaryTags: ['Vegan', 'Gluten-Free'],
       nutritionalInfo: { calories: 110, protein: 2, carbs: 26, fat: 0 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-3.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '5.00' }
+      ],
     },
     {
       name: 'Iced Latte',
@@ -208,6 +213,11 @@ async function seed() {
       allergens: ['Dairy'],
       dietaryTags: ['Vegetarian'],
       nutritionalInfo: { calories: 120, protein: 6, carbs: 12, fat: 5 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-4.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '6.00' }
+      ],
     },
     {
       name: 'Mint Lemonade',
@@ -221,6 +231,11 @@ async function seed() {
       allergens: [],
       dietaryTags: ['Vegan', 'Gluten-Free'],
       nutritionalInfo: { calories: 95, protein: 0, carbs: 24, fat: 0 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-3.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '4.00' }
+      ],
     },
     {
       name: 'Arabic Coffee',
@@ -234,6 +249,11 @@ async function seed() {
       allergens: [],
       dietaryTags: ['Vegan', 'Gluten-Free'],
       nutritionalInfo: { calories: 5, protein: 0, carbs: 1, fat: 0 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-2.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '3.00' }
+      ],
     },
     {
       name: 'Jallab',
@@ -247,6 +267,11 @@ async function seed() {
       allergens: [],
       dietaryTags: ['Vegan', 'Gluten-Free'],
       nutritionalInfo: { calories: 150, protein: 1, carbs: 38, fat: 0 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-4.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '5.00' }
+      ],
     },
     {
       name: 'Mango Smoothie',
@@ -260,6 +285,11 @@ async function seed() {
       allergens: ['Dairy'],
       dietaryTags: ['Vegetarian', 'Gluten-Free'],
       nutritionalInfo: { calories: 180, protein: 5, carbs: 38, fat: 2 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-5.00' },
+        { name: 'Medium', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '6.00' }
+      ],
     },
 
     // Snacks
@@ -288,6 +318,11 @@ async function seed() {
       allergens: [],
       dietaryTags: ['Vegan'],
       nutritionalInfo: { calories: 365, protein: 4, carbs: 48, fat: 17 },
+      sizeVariants: [
+        { name: 'Small', priceModifier: '-4.00' },
+        { name: 'Regular', priceModifier: '0.00' },
+        { name: 'Large', priceModifier: '5.00' }
+      ],
     },
     {
       name: 'Cheese Sambousek',
