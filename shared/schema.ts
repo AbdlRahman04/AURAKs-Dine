@@ -60,6 +60,7 @@ export const menuItems = pgTable("menu_items", {
   nutritionalInfo: jsonb("nutritional_info"), // FR-10: {calories, protein, carbs, fats, fiber}
   allergens: text("allergens").array(), // FR-10: array of allergen strings
   dietaryTags: text("dietary_tags").array(), // FR-08: vegetarian, vegan, gluten-free, etc.
+  sizeVariants: jsonb("size_variants"), // Size options: [{name: "Small", priceModifier: -2.00}, {name: "Medium", priceModifier: 0}, {name: "Large", priceModifier: 3.00}]
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -109,6 +110,7 @@ export const orderItems = pgTable("order_items", {
   menuItemName: varchar("menu_item_name", { length: 255 }).notNull(), // snapshot at order time
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(), // price at order time
+  selectedSize: varchar("selected_size", { length: 50 }), // Selected size variant (Small/Medium/Large)
   customizations: text("customizations"), // FR-11: customization options
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
 });
@@ -141,11 +143,36 @@ export const auditLogs = pgTable("audit_logs", {
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
 export type AuditLog = typeof auditLogs.$inferSelect;
 
+// Customer feedback table - for menu suggestions and general feedback
+export const feedback = pgTable("feedback", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  category: varchar("category", { length: 50 }).notNull(), // menu_suggestion, complaint, compliment, other
+  subject: varchar("subject", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // pending, reviewed, resolved
+  adminResponse: text("admin_response"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  status: true,
+  adminResponse: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type Feedback = typeof feedback.$inferSelect;
+
 // Define relations for better query performance
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   favorites: many(favorites),
   auditLogs: many(auditLogs),
+  feedback: many(feedback),
 }));
 
 export const menuItemsRelations = relations(menuItems, ({ many }) => ({
@@ -186,6 +213,13 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(users, {
     fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  user: one(users, {
+    fields: [feedback.userId],
     references: [users.id],
   }),
 }));
