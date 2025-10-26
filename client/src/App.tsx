@@ -15,6 +15,8 @@ import FeedbackPage from "@/pages/FeedbackPage";
 import KitchenDisplayPage from "@/pages/admin/KitchenDisplayPage";
 import FeedbackManagementPage from "@/pages/admin/FeedbackManagementPage";
 import { CartProvider } from "@/contexts/CartContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function Router() {
   const { isAuthenticated, isLoading, isAdmin } = useAuth();
@@ -67,12 +69,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </CartProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </CartProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
