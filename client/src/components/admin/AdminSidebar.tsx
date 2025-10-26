@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, MessageSquare, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ const navItems = [
   { href: '/admin', label: 'Kitchen Display', icon: LayoutDashboard },
   { href: '/admin/menu', label: 'Menu Management', icon: UtensilsCrossed },
   { href: '/admin/orders', label: 'All Orders', icon: Package },
+  { href: '/admin/feedback', label: 'Customer Feedback', icon: MessageSquare },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 

@@ -13,6 +13,7 @@ import FavoritesPage from "@/pages/FavoritesPage";
 import ProfilePage from "@/pages/ProfilePage";
 import FeedbackPage from "@/pages/FeedbackPage";
 import KitchenDisplayPage from "@/pages/admin/KitchenDisplayPage";
+import FeedbackManagementPage from "@/pages/admin/FeedbackManagementPage";
 import { CartProvider } from "@/contexts/CartContext";
 
 function Router() {
@@ -50,6 +51,7 @@ function Router() {
               <Route path="/admin" component={KitchenDisplayPage} />
               <Route path="/admin/menu" component={() => <div className="p-8"><h1 className="text-2xl font-bold">Menu Management - Coming Soon</h1><p className="text-muted-foreground mt-2">Full menu CRUD interface will be available in the next phase.</p></div>} />
               <Route path="/admin/orders" component={KitchenDisplayPage} />
+              <Route path="/admin/feedback" component={FeedbackManagementPage} />
               <Route path="/admin/analytics" component={() => <div className="p-8"><h1 className="text-2xl font-bold">Analytics Dashboard - Coming Soon</h1><p className="text-muted-foreground mt-2">Charts, reports, and CSV exports will be available in the next phase.</p></div>} />
             </>
           )}
