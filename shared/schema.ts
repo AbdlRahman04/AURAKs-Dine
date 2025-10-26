@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).notNull().default('student'), // student or admin (FR-26: role-based access)
   preferredPickupLocation: varchar("preferred_pickup_location"), // FR-05: profile preferences
   phoneNumber: varchar("phone_number"), // FR-05: contact details
+  dietaryRestrictions: text("dietary_restrictions").array(), // FR-05: dietary preferences (vegetarian, vegan, etc.)
+  allergies: text("allergies").array(), // FR-05: allergen information
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

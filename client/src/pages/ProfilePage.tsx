@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { User as UserIcon, Save } from 'lucide-react';
 import type { User } from '@shared/schema';
@@ -23,7 +23,24 @@ export default function ProfilePage() {
     studentId: user?.studentId || '',
     phoneNumber: user?.phoneNumber || '',
     preferredPickupLocation: user?.preferredPickupLocation || '',
+    dietaryRestrictions: user?.dietaryRestrictions?.join(', ') || '',
+    allergies: user?.allergies?.join(', ') || '',
   });
+
+  // Update form data when user data loads
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        studentId: user.studentId || '',
+        phoneNumber: user.phoneNumber || '',
+        preferredPickupLocation: user.preferredPickupLocation || '',
+        dietaryRestrictions: user.dietaryRestrictions?.join(', ') || '',
+        allergies: user.allergies?.join(', ') || '',
+      });
+    }
+  }, [user]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<User>) => {
@@ -47,7 +64,19 @@ export default function ProfilePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate(formData);
+    
+    // Convert comma-separated strings to arrays
+    const dataToSubmit = {
+      ...formData,
+      dietaryRestrictions: formData.dietaryRestrictions
+        ? formData.dietaryRestrictions.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+      allergies: formData.allergies
+        ? formData.allergies.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+    };
+    
+    updateProfileMutation.mutate(dataToSubmit);
   };
 
   const getInitials = () => {
@@ -143,6 +172,38 @@ export default function ProfilePage() {
                   }
                   data-testid="input-pickup-location"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
+                <Input
+                  id="dietaryRestrictions"
+                  placeholder="e.g., Vegetarian, Vegan, Gluten-Free (comma-separated)"
+                  value={formData.dietaryRestrictions}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dietaryRestrictions: e.target.value })
+                  }
+                  data-testid="input-dietary-restrictions"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Separate multiple restrictions with commas
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="allergies">Allergies</Label>
+                <Input
+                  id="allergies"
+                  placeholder="e.g., Peanuts, Dairy, Shellfish (comma-separated)"
+                  value={formData.allergies}
+                  onChange={(e) =>
+                    setFormData({ ...formData, allergies: e.target.value })
+                  }
+                  data-testid="input-allergies"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Separate multiple allergies with commas
+                </p>
               </div>
 
               <Button
