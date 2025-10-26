@@ -190,6 +190,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feedback routes
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { orderId, category, message, rating } = req.body;
+
+      // Validate category
+      const validCategories = ['food_quality', 'service', 'menu_suggestion', 'general'];
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({ message: "Invalid feedback category" });
+      }
+
+      const feedbackData = {
+        userId,
+        orderId: orderId || null,
+        category,
+        message,
+        rating: rating || null,
+        status: 'pending',
+      };
+
+      const newFeedback = await storage.createFeedback(feedbackData);
+      res.json(newFeedback);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
+  app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      // Only admins can view all feedback
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const allFeedback = await storage.getAllFeedback();
+      res.json(allFeedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  app.get('/api/feedback/my', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userFeedback = await storage.getUserFeedback(userId);
+      res.json(userFeedback);
+    } catch (error) {
+      console.error("Error fetching user feedback:", error);
+      res.status(500).json({ message: "Failed to fetch user feedback" });
+    }
+  });
+
+  app.patch('/api/feedback/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      // Only admins can update feedback status
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+      const { status } = req.body;
+
+      // Validate status
+      const validStatuses = ['pending', 'reviewed', 'resolved', 'dismissed'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updatedFeedback = await storage.updateFeedbackStatus(parseInt(id), status);
+      res.json(updatedFeedback);
+    } catch (error) {
+      console.error("Error updating feedback status:", error);
+      res.status(500).json({ message: "Failed to update feedback status" });
+    }
+  });
+
   // Order routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {

@@ -5,6 +5,7 @@ import {
   orderItems,
   favorites,
   auditLogs,
+  feedback,
   type User,
   type UpsertUser,
   type MenuItem,
@@ -16,6 +17,8 @@ import {
   type InsertFavorite,
   type InsertAuditLog,
   type OrderWithItems,
+  type Feedback,
+  type InsertFeedback,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -53,6 +56,12 @@ export interface IStorage {
   // Analytics operations
   getDailyStats(date?: Date): Promise<any>;
   getWeeklyStats(): Promise<any>;
+
+  // Feedback operations
+  createFeedback(feedbackData: InsertFeedback): Promise<Feedback>;
+  getAllFeedback(): Promise<Feedback[]>;
+  getUserFeedback(userId: string): Promise<Feedback[]>;
+  updateFeedbackStatus(id: number, status: string): Promise<Feedback>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -261,6 +270,39 @@ export class DatabaseStorage implements IStorage {
       averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
       orders: weeklyOrders,
     };
+  }
+
+  // Feedback operations
+  async createFeedback(feedbackData: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+
+  async getAllFeedback(): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async getUserFeedback(userId: string): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.userId, userId))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async updateFeedbackStatus(id: number, status: string): Promise<Feedback> {
+    const [updatedFeedback] = await db
+      .update(feedback)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(feedback.id, id))
+      .returning();
+    return updatedFeedback;
   }
 }
 
