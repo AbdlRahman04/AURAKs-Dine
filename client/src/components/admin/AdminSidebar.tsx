@@ -34,7 +34,7 @@ export default function AdminSidebar() {
       <div className="p-6 border-b space-y-3">
         <div>
           <h2 className="text-xl font-bold">Admin Panel</h2>
-          <p className="text-sm text-muted-foreground">AURAK Cafeteria</p>
+          <p className="text-sm text-muted-foreground">AURAK'S Dine</p>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />

@@ -48,7 +48,7 @@ export default function StudentHeader() {
               href="/menu" 
               className="text-xl sm:text-2xl font-bold text-brand-red hover:opacity-90 transition-opacity"
             >
-              AURAK Cafeteria
+              AURAK'S Dine
             </Link>
 
             {/* Navigation */}
