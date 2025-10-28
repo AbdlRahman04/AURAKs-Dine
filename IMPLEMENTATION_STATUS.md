@@ -1,4 +1,4 @@
-# AURAK Cafeteria - Implementation Status
+# AURAK'S Dine - Implementation Status
 
 ## ✅ Implemented Functional Requirements
 
@@ -189,7 +189,7 @@
 
 ## 🎯 System Ready for Use
 
-The AURAK Cafeteria Smart Ordering System is **fully functional** with core features:
+The AURAK'S Dine Smart Ordering System is **fully functional** with core features:
 - ✅ Student registration and authentication
 - ✅ Menu browsing with search and filters
 - ✅ Size selection for beverages and fries
