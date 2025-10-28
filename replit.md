@@ -1,4 +1,4 @@
-# AURAK Cafeteria - Smart Ordering System
+# AURAK'S Dine - Smart Ordering System
 
 ## Overview
 
