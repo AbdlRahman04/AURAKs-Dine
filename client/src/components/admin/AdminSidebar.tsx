@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { apiRequest } from '@/lib/queryClient';
 
 const navItems = [
   { href: '/admin', label: 'Kitchen Display', icon: LayoutDashboard },
@@ -19,6 +20,16 @@ export default function AdminSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const { t } = useLanguage();
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout', {});
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
+  };
 
   const getInitials = () => {
     if (!user) return 'A';
@@ -85,7 +96,7 @@ export default function AdminSidebar() {
         <Button
           variant="outline"
           className="w-full justify-start"
-          onClick={() => window.location.href = '/api/logout'}
+          onClick={handleLogout}
           data-testid="button-logout"
         >
           <LogOut className="w-4 h-4 mr-2" />

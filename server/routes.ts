@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./localAuth";
 import { z } from "zod";
 import { insertMenuItemSchema } from "@shared/schema";
 
@@ -29,9 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -41,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Profile routes
   app.patch('/api/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const updates = req.body;
       const user = await storage.updateUserProfile(userId, updates);
       res.json(user);
@@ -78,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/menu', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validated = insertMenuItemSchema.parse(req.body);
       const item = await storage.createMenuItem(validated);
       
@@ -102,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/menu/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const updates = req.body;
       const item = await storage.updateMenuItem(id, updates);
@@ -124,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/menu/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       await storage.deleteMenuItem(id);
       
@@ -146,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Favorites routes
   app.get('/api/favorites', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const favoriteIds = await storage.getUserFavorites(userId);
       res.json(favoriteIds);
     } catch (error) {
@@ -157,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/favorites/items', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const items = await storage.getUserFavoriteItems(userId);
       res.json(items);
     } catch (error) {
@@ -168,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/favorites', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { menuItemId } = req.body;
       const favorite = await storage.addFavorite({ userId, menuItemId });
       res.json(favorite);
@@ -180,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/favorites/:menuItemId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const menuItemId = parseInt(req.params.menuItemId);
       await storage.removeFavorite(userId, menuItemId);
       res.json({ success: true });
@@ -193,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Feedback routes
   app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { orderId, category, message, rating } = req.body;
 
       // Validate category
@@ -221,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       // Only admins can view all feedback
@@ -239,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/feedback/my', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const userFeedback = await storage.getUserFeedback(userId);
       res.json(userFeedback);
     } catch (error) {
@@ -250,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/feedback/:id/status', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       // Only admins can update feedback status
@@ -278,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       let orders;
@@ -305,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user owns this order or is admin
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       if (order.userId !== userId && user?.role !== 'admin') {
         return res.status(403).json({ message: "Forbidden" });
@@ -320,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/orders/:id/status', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const { status } = req.body;
       
@@ -351,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/orders/:id/cancel', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const order = await storage.getOrderById(id);
 
@@ -378,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cash payment route - create order without Stripe
   app.post('/api/orders/cash', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { items, pickupTime, specialInstructions, subtotal, tax, total } = req.body;
 
       // Create order number
@@ -448,7 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment route
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { items, pickupTime, specialInstructions, subtotal, tax, total } = req.body;
 
       // Create order number

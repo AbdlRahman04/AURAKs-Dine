@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, ShoppingBag, TrendingUp, Utensils } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function LandingPage() {
+  const [, setLocation] = useLocation();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -19,8 +22,8 @@ export default function LandingPage() {
               <Button 
                 size="lg" 
                 className="text-lg px-8 min-h-12"
-                onClick={() => window.location.href = '/api/login'}
-                data-testid="button-login"
+                onClick={() => setLocation('/register')}
+                data-testid="button-register"
               >
                 Get Started
               </Button>
@@ -28,9 +31,10 @@ export default function LandingPage() {
                 size="lg" 
                 variant="outline" 
                 className="text-lg px-8 min-h-12"
-                data-testid="button-learn-more"
+                onClick={() => setLocation('/login')}
+                data-testid="button-login"
               >
-                Learn More
+                Sign In
               </Button>
             </div>
           </div>

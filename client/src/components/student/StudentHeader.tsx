@@ -17,6 +17,7 @@ import ShoppingCart from './ShoppingCart';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function StudentHeader() {
   const { user } = useAuth();
@@ -26,6 +27,16 @@ export default function StudentHeader() {
   const [cartOpen, setCartOpen] = useState(false);
 
   const itemCount = getItemCount();
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout', {});
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
+  };
 
   const getInitials = () => {
     if (!user) return 'U';
@@ -163,11 +174,9 @@ export default function StudentHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <a href="/api/logout" className="flex items-center w-full" data-testid="link-logout">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>{t('logout')}</span>
-                    </a>
+                  <DropdownMenuItem onClick={handleLogout} data-testid="link-logout">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t('logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
