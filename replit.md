@@ -44,11 +44,16 @@ Preferred communication style: Simple, everyday language.
 - WebSocket server (via `ws` library) for real-time order status updates
 
 **Authentication & Session Management**
-- Replit Auth via OpenID Connect (OIDC) for SSO authentication
-- Passport.js strategy for auth middleware integration
+- Custom email/password authentication using Passport.js with passport-local strategy
+- Passwords hashed using bcryptjs (cost factor: 10) before database storage
 - Session-based authentication using `express-session`
 - Sessions stored in PostgreSQL using `connect-pg-simple`
+- Session cookies: httpOnly, sameSite='lax', secure only in production
 - Role-based access control (student vs admin) implemented at route level
+- Authentication endpoints:
+  - POST /api/auth/register - Create new account and auto-login
+  - POST /api/auth/login - Authenticate with email/password
+  - POST /api/auth/logout - Destroy session
 
 **API Design**
 - RESTful API endpoints under `/api` prefix
@@ -68,10 +73,12 @@ Preferred communication style: Simple, everyday language.
 - Connection pooling via `@neondatabase/serverless` with WebSocket support
 
 **Schema Design**
-- `users` table: stores student/admin profiles with Replit Auth integration
-  - Supports 8-digit student IDs (FR-04)
+- `users` table: stores student/admin profiles with custom authentication
+  - Email and hashed password for authentication
+  - Supports 8-digit student IDs (optional for students)
   - Role-based access (student/admin)
-  - Profile preferences (pickup location, contact details)
+  - Profile information (firstName, lastName, email, studentId)
+  - Optional profile fields (profileImageUrl, phoneNumber, pickupLocation, dietary preferences)
 - `menu_items` table: cafeteria menu with categories, pricing, availability, dietary info
   - Support for specials with alternate pricing
   - Nutritional information and allergen tracking
@@ -95,10 +102,13 @@ Preferred communication style: Simple, everyday language.
   - Server-side Stripe SDK for payment intent creation and webhooks
   - Environment variables: `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLIC_KEY`
 
-**Authentication Provider**
-- Replit Authentication (OpenID Connect)
-  - Requires `REPL_ID`, `REPLIT_DOMAINS`, `ISSUER_URL`, `SESSION_SECRET` environment variables
-  - Handles user registration, login, and profile management
+**Authentication System**
+- Custom Email/Password Authentication
+  - Requires `SESSION_SECRET` environment variable for session encryption
+  - Student self-registration via /register page (email, password, firstName, lastName, optional studentId)
+  - Admin accounts created separately via database seeding
+  - Automatic login after successful registration
+  - Password requirements: minimum length enforced client-side (min 6 characters)
 
 **Database Service**
 - Neon serverless PostgreSQL

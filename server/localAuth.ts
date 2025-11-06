@@ -22,7 +22,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });
@@ -74,6 +75,9 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
       done(null, user);
     } catch (error) {
       done(error);
@@ -112,12 +116,13 @@ export async function setupAuth(app: Express) {
       // Log the user in
       req.login(user, (err) => {
         if (err) {
+          console.error("Login after registration failed");
           return res.status(500).json({ message: "Registration successful, but login failed" });
         }
         res.json(user);
       });
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration error");
       res.status(500).json({ message: "Failed to register" });
     }
   });
