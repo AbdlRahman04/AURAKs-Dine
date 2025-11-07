@@ -39,6 +39,7 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number"), // FR-05: contact details
   dietaryRestrictions: text("dietary_restrictions").array(), // FR-05: dietary preferences (vegetarian, vegan, etc.)
   allergies: text("allergies").array(), // FR-05: allergen information
+  stripeCustomerId: varchar("stripe_customer_id"), // FR-26: Stripe customer ID for saved payment methods
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -171,12 +172,29 @@ export const insertFeedbackSchema = createInsertSchema(feedback).omit({
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type Feedback = typeof feedback.$inferSelect;
 
+// Payment methods table - FR-26: save payment methods for future use
+export const paymentMethods = pgTable("payment_methods", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  stripePaymentMethodId: varchar("stripe_payment_method_id").notNull(), // Stripe payment method ID
+  cardBrand: varchar("card_brand", { length: 50 }), // visa, mastercard, amex, etc.
+  cardLast4: varchar("card_last4", { length: 4 }), // last 4 digits for display
+  cardExpMonth: integer("card_exp_month"),
+  cardExpYear: integer("card_exp_year"),
+  isDefault: boolean("is_default").notNull().default(false), // default payment method
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+
 // Define relations for better query performance
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   favorites: many(favorites),
   auditLogs: many(auditLogs),
   feedback: many(feedback),
+  paymentMethods: many(paymentMethods),
 }));
 
 export const menuItemsRelations = relations(menuItems, ({ many }) => ({
@@ -224,6 +242,13 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
 export const feedbackRelations = relations(feedback, ({ one }) => ({
   user: one(users, {
     fields: [feedback.userId],
+    references: [users.id],
+  }),
+}));
+
+export const paymentMethodsRelations = relations(paymentMethods, ({ one }) => ({
+  user: one(users, {
+    fields: [paymentMethods.userId],
     references: [users.id],
   }),
 }));

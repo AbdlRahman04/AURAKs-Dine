@@ -6,6 +6,7 @@ import {
   favorites,
   auditLogs,
   feedback,
+  paymentMethods,
   type User,
   type UpsertUser,
   type MenuItem,
@@ -19,6 +20,8 @@ import {
   type OrderWithItems,
   type Feedback,
   type InsertFeedback,
+  type PaymentMethod,
+  type InsertPaymentMethod,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -64,6 +67,13 @@ export interface IStorage {
   getAllFeedback(): Promise<Feedback[]>;
   getUserFeedback(userId: string): Promise<Feedback[]>;
   updateFeedbackStatus(id: number, status: string): Promise<Feedback>;
+
+  // Payment methods operations - FR-26
+  getUserPaymentMethods(userId: string): Promise<PaymentMethod[]>;
+  addPaymentMethod(paymentMethod: InsertPaymentMethod): Promise<PaymentMethod>;
+  deletePaymentMethod(id: number, userId: string): Promise<void>;
+  setDefaultPaymentMethod(userId: string, paymentMethodId: number): Promise<void>;
+  updateUserStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -329,6 +339,90 @@ export class DatabaseStorage implements IStorage {
       .where(eq(feedback.id, id))
       .returning();
     return updatedFeedback;
+  }
+
+  // Payment methods operations - FR-26
+  async getUserPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+    return await db
+      .select()
+      .from(paymentMethods)
+      .where(eq(paymentMethods.userId, userId))
+      .orderBy(desc(paymentMethods.isDefault), desc(paymentMethods.createdAt));
+  }
+
+  async addPaymentMethod(paymentMethodData: InsertPaymentMethod): Promise<PaymentMethod> {
+    const [newPaymentMethod] = await db
+      .insert(paymentMethods)
+      .values(paymentMethodData)
+      .returning();
+    return newPaymentMethod;
+  }
+
+  async deletePaymentMethod(id: number, userId: string): Promise<void> {
+    // Get the payment method to check if it's default
+    const [paymentMethod] = await db
+      .select()
+      .from(paymentMethods)
+      .where(and(eq(paymentMethods.id, id), eq(paymentMethods.userId, userId)));
+
+    if (!paymentMethod) {
+      throw new Error('Payment method not found or unauthorized');
+    }
+
+    const wasDefault = paymentMethod.isDefault;
+
+    // Delete the payment method
+    await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
+
+    // If it was the default, set another card as default
+    if (wasDefault) {
+      const [nextPaymentMethod] = await db
+        .select()
+        .from(paymentMethods)
+        .where(eq(paymentMethods.userId, userId))
+        .orderBy(desc(paymentMethods.createdAt))
+        .limit(1);
+
+      if (nextPaymentMethod) {
+        await db
+          .update(paymentMethods)
+          .set({ isDefault: true })
+          .where(eq(paymentMethods.id, nextPaymentMethod.id));
+      }
+    }
+  }
+
+  async setDefaultPaymentMethod(userId: string, paymentMethodId: number): Promise<void> {
+    // First, verify the payment method exists and belongs to this user
+    const [existingPaymentMethod] = await db
+      .select()
+      .from(paymentMethods)
+      .where(and(eq(paymentMethods.id, paymentMethodId), eq(paymentMethods.userId, userId)));
+
+    if (!existingPaymentMethod) {
+      throw new Error('Payment method not found or unauthorized');
+    }
+
+    // Unset all default flags for this user
+    await db
+      .update(paymentMethods)
+      .set({ isDefault: false })
+      .where(eq(paymentMethods.userId, userId));
+
+    // Then set the specified payment method as default
+    await db
+      .update(paymentMethods)
+      .set({ isDefault: true })
+      .where(eq(paymentMethods.id, paymentMethodId));
+  }
+
+  async updateUserStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 }
 
