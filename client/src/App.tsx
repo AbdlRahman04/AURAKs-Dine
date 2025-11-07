@@ -17,6 +17,8 @@ import ProfilePage from "@/pages/ProfilePage";
 import FeedbackPage from "@/pages/FeedbackPage";
 import KitchenDisplayPage from "@/pages/admin/KitchenDisplayPage";
 import FeedbackManagementPage from "@/pages/admin/FeedbackManagementPage";
+import MenuManagementPage from "@/pages/admin/MenuManagementPage";
+import AnalyticsPage from "@/pages/admin/AnalyticsPage";
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -71,10 +73,10 @@ function Router() {
           
           {/* Admin Routes - with access control */}
           <Route path="/admin" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
-          <Route path="/admin/menu" component={() => <RequireAdmin><div className="p-8"><h1 className="text-2xl font-bold">Menu Management - Coming Soon</h1><p className="text-muted-foreground mt-2">Full menu CRUD interface will be available in the next phase.</p></div></RequireAdmin>} />
+          <Route path="/admin/menu" component={() => <RequireAdmin><MenuManagementPage /></RequireAdmin>} />
           <Route path="/admin/orders" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
           <Route path="/admin/feedback" component={() => <RequireAdmin><FeedbackManagementPage /></RequireAdmin>} />
-          <Route path="/admin/analytics" component={() => <RequireAdmin><div className="p-8"><h1 className="text-2xl font-bold">Analytics Dashboard - Coming Soon</h1><p className="text-muted-foreground mt-2">Charts, reports, and CSV exports will be available in the next phase.</p></div></RequireAdmin>} />
+          <Route path="/admin/analytics" component={() => <RequireAdmin><AnalyticsPage /></RequireAdmin>} />
           
           {/* Fallback to 404 */}
           <Route component={NotFound} />
