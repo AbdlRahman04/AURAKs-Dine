@@ -330,6 +330,239 @@ Methods:
 
 ## 3. ACTIVITY DIAGRAM
 
+### Activity 0: Complete User Journey - Registration to Checkout
+
+```
+[Start]
+    ↓
+[Access Landing Page]
+    ↓
+{User Account Exists?}
+    ├─ No → [Navigate to Registration Page]
+    │        ↓
+    │        [Enter Registration Details]
+    │        - Email
+    │        - Password
+    │        - Confirm Password
+    │        - First Name
+    │        - Last Name
+    │        - Student ID (optional)
+    │        ↓
+    │        [Validate Form Data]
+    │        ↓
+    │        {Validation Passed?}
+    │        ├─ No → [Show Error Messages]
+    │        │        ↓
+    │        │        [Return to Registration Form]
+    │        └─ Yes → [Check if Email Already Exists]
+    │                 ↓
+    │                 {Email Exists?}
+    │                 ├─ Yes → [Show Error: Email Already Registered]
+    │                 │        ↓
+    │                 │        [Return to Registration Form]
+    │                 └─ No → [Hash Password]
+    │                          ↓
+    │                          [Create User in Database]
+    │                          ↓
+    │                          [Auto Login User]
+    │                          ↓
+    │                          [Create Session]
+    │                          ↓
+    │                          [Redirect to Menu Page]
+    │
+    └─ Yes → [Navigate to Login Page]
+             ↓
+             [Enter Credentials]
+             - Email
+             - Password
+             ↓
+             [Validate Credentials]
+             ↓
+             {Credentials Valid?}
+             ├─ No → [Show Error: Invalid Credentials]
+             │        ↓
+             │        [Return to Login Form]
+             └─ Yes → [Create Session]
+                      ↓
+                      {User Role?}
+                      ├─ Admin → [Redirect to Admin Dashboard]
+                      └─ Student → [Redirect to Menu Page]
+    ↓
+[Menu Page Loaded]
+    ↓
+[Fetch Menu Items from API]
+    ↓
+[Display Menu Items]
+    ↓
+{User Action?}
+    ├─ Browse Menu → [View Menu Items by Category]
+    │                  ↓
+    │                  [Filter by Category (optional)]
+    │                  - Breakfast
+    │                  - Lunch
+    │                  - Snacks
+    │                  - Beverages
+    │                  ↓
+    │                  [Search Menu Items (optional)]
+    │                  ↓
+    │                  [View Menu Item Details]
+    │                  ↓
+    │                  [Return to Menu Browsing]
+    │
+    ├─ Select Menu Item → [View Item Details]
+    │                      ↓
+    │                      {Item Has Size Variants?}
+    │                      ├─ Yes → [Select Size]
+    │                      │        - Small
+    │                      │        - Medium
+    │                      │        - Large
+    │                      └─ No → [Continue]
+    │                      ↓
+    │                      [Add Customizations (optional)]
+    │                      - Special instructions
+    │                      - Dietary preferences
+    │                      ↓
+    │                      [Select Quantity]
+    │                      ↓
+    │                      [Add to Cart]
+    │                      ↓
+    │                      [Update Cart State]
+    │                      ↓
+    │                      [Show Success Notification]
+    │                      ↓
+    │                      {Add More Items?}
+    │                      ├─ Yes → [Return to Menu Browsing]
+    │                      └─ No → [Continue]
+    │
+    ├─ View Cart → [Display Cart Items]
+    │                ↓
+    │                [Show Cart Summary]
+    │                - Item count
+    │                - Subtotal
+    │                - Tax calculation
+    │                - Total
+    │                ↓
+    │                {Cart Empty?}
+    │                ├─ Yes → [Show Empty Cart Message]
+    │                │        ↓
+    │                │        [Return to Menu]
+    │                └─ No → [Allow Cart Modifications]
+    │                         - Update quantity
+    │                         - Remove items
+    │                         - Modify customizations
+    │                         ↓
+    │                         {Proceed to Checkout?}
+    │                         ├─ No → [Return to Menu]
+    │                         └─ Yes → [Navigate to Checkout]
+    │
+    └─ View Favorites → [Display Favorite Items]
+                        ↓
+                        [Return to Menu]
+    ↓
+[Checkout Page Loaded]
+    ↓
+{Is First-Time Customer?}
+    ├─ Yes → [Apply 10% First-Time Discount]
+    └─ No → [Continue]
+    ↓
+[Calculate Order Totals]
+    - Subtotal
+    - Discount (if applicable)
+    - Tax (8%)
+    - Final Total
+    ↓
+[Display Order Summary]
+    ↓
+[Step 1: Select Pickup Time]
+    ↓
+[Display Available Time Slots]
+    ↓
+[User Selects Pickup Time]
+    ↓
+{Time Slot Selected?}
+    ├─ No → [Show Error: Select Pickup Time]
+    │        ↓
+    │        [Return to Time Selection]
+    └─ Yes → [Continue]
+    ↓
+[Step 2: Choose Payment Method]
+    ↓
+{Payment Method?}
+    ├─ Card Payment → [Select Card Payment]
+    │                  ↓
+    │                  [Create Payment Intent via API]
+    │                  ↓
+    │                  [Receive Client Secret from Stripe]
+    │                  ↓
+    │                  [Display Payment Form]
+    │                  - Card number
+    │                  - Expiry date
+    │                  - CVC
+    │                  - Cardholder name
+    │                  ↓
+    │                  [User Enters Card Details]
+    │                  ↓
+    │                  [Validate Card Details]
+    │                  ↓
+    │                  {Card Valid?}
+    │                  ├─ No → [Show Error: Invalid Card]
+    │                  │        ↓
+    │                  │        [Return to Payment Form]
+    │                  └─ Yes → [Process Payment via Stripe]
+    │                           ↓
+    │                           {Payment Successful?}
+    │                           ├─ No → [Show Error: Payment Failed]
+    │                           │        ↓
+    │                           │        [Return to Payment Form]
+    │                           └─ Yes → [Payment Confirmed]
+    │                                    ↓
+    │                                    [Create Order in Database]
+    │                                    - Order number generation
+    │                                    - Order items creation
+    │                                    - Payment status: completed
+    │                                    ↓
+    │                                    [Broadcast Order via WebSocket]
+    │                                    ↓
+    │                                    [Clear Cart]
+    │                                    ↓
+    │                                    [Show Success Message]
+    │                                    ↓
+    │                                    [Redirect to Orders Page]
+    │
+    └─ Cash Payment → [Select Cash Payment]
+                       ↓
+                       [Display Cash Payment Confirmation]
+                       ↓
+                       [User Confirms Cash Payment]
+                       ↓
+                       [Create Order in Database]
+                       - Order number generation
+                       - Order items creation
+                       - Payment method: cash
+                       - Payment status: pending
+                       ↓
+                       [Broadcast Order via WebSocket]
+                       ↓
+                       [Clear Cart]
+                       ↓
+                       [Show Success Message]
+                       - "Pay cash when you pick up your order"
+                       ↓
+                       [Redirect to Orders Page]
+    ↓
+[Orders Page Loaded]
+    ↓
+[Display Order Confirmation]
+    - Order number
+    - Order items
+    - Pickup time
+    - Payment method
+    - Total amount
+    - Order status
+    ↓
+[End]
+```
+
 ### Activity 1: Order Placement Flow (Student)
 
 ```
