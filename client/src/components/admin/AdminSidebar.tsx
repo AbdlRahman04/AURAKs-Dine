@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, MessageSquare, LogOut } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, MessageSquare, LogOut, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
@@ -75,6 +75,21 @@ export default function AdminSidebar() {
             </Link>
           );
         })}
+        
+        {/* Home Link to User Menu */}
+        <Link href="/menu">
+          <a
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors mt-4 border border-destructive/50 ${
+              location === '/menu' || location === '/'
+                ? 'bg-destructive/10 text-destructive border-destructive'
+                : 'text-destructive hover:bg-destructive/10 hover:text-destructive'
+            }`}
+            data-testid="link-home"
+          >
+            <Home className="w-5 h-5" />
+            <span className="font-medium">Home</span>
+          </a>
+        </Link>
       </nav>
 
       {/* User Info */}
