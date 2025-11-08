@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart, MessageSquare } from 'lucide-react';
+import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart, MessageSquare, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +20,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function StudentHeader() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { getItemCount } = useCart();
   const { t } = useLanguage();
   const [location] = useLocation();
@@ -100,6 +100,17 @@ export default function StudentHeader() {
               >
                 {t('feedback')}
               </Link>
+              {isAdmin && (
+                <Link 
+                  href="/admin"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    location.startsWith('/admin') ? 'text-foreground' : 'text-muted-foreground'
+                  }`}
+                  data-testid="link-admin"
+                >
+                  {t('admin')}
+                </Link>
+              )}
             </nav>
 
             {/* Actions */}
@@ -229,6 +240,18 @@ export default function StudentHeader() {
               <User className="w-5 h-5" />
               <span>{t('profile')}</span>
             </Link>
+            {isAdmin && (
+              <Link 
+                href="/admin"
+                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
+                  location.startsWith('/admin') ? 'text-primary' : 'text-muted-foreground'
+                }`}
+                data-testid="link-admin-mobile"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                <span>{t('admin')}</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>
