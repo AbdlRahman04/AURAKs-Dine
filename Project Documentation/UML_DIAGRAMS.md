@@ -717,6 +717,93 @@ Methods:
 
 ## 4. SEQUENCE DIAGRAM
 
+### Sequence 0: Complete User Journey - Registration to Checkout
+
+```
+Student    RegisterPage    MenuPage    CartContext    CheckoutPage    API    DatabaseStorage    Database    Stripe    WebSocket
+   |            |              |             |              |            |            |              |            |          |
+   |--Register->|              |             |              |            |            |              |            |          |
+   |            |--POST /api/auth/register-->|              |            |            |              |            |          |
+   |            |              |             |              |            |--getUserByEmail()-->|            |          |
+   |            |              |             |              |            |            |--SELECT--->|            |          |
+   |            |              |             |              |            |            |<--Not Found|            |          |
+   |            |              |             |              |            |<--Not Found|              |            |          |
+   |            |              |             |              |            |--hash(password)-->|            |          |
+   |            |              |             |              |            |--createUser()-->|            |          |
+   |            |              |             |              |            |            |--INSERT----->|            |          |
+   |            |              |             |              |            |            |<--User-------|            |          |
+   |            |              |             |              |            |<--User------|              |            |          |
+   |            |<--User-------|              |             |              |            |            |              |            |          |
+   |--Navigate->|              |             |              |            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |            |--Load Menu-->|             |              |            |            |              |            |          |
+   |            |              |--GET /api/menu-->|          |            |            |              |            |          |
+   |            |              |             |              |            |--getAllMenuItems()-->|            |          |
+   |            |              |             |              |            |            |--SELECT----->|            |          |
+   |            |              |             |              |            |            |<--MenuItem[]|            |          |
+   |            |              |             |              |            |<--MenuItem[]|              |            |          |
+   |            |              |<--MenuItem[]|              |            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |--Add Item->|              |             |              |            |            |              |            |          |
+   |            |              |--addItem()-->|              |            |            |              |            |          |
+   |            |              |             |--Update Cart|            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |--Add More->|              |             |              |            |            |              |            |          |
+   |            |              |--addItem()-->|              |            |            |              |            |          |
+   |            |              |             |--Update Cart|            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |--Checkout->|              |             |              |            |            |              |            |          |
+   |            |              |             |              |--Load Page|            |            |              |            |          |
+   |            |              |             |              |--GET /api/orders-->|            |              |            |          |
+   |            |              |             |              |            |--getUserOrders()-->|            |          |
+   |            |              |             |              |            |            |--SELECT----->|            |          |
+   |            |              |             |              |            |            |<--Orders[]--|            |          |
+   |            |              |             |              |            |<--Orders[]|              |            |          |
+   |            |              |             |              |<--Orders[]|            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |--Select Time->|              |             |              |            |            |              |            |          |
+   |            |              |             |              |--Select Payment-->|            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |            |              |             |              |{Payment = Card?}  |            |              |            |          |
+   |            |              |             |              |  ├─ Yes:          |            |              |            |          |
+   |            |              |             |              |--POST /api/create-payment-intent-->|            |          |
+   |            |              |             |              |            |--Create Payment Intent-->|            |          |
+   |            |              |             |              |            |            |              |--Process->|          |
+   |            |              |             |              |            |            |              |<--Success|          |
+   |            |              |             |              |            |<--clientSecret|              |            |          |
+   |            |              |             |              |<--clientSecret|            |              |            |          |
+   |            |              |             |              |--confirmPayment()-->|            |              |            |          |
+   |            |              |             |              |            |            |              |--Process->|          |
+   |            |              |             |              |            |            |              |<--Success|          |
+   |            |              |             |              |            |--createOrder()-->|            |          |
+   |            |              |             |              |            |            |--INSERT----->|            |          |
+   |            |              |             |              |            |            |<--Order------|            |          |
+   |            |              |             |              |            |<--Order-----|              |            |          |
+   |            |              |             |              |            |--Broadcast-->|            |            |          |
+   |            |              |             |              |            |            |              |            |--Notify->|
+   |            |              |             |              |<--Success|            |              |            |          |
+   |            |              |             |--clearCart()|            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |            |              |             |              |  └─ No (Cash):   |            |              |            |          |
+   |            |              |             |              |--POST /api/orders/cash-->|            |          |
+   |            |              |             |              |            |--createOrder()-->|            |          |
+   |            |              |             |              |            |            |--INSERT----->|            |          |
+   |            |              |             |              |            |            |<--Order------|            |          |
+   |            |              |             |              |            |<--Order-----|              |            |          |
+   |            |              |             |              |            |--Broadcast-->|            |            |          |
+   |            |              |             |              |            |            |              |            |--Notify->|
+   |            |              |             |--clearCart()|            |            |              |            |          |
+   |            |              |             |              |            |            |              |            |          |
+   |--Navigate->|              |             |              |            |            |              |            |          |
+   |            |              |             |              |--GET /api/orders-->|            |              |            |          |
+   |            |              |             |              |            |--getUserOrders()-->|            |          |
+   |            |              |             |              |            |            |--SELECT----->|            |          |
+   |            |              |             |              |            |            |<--Orders[]--|            |          |
+   |            |              |             |              |            |<--Orders[]|              |            |          |
+   |            |              |             |              |<--Orders[]|            |              |            |          |
+   |            |              |             |              |--Display Order|            |              |            |          |
+```
+
 ### Sequence 1: Place Order (Card Payment)
 
 ```
