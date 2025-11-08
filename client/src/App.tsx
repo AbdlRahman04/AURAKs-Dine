@@ -78,8 +78,8 @@ function Router() {
           <Route path="/admin/feedback" component={() => <RequireAdmin><FeedbackManagementPage /></RequireAdmin>} />
           <Route path="/admin/analytics" component={() => <RequireAdmin><AnalyticsPage /></RequireAdmin>} />
           
-          {/* Fallback to 404 */}
-          <Route component={NotFound} />
+          {/* Fallback to 404 - only for unmatched routes (must have at least one character after /) */}
+          <Route path="/:rest+" component={NotFound} />
         </>
       )}
     </Switch>

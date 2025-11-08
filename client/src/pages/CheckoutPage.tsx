@@ -14,6 +14,7 @@ import { formatCurrency, formatTime, generatePickupTimeSlots } from '@/lib/utils
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
+import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { OrderWithItems, MenuItem } from '@shared/schema';
 
@@ -242,10 +243,11 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StudentHeader />
+      <div className="flex-grow">
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-8">
           <div className={`flex items-center gap-2 ${step === 'pickup' ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -419,10 +421,10 @@ export default function CheckoutPage() {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
+              <CardContent className="space-y-6 p-6">
+                <div className="space-y-4">
                   {items.map((item, index) => (
-                    <div key={`${item.menuItem.id}-${index}`} className="flex justify-between text-sm">
+                    <div key={`${item.menuItem.id}-${index}`} className="flex justify-between text-sm py-1">
                       <span className="text-muted-foreground">
                         {item.quantity}x {getItemName(item.menuItem)}
                         {item.selectedSize && ` (${item.selectedSize})`}
@@ -444,13 +446,13 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
+                <div className="border-t pt-6 space-y-4">
+                  <div className="flex justify-between text-sm py-1">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatCurrency(getSubtotal())}</span>
                   </div>
                   {isFirstTimeCustomer && getDiscountAmount() > 0 && (
-                    <div className="flex justify-between text-sm text-vibrant-orange">
+                    <div className="flex justify-between text-sm text-vibrant-orange py-1">
                       <span className="flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         First-Time Discount (10%)
@@ -458,28 +460,28 @@ export default function CheckoutPage() {
                       <span>-{formatCurrency(getDiscountAmount())}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm py-1">
                     <span className="text-muted-foreground">Tax</span>
                     <span>{formatCurrency(getDiscountedTax())}</span>
                   </div>
                   {pickupTime && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm py-1">
                       <span className="text-muted-foreground">Pickup Time</span>
                       <span className="font-medium">{formatTime(pickupTime)}</span>
                     </div>
                   )}
                   {step === 'payment' && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm py-1">
                       <span className="text-muted-foreground">Payment Method</span>
                       <span className="font-medium">{paymentMethod === 'card' ? 'Card' : 'Cash on Pickup'}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                  <div className="flex justify-between text-lg font-bold pt-4 mt-4 border-t">
                     <span>Total</span>
                     <span>{formatCurrency(getDiscountedTotal())}</span>
                   </div>
                   {isFirstTimeCustomer && (
-                    <div className="bg-vibrant-orange/10 border border-vibrant-orange/20 rounded-md p-3 mt-2">
+                    <div className="bg-vibrant-orange/10 border border-vibrant-orange/20 rounded-md p-4 mt-4">
                       <p className="text-xs text-vibrant-orange font-medium">
                         Welcome! Enjoy 10% off your first order 🎉
                       </p>
@@ -490,7 +492,9 @@ export default function CheckoutPage() {
             </Card>
           </div>
         </div>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

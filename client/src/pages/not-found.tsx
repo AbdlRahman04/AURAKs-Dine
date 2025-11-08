@@ -4,7 +4,16 @@ import { AlertCircle, Home } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function NotFound() {
+  const [location] = useLocation();
   const [, setLocation] = useLocation();
+
+  // Only show 404 for actual invalid routes, not on valid pages
+  const validRoutes = ['/', '/menu', '/checkout', '/orders', '/favorites', '/feedback', '/profile', '/admin', '/admin/menu', '/admin/orders', '/admin/feedback', '/admin/analytics'];
+  
+  // If we're on a valid route, don't show 404
+  if (validRoutes.includes(location) || location.startsWith('/admin/')) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">

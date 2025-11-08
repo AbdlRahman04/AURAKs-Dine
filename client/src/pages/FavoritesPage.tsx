@@ -10,6 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
+import Footer from '@/components/Footer';
 
 export default function FavoritesPage() {
   const { addItem } = useCart();
@@ -42,10 +43,11 @@ export default function FavoritesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StudentHeader />
+      <div className="flex-grow">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Favorites</h1>
           <p className="text-muted-foreground">
@@ -145,7 +147,9 @@ export default function FavoritesPage() {
             </Button>
           </Card>
         )}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -122,8 +122,16 @@ export async function setupAuth(app: Express) {
         res.json(user);
       });
     } catch (error) {
-      console.error("Registration error");
-      res.status(500).json({ message: "Failed to register" });
+      console.error("Registration error:", error);
+      let errorMessage = "Unknown error";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        // Log the full error stack for debugging
+        console.error("Error stack:", error.stack);
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error);
+      }
+      res.status(500).json({ message: `Failed to register: ${errorMessage}` });
     }
   });
 

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { db } from './db';
 import { menuItems, users } from '@shared/schema';
 

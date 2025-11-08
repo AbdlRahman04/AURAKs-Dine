@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
+import Footer from '@/components/Footer';
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -90,8 +91,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <StudentHeader />
+      <div className="flex-grow">
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
@@ -220,6 +222,8 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -89,8 +89,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(userData).returning();
-    return user;
+    try {
+      const [user] = await db.insert(users).values(userData).returning();
+      return user;
+    } catch (error: any) {
+      // Provide more helpful error messages
+      if (error?.code === '42P01') {
+        throw new Error('Database table "users" does not exist. Please run database migrations first.');
+      }
+      if (error?.code === '23505') {
+        throw new Error('Email or student ID already exists');
+      }
+      // Re-throw with original error for other cases
+      throw error;
+    }
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {

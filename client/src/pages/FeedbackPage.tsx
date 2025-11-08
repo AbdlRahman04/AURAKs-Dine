@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MessageSquare, ChefHat, Star, Info, CheckCircle2 } from "lucide-react";
 import type { OrderWithItems } from "@shared/schema";
+import StudentHeader from '@/components/student/StudentHeader';
+import Footer from '@/components/Footer';
 
 const feedbackFormSchema = z.object({
   category: z.enum(["food_quality", "service", "menu_suggestion", "general"]),
@@ -91,7 +93,9 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-background flex flex-col">
+      <StudentHeader />
+      <div className="flex-grow p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Share Your Feedback</h1>
@@ -295,6 +299,8 @@ export default function FeedbackPage() {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }
