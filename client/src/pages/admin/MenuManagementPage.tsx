@@ -43,6 +43,23 @@ const categories = [
 
 const dietaryTags = ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Dairy-Free', 'Nut-Free'];
 
+type MenuItemFormData = {
+  name: string;
+  nameAr: string;
+  description: string;
+  descriptionAr: string;
+  price: string;
+  category: string;
+  imageUrl: string;
+  isAvailable: boolean;
+  isSpecial: boolean;
+  specialPrice: string | null;
+  preparationTime: number;
+  dietaryTags: string[];
+  allergens: string[];
+  nutritionalInfo: unknown | null;
+};
+
 function MenuItemForm({
   item,
   onClose,
@@ -51,7 +68,7 @@ function MenuItemForm({
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Partial<InsertMenuItem>>({
+  const [formData, setFormData] = useState<MenuItemFormData>({
     name: item?.name || '',
     nameAr: item?.nameAr || '',
     description: item?.description || '',
@@ -125,10 +142,28 @@ function MenuItemForm({
       return;
     }
 
+    // Convert form data to the correct format
+    const submitData: InsertMenuItem = {
+      name: formData.name,
+      nameAr: formData.nameAr || undefined,
+      description: formData.description || undefined,
+      descriptionAr: formData.descriptionAr || undefined,
+      price: formData.price,
+      category: formData.category,
+      imageUrl: formData.imageUrl || undefined,
+      isAvailable: formData.isAvailable,
+      isSpecial: formData.isSpecial,
+      specialPrice: formData.specialPrice || undefined,
+      preparationTime: formData.preparationTime,
+      dietaryTags: formData.dietaryTags,
+      allergens: formData.allergens,
+      nutritionalInfo: formData.nutritionalInfo || undefined,
+    };
+
     if (item) {
-      updateMutation.mutate(formData as MenuItem);
+      updateMutation.mutate(submitData);
     } else {
-      createMutation.mutate(formData as InsertMenuItem);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -240,7 +275,10 @@ function MenuItemForm({
             type="number"
             min="1"
             value={formData.preparationTime || 15}
-            onChange={(e) => setFormData({ ...formData, preparationTime: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              setFormData({ ...formData, preparationTime: isNaN(value) ? 15 : value });
+            }}
             data-testid="input-menu-prep-time"
           />
         </div>
@@ -284,9 +322,10 @@ function MenuItemForm({
               step="0.01"
               min="0"
               value={formData.specialPrice || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, specialPrice: e.target.value || null })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({ ...formData, specialPrice: value === '' ? null : value });
+              }}
               placeholder="Leave empty to use regular price"
               data-testid="input-menu-special-price"
             />
@@ -333,6 +372,7 @@ export default function MenuManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [createFormKey, setCreateFormKey] = useState(0);
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu'],
@@ -361,7 +401,7 @@ export default function MenuManagementPage() {
   const filteredItems = menuItems.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.nameAr && item.nameAr.includes(searchQuery));
+      (item.nameAr && item.nameAr.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -398,7 +438,15 @@ export default function MenuManagementPage() {
               <h1 className="text-3xl font-bold">Menu Management</h1>
               <p className="text-muted-foreground">Create, edit, and manage menu items</p>
             </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog 
+              open={isCreateDialogOpen} 
+              onOpenChange={(open) => {
+                setIsCreateDialogOpen(open);
+                if (open) {
+                  setCreateFormKey(prev => prev + 1);
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button data-testid="button-create-menu-item">
                   <Plus className="w-4 h-4 mr-2" />
@@ -412,7 +460,7 @@ export default function MenuManagementPage() {
                     Add a new item to the cafeteria menu
                   </DialogDescription>
                 </DialogHeader>
-                <MenuItemForm onClose={() => setIsCreateDialogOpen(false)} />
+                <MenuItemForm key={createFormKey} onClose={() => setIsCreateDialogOpen(false)} />
               </DialogContent>
             </Dialog>
           </div>
@@ -527,15 +575,15 @@ export default function MenuManagementPage() {
                         {item.isSpecial && item.specialPrice ? (
                           <>
                             <span className="text-sm line-through text-muted-foreground">
-                              {formatCurrency(parseFloat(item.price))}
+                              {formatCurrency(parseFloat(item.price || '0'))}
                             </span>
                             <span className="text-lg font-bold text-vibrant-orange">
-                              {formatCurrency(parseFloat(item.specialPrice))}
+                              {formatCurrency(parseFloat(item.specialPrice || '0'))}
                             </span>
                           </>
                         ) : (
                           <span className="text-lg font-bold">
-                            {formatCurrency(parseFloat(item.price))}
+                            {formatCurrency(parseFloat(item.price || '0'))}
                           </span>
                         )}
                       </div>

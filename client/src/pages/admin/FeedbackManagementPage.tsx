@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 interface FeedbackItem {
   id: number;
@@ -132,9 +133,26 @@ export default function FeedbackManagementPage() {
     resolved: allFeedback?.filter((f) => f.status === "resolved").length || 0,
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading feedback...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="flex h-screen bg-background">
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Customer Feedback</h1>
           <p className="text-muted-foreground mt-2">
@@ -321,6 +339,8 @@ export default function FeedbackManagementPage() {
             )}
           </CardContent>
         </Card>
+          </div>
+        </div>
       </div>
 
       {/* Feedback Details Dialog */}
