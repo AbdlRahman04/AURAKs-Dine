@@ -1,0 +1,1789 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{xcolor} 
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{placeins}
+\usepackage{forest}
+\usepackage{xcolor}      % For coloring text
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage[labelfont=bf]{caption}
+\usepackage[export]{adjustbox} 
+\usepackage{parskip}
+\usepackage{float}  
+\usepackage{enumitem} % To customize lists
+\usepackage{caption}
+\captionsetup{justification=centerlast, singlelinecheck=false}
+\usepackage[margin=0.7in]{geometry} % Adjust the margin as needed
+\usepackage{longtable} % For multi-page tables
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+
+% Column types for better formatting
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% Define a new enumerate style
+\setlist[enumerate,1]{%
+    label=\textbf{\textcolor{red}{\arabic*.}},  % Number bold and red
+    left=0pt,
+    labelsep=0.5em
+}
+
+\renewcommand{\labelenumi}{\textbf{\theenumi}.}
+\renewcommand{\cftsubsecnumwidth}{2.75em}
+
+% Customizing section titles
+\titleformat{\section}{\color{red}\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{red}\bfseries}{\thesubsection}{1em}{} % <-- Ensures red color
+
+\titleformat{\subsubsection}{\color{red}\bfseries}{\thesubsubsection}{1em}{} 
+
+\titleformat{\paragraph}{\color{red}\bfseries}{\theparagraph}{1em}{}
+
+\titleformat{\subparagraph}{\color{red}\bfseries}{\thesubparagraph}{1em}{} 
+
+% Custom title formatting
+\title{\hrule\vspace{0.5em}\textbf{Smart Cafeteria Ordering System}  \\[0.5em] CENG 411 \\[0.5em] \textbf{Instructor}: Dr. Khouloud Salameh \\[-1.4em] \date{5 November 2025 \vspace{0.5em} \hrule}}
+
+% \usepackage[colorlinks=true,
+            %linkcolor=red,
+            %urlcolor=blue,
+            %citecolor=blue]{hyperref}
+
+
+
+\begin{document}
+
+\begin{figure}
+  \centering
+    \includegraphics[height=0.4\textwidth]{AURAK.jpg} % Adjust width as needed
+\end{figure}
+
+\maketitle
+
+\begin{center}
+\begin{tabular}{c @{\hspace{2cm}} c @{\hspace{2cm}} c}
+\textbf{\large \textcolor{black}{Fatima Farooq}} & \textbf{\large \textcolor{black}{Jannat Waqass}} & \textbf{\large \textcolor{black}{Lana Omar Zanneh}} \\
+\large \textcolor{black}{2023006109} & \large \textcolor{black}{2022005413} & \large \textcolor{black}{2022005620} \\
+\end{tabular}
+
+\vspace{1cm}  % Optional space between the rows
+
+\begin{tabular}{c @{\hspace{2cm}} c @{\hspace{2cm}} c}
+\textbf{\large \textcolor{black}{Alya Alzaabi}} & \textbf{\large \textcolor{black}{AbdulRahman Kamal}}& \textbf{\large \textcolor{black}{Saifeldin Ibrahim}} \\
+\large \textcolor{black}{2022005685} & \large \textcolor{black}{2022005478}& \large \textcolor{black}{2021004885} \\
+\end{tabular}
+\end{center}
+
+\vspace{12em} % Adjust the space as needed
+
+\begin{center}
+  \textit{Department of Computer Science and Engineering} \\
+  \textit{American University of Ras Al Khaimah} \\
+  \textit{2024-25}
+\end{center}
+
+% Table of Contents formatting
+\renewcommand{\contentsname}{\textbf{Table of Contents}}
+\renewcommand{\cftsecleader}{\dotfill} % Adds dotted lines
+
+% Increase the size of TOC section and subsection headings
+\renewcommand{\cftsecfont}{\color{red}\bfseries} % Larger sections
+\renewcommand{\cftsubsecfont}{\color{red}\bfseries} % Larger subsections
+\renewcommand{\cftsubsubsecfont}{\color{black}\bfseries} % Larger subsections
+
+
+\renewcommand{\cftsecpagefont}{\color{red}} % Page numbers in red for sections
+\renewcommand{\cftsubsecpagefont}{\color{red}} % Page numbers in red for subsections
+\newpage
+\tableofcontents
+
+
+\newpage
+
+\section{Introduction}
+QuickDineFlow is a web-based smart cafeteria ordering system designed to revolutionize the dining experience for students at educational institutions. The system enables students to pre-order meals online, skip queues, and pick up orders at their convenience, while providing kitchen staff with an efficient administrative interface to manage menu items and track orders in real-time.
+
+\subsection{Problem Statement}
+Traditional cafeteria systems often suffer from long queues during peak hours, inefficient order management, and limited visibility into order status. Students waste valuable time waiting in lines (typically 10-15 minutes per meal), while kitchen staff struggle to manage orders efficiently and provide timely service.
+
+\subsection{Solution Overview}
+QuickDineFlow addresses these challenges by providing:
+\begin{itemize}
+    \item \textbf{Student Interface}: An intuitive web application for browsing menus, placing pre-orders, and tracking order status in real-time
+    \item \textbf{Admin Interface}: A comprehensive dashboard for kitchen staff to manage menu items, monitor orders, and generate analytics
+    \item \textbf{Real-time Updates}: WebSocket-based communication for instant order status updates
+    \item \textbf{Payment Integration}: Secure payment processing through Stripe, supporting both card and cash payments
+    \item \textbf{Bilingual Support}: Full English and Arabic language support with RTL layout capabilities
+\end{itemize}
+
+\subsection{Development Environment}
+The software was developed on \textbf{Replit}, a cloud-based development platform. The deployment is performed directly from Replit. For testing purposes, \textbf{Neon} (PostgreSQL database) and \textbf{Render} (hosting platform) were utilized.
+
+\section{Requirements Elicitation}
+
+\subsection{User Requirements}
+
+This section describes the main needs and expectations of students using the Smart Cafeteria application, expressed from the user's point of view.
+
+\begin{longtable}{|p{2cm}|p{4cm}|p{9cm}|}
+\hline
+\textbf{Requirement ID} & \textbf{Title} & \textbf{Description} \\
+\hline
+\endfirsthead
+\multicolumn{3}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{Requirement ID} & \textbf{Title} & \textbf{Description} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{{Continued on next page}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+UR-01 & Clear Menu Display & Students should be able to view a clear and organized menu with item names, short descriptions, prices, and images. \\
+\hline
+UR-02 & Ingredient and Allergen Information & Students should be able to see key ingredient and allergen information (e.g., nuts, dairy, gluten) for each menu item. \\
+\hline
+UR-03 & Simple Food Ordering & Students should be able to order food with a simple and intuitive process (select items, review order, and confirm). \\
+\hline
+UR-04 & Easy Registration and Login & Students should be able to register and log in easily using their university email with minimal steps. \\
+\hline
+UR-05 & Flexible Payment Options & Students should be able to pay for their orders using different payment options (e.g., card payment, cash on pickup, or other supported methods). \\
+\hline
+UR-06 & Order Dashboard and Billing History & Students should be able to view their current orders and see a history of past orders and payments in a dashboard. \\
+\hline
+UR-07 & Real-Time Order Status & Students should be able to track the status of their orders (e.g., received, preparing, ready) so they know when to pick up. \\
+\hline
+UR-08 & Multiple Language Support & Students should be able to switch the app interface between at least English and Arabic. \\
+\hline
+UR-09 & Student Discounts and Vouchers & Students should be able to access and use student discounts, vouchers, or promotional offers during ordering. \\
+\hline
+UR-10 & Pre-Ordering Meals & Students should be able to pre-order meals for a specific time so they can pick up food with reduced waiting time. \\
+\hline
+UR-11 & Feedback and Ratings & Students should be able to give feedback and ratings about food and service to help improve the café experience. \\
+\hline
+UR-12 & Secure and Personalized Experience & Students should feel that their personal data and orders are handled securely while allowing them to customize preferences (e.g., dietary needs). \\
+\hline
+\end{longtable}
+
+\subsection{System Requirements}
+
+\subsubsection{Functional Requirements}
+
+The system implements comprehensive functional requirements organized by category. Each requirement is detailed with its function, description, inputs, outputs, actions, and conditions.
+
+\paragraph{Student Authentication and Profile Management}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{User Authentication, Registration, and Profile Management} \\
+\hline
+\textbf{Description} & Handles secure student registration and login using an external identity provider compliant with OpenID Connect standards. Manages user sessions, supports password reset through the identity provider, and enables students to update their personal information such as name, ID, email, and profile picture. \\
+\hline
+\textbf{Inputs} & Student credentials (email, password, or federated login token); profile data fields (name, ID, photo). \\
+\hline
+\textbf{Source} & User input through registration/login form and identity provider response. \\
+\hline
+\textbf{Outputs} & Authentication token and active session; success or error messages; updated user profile data. \\
+\hline
+\textbf{Destination} & User dashboard and profile management interface. \\
+\hline
+\textbf{Action} & When a student logs in or registers, the system authenticates credentials using the provider, establishes a secure session, and loads the student dashboard. Profile edits are stored in the user database after validation. \\
+\hline
+\textbf{Requirements} & Stable internet connection; valid institutional account; secure backend database. \\
+\hline
+\textbf{Pre-condition} & Authentication service must be available; student account must exist or be newly created. \\
+\hline
+\textbf{Post-condition} & Session established or updated; modified profile saved to the database. \\
+\hline
+\textbf{Side effects} & Automatic logout occurs after session timeout for security. \\
+\hline
+\end{longtable}
+
+\paragraph{Menu Display and Browsing}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Display and manage the cafeteria menu with detailed information and filters.} \\
+\hline
+\textbf{Description} & Displays daily categorized menus such as Breakfast, Lunch, Snacks, and Beverages. Each menu item includes its name, description, price, image, availability status, preparation time, nutritional facts, and allergen warnings. Students can search or filter items by category. \\
+\hline
+\textbf{Inputs} & Menu item data (name, description, price, category, image, availability, nutritional info, allergen info). \\
+\hline
+\textbf{Source} & Cafeteria menu database or content management system. \\
+\hline
+\textbf{Outputs} & Dynamic menu displayed on the user interface; search and filter results; real-time updates. \\
+\hline
+\textbf{Destination} & Frontend web interface - Menu Page. \\
+\hline
+\textbf{Action} & The system retrieves and displays menu items grouped by category. When the user searches or applies filters, the system updates visible items. Real-time availability is refreshed automatically when an item becomes unavailable. \\
+\hline
+\textbf{Requirements} & Active backend API; structured menu database; connection to the availability tracking module. \\
+\hline
+\textbf{Pre-condition} & System connected to the backend database; user on the menu page. \\
+\hline
+\textbf{Post-condition} & Filtered or updated menu displayed to the user. \\
+\hline
+\textbf{Side effects} & None. \\
+\hline
+\end{longtable}
+
+\paragraph{Meal Pre-Ordering}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Meal Pre-Ordering} \\
+\hline
+\textbf{Description} & Enables students to select and pre-order meals from the available menu before arriving at the café. Students can choose desired items, select portion sizes (Small, Medium, Large), and specify optional special instructions. The feature streamlines the ordering process and reduces waiting times at pickup. \\
+\hline
+\textbf{Inputs} & Selected menu items, portion size, and optional special instructions. \\
+\hline
+\textbf{Source} & User selections from the menu browsing interface. \\
+\hline
+\textbf{Outputs} & Order preview showing selected items, size, price, and preparation time. \\
+\hline
+\textbf{Destination} & Cart system and order database. \\
+\hline
+\textbf{Action} & When the student selects an item and size, the system verifies availability, applies any size-based price modifiers, and adds the item to a temporary pre-order list. The order details are stored for confirmation before checkout. \\
+\hline
+\textbf{Requirements} & Real-time menu data; pricing and size mapping; order validation mechanism. \\
+\hline
+\textbf{Pre-condition} & User must be logged in and menu items must be available for the current day. \\
+\hline
+\textbf{Post-condition} & Pre-ordered items are temporarily saved in the user's session or cart. \\
+\hline
+\textbf{Side effects} & Unavailable items may be automatically removed if their availability changes before checkout. \\
+\hline
+\end{longtable}
+
+\paragraph{Shopping Cart Management}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Shopping Cart Item Modification and Management} \\
+\hline
+\textbf{Description} & Allows students to view, update, and manage their cart before checkout. They can change quantities, remove items, or clear the entire cart. The cart automatically recalculates the total price (including tax) after every update, ensuring accurate order totals. \\
+\hline
+\textbf{Inputs} & Cart items, updated quantities, item deletions, and recalculated totals. \\
+\hline
+\textbf{Source} & User interactions on the cart interface. \\
+\hline
+\textbf{Outputs} & Updated cart summary reflecting changes in item count and total cost. \\
+\hline
+\textbf{Destination} & Checkout module and order summary page. \\
+\hline
+\textbf{Action} & Each modification (add, edit, delete) triggers an immediate update to the cart state and recalculates totals. Once finalized, the updated cart data is sent to the checkout module for further processing. \\
+\hline
+\textbf{Requirements} & Active user session; consistent pricing data; responsive cart interface. \\
+\hline
+\textbf{Pre-condition} & User logged in with existing cart data; menu items available. \\
+\hline
+\textbf{Post-condition} & Cart state updated and stored until checkout or manual clearance. \\
+\hline
+\textbf{Side effects} & If an item becomes unavailable, the system automatically removes it and updates the total. \\
+\hline
+\end{longtable}
+
+\paragraph{Order Checkout and Customization}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Order checkout with pickup scheduling, automatic tax calculation, and customization options.} \\
+\hline
+\textbf{Description} & Facilitates the final checkout process by allowing students to choose a preferred pickup time slot with at least 15 minutes' advance notice. The system automatically calculates the total order cost, including applicable taxes, and provides a field for any special instructions related to the order (e.g., ``extra sauce,'' ``no onions''). \\
+\hline
+\textbf{Inputs} & Cart items, selected pickup time, quantity, size, and optional special instructions. \\
+\hline
+\textbf{Source} & User input from the cart and checkout interface. \\
+\hline
+\textbf{Outputs} & Finalized order summary showing item details, total cost with tax, and scheduled pickup time confirmation. \\
+\hline
+\textbf{Destination} & Order confirmation module and kitchen order queue. \\
+\hline
+\textbf{Action} & Once the user proceeds to checkout, the system validates cart items, ensures the selected pickup slot is available, computes the total price (base price + tax), and attaches any special notes to the order. After confirmation, the order details are recorded and sent to the kitchen for preparation. \\
+\hline
+\textbf{Requirements} & Accurate tax configuration in the backend; order timing module to manage pickup slots; active database for storing order data. \\
+\hline
+\textbf{Pre-condition} & Student must be logged in with a valid cart and selected items. The chosen pickup time must be at least 15 minutes from the current time. \\
+\hline
+\textbf{Post-condition} & Order is saved in the database with complete details including total cost, selected pickup slot, and special instructions. \\
+\hline
+\textbf{Side effects} & If multiple users choose the same time slot, the system may adjust availability dynamically or suggest an alternate slot. \\
+\hline
+\end{longtable}
+
+\paragraph{Payment \& Transaction Management}
+
+\subparagraph{Order Payment Processing}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Process online and cash payments for confirmed cafeteria orders.} \\
+\hline
+\textbf{Description} & Handles payment for orders using multiple methods, including card payments via Stripe and cash on pickup. Ensures that payment details are securely transmitted and that the order is only marked as paid when the payment provider confirms success. \\
+\hline
+\textbf{Inputs} & Order identifier, selected payment method, payment amount, card/payment token (for card payments), confirmation of cash selection. \\
+\hline
+\textbf{Source} & Checkout page inputs and payment method selection by the student. \\
+\hline
+\textbf{Outputs} & Payment confirmation or failure result; updated order payment status. \\
+\hline
+\textbf{Destination} & Orders database, payment status display on the student interface, and admin dashboards. \\
+\hline
+\textbf{Action} & When the student confirms payment, the system validates the order amount and payment method, initiates the payment with the provider if card is chosen, receives the result, and updates the order record accordingly. For cash, the system marks the order as ``payment pending'' until pickup. \\
+\hline
+\textbf{Requirements} & Reliable connection to Stripe; valid order in the system; secure backend for handling tokens. \\
+\hline
+\textbf{Pre-condition} & Order has passed validation and is ready for payment; student is authenticated. \\
+\hline
+\textbf{Post-condition} & Order payment status is updated to completed, pending, or failed based on the outcome. \\
+\hline
+\textbf{Side effects} & Payment attempts are logged for audit; failed payments may trigger user notifications. \\
+\hline
+\end{longtable}
+
+\subparagraph{Payment Status and Digital Receipts}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Generate and display payment status and digital receipts for student orders.} \\
+\hline
+\textbf{Description} & Provides students with clear confirmation of successful payments, including order details, amount paid, and payment method. Receipts can be viewed later from the order history. \\
+\hline
+\textbf{Inputs} & Order data, payment result, timestamp, payment method details. \\
+\hline
+\textbf{Source} & Orders database and payment processing module. \\
+\hline
+\textbf{Outputs} & Receipt record associated with the order and a rendered receipt view. \\
+\hline
+\textbf{Destination} & Student order confirmation page, order history page, and backend receipts store. \\
+\hline
+\textbf{Action} & After a successful payment, the system compiles order and payment information into a receipt object, stores it, and displays a confirmation screen with a unique order number and payment summary. \\
+\hline
+\textbf{Requirements} & Consistent order and payment schemas; storage for historical receipts. \\
+\hline
+\textbf{Pre-condition} & Payment for an order has succeeded. \\
+\hline
+\textbf{Post-condition} & A persistent digital receipt exists and is accessible to the student. \\
+\hline
+\textbf{Side effects} & Receipt data may be included in analytics and export reports. \\
+\hline
+\end{longtable}
+
+\subparagraph{Saved Payment Methods}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Manage secure storage and reuse of student payment methods.} \\
+\hline
+\textbf{Description} & Allows students to save card information (via Stripe payment method IDs) for faster checkout on future orders, while ensuring that sensitive card data is never stored directly on the café system. \\
+\hline
+\textbf{Inputs} & Stripe payment method identifier, student identifier, card label (e.g., ``Personal Visa''). \\
+\hline
+\textbf{Source} & Payment form during checkout or dedicated ``Manage Payment Methods'' screen. \\
+\hline
+\textbf{Outputs} & Updated payment-method records linked to the student account. \\
+\hline
+\textbf{Destination} & Payment methods table in the backend; selection list on the checkout page. \\
+\hline
+\textbf{Action} & When the student chooses to save or delete a payment method, the system communicates with Stripe to attach/detach the method to the customer and updates local records, marking a default card when appropriate. \\
+\hline
+\textbf{Requirements} & Stripe customer profile for each student; secure server-to-Stripe communication. \\
+\hline
+\textbf{Pre-condition} & Student is authenticated; at least one successful or valid card entry exists. \\
+\hline
+\textbf{Post-condition} & Payment methods list is updated; default payment method is clearly identified. \\
+\hline
+\textbf{Side effects} & Changes are logged in the audit trail for security compliance. \\
+\hline
+\end{longtable}
+
+\paragraph{Order Management}
+
+\subparagraph{Pickup Time Slot Management}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Allocate and validate pickup time slots for student orders.} \\
+\hline
+\textbf{Description} & Ensures that each order is assigned a valid pickup time at least 15 minutes in the future, while preventing overbooking of specific time windows. \\
+\hline
+\textbf{Inputs} & Requested pickup time, current time, café configuration (slot size and capacity), existing orders. \\
+\hline
+\textbf{Source} & Student selection on the checkout page; order database. \\
+\hline
+\textbf{Outputs} & Confirmed pickup time or alternative suggested time slot. \\
+\hline
+\textbf{Destination} & Order record, kitchen display, and student confirmation page. \\
+\hline
+\textbf{Action} & When a student selects a time, the system checks that it is at least 15 minutes ahead and that the number of orders in that slot is below the configured capacity; if not, it proposes the nearest available slot. \\
+\hline
+\textbf{Requirements} & Configurable slot size and capacity; synchronized server time. \\
+\hline
+\textbf{Pre-condition} & Order is valid and has not yet been placed. \\
+\hline
+\textbf{Post-condition} & Order record stores a confirmed pickup time. \\
+\hline
+\textbf{Side effects} & Slot capacity statistics are updated for analytics. \\
+\hline
+\end{longtable}
+
+\subparagraph{Order Identification and Numbering}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Generate a unique order identifier for each confirmed order.} \\
+\hline
+\textbf{Description} & Creates human-readable, unique order numbers used in confirmations, kitchen display, and analytics. \\
+\hline
+\textbf{Inputs} & Order creation event, timestamp, random or sequential component. \\
+\hline
+\textbf{Source} & Checkout process after all validations pass. \\
+\hline
+\textbf{Outputs} & Unique order number string. \\
+\hline
+\textbf{Destination} & Order record, student confirmation screen, receipts, and admin views. \\
+\hline
+\textbf{Action} & When the order is finalized, the system generates a new identifier using a timestamp and random component, verifies its uniqueness, then attaches it to the order. \\
+\hline
+\textbf{Requirements} & Collision-safe ID generation logic; access to order store to ensure uniqueness. \\
+\hline
+\textbf{Pre-condition} & Order has passed payment or cash-selection validation. \\
+\hline
+\textbf{Post-condition} & Order has a permanent unique identifier that can be used for lookup. \\
+\hline
+\textbf{Side effects} & Order IDs may be used as keys in logs and external integrations. \\
+\hline
+\end{longtable}
+
+\subparagraph{Order Status Tracking}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Track and update order status throughout its lifecycle.} \\
+\hline
+\textbf{Description} & Represents each order using standard states -- received, preparing, ready, completed, and cancelled -- and ensures that status changes are reflected consistently for students and admins. \\
+\hline
+\textbf{Inputs} & Status change commands (from kitchen staff or system), order identifier. \\
+\hline
+\textbf{Source} & Kitchen display actions, order cancellation module, and automated rules. \\
+\hline
+\textbf{Outputs} & Updated status field for the order; notifications to relevant clients. \\
+\hline
+\textbf{Destination} & Orders database, student order tracking view, admin views. \\
+\hline
+\textbf{Action} & When a status update is triggered, the system verifies that the transition is allowed (e.g., cannot move from completed back to preparing), updates the record, and pushes real-time updates via WebSocket or polling. \\
+\hline
+\textbf{Requirements} & Defined finite state machine for order statuses; real-time update mechanism. \\
+\hline
+\textbf{Pre-condition} & Order has been created and stored. \\
+\hline
+\textbf{Post-condition} & Order status reflects the latest valid state. \\
+\hline
+\textbf{Side effects} & Status transitions may write audit logs and affect analytics counters. \\
+\hline
+\end{longtable}
+
+\subparagraph{Order History and Detail Viewing}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Provide students and admins with access to historical order information.} \\
+\hline
+\textbf{Description} & Allows users to view a list of their past orders and inspect detailed information such as items, prices, pickup time, and payment method. \\
+\hline
+\textbf{Inputs} & User identifier, optional filter parameters (date range, status). \\
+\hline
+\textbf{Source} & Student dashboard, admin analytics or order-management screens. \\
+\hline
+\textbf{Outputs} & Paginated list of orders; detailed view for a selected order. \\
+\hline
+\textbf{Destination} & Order history page for students; admin back-office panels. \\
+\hline
+\textbf{Action} & Upon request, the system queries the orders database by user and filter criteria, composes a list of matching orders, and retrieves the full details when a user selects one. \\
+\hline
+\textbf{Requirements} & Indexed queries by user ID and date; secure access control. \\
+\hline
+\textbf{Pre-condition} & User is authenticated. \\
+\hline
+\textbf{Post-condition} & Requested historical data is displayed; no changes to underlying orders. \\
+\hline
+\textbf{Side effects} & Request may be logged for audit and performance tuning. \\
+\hline
+\end{longtable}
+
+\subparagraph{Order Cancellation}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Allow students or admins to cancel orders under allowed conditions.} \\
+\hline
+\textbf{Description} & Supports cancellation of orders that are still in received state, ensuring that the kitchen is not preparing the order and that any card payments are handled appropriately. \\
+\hline
+\textbf{Inputs} & Order identifier, cancellation request (student or admin), reason (optional). \\
+\hline
+\textbf{Source} & Student order detail page; admin order-management interface. \\
+\hline
+\textbf{Outputs} & Updated order status, optional refund trigger for paid orders, and confirmation message. \\
+\hline
+\textbf{Destination} & Orders database, student notification area, admin views. \\
+\hline
+\textbf{Action} & When a cancellation request is received, the system checks the order status; if it is received, the status is set to cancelled, any card payment is marked for refund or void, and the pickup slot capacity is released. \\
+\hline
+\textbf{Requirements} & Refund/void integration with payment provider; business rules for cancellation windows. \\
+\hline
+\textbf{Pre-condition} & Order exists and is in a cancellable state. \\
+\hline
+\textbf{Post-condition} & Order is marked as cancelled; associated resources (slots, analytics counts) are updated. \\
+\hline
+\textbf{Side effects} & Cancellation entries appear in audit logs and analytics. \\
+\hline
+\end{longtable}
+
+\subparagraph{Real-Time Order Notifications}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Notify students of important order events in real time.} \\
+\hline
+\textbf{Description} & Delivers visual notifications when an order status changes (e.g., to preparing or ready) so that students know when to arrive at the café. \\
+\hline
+\textbf{Inputs} & Order status change events, destination user session identifiers. \\
+\hline
+\textbf{Source} & Order status tracking module and WebSocket server. \\
+\hline
+\textbf{Outputs} & In-app notifications, badge updates, and refreshed order views. \\
+\hline
+\textbf{Destination} & Student web interface (orders page, notification area). \\
+\hline
+\textbf{Action} & On every status change, the system pushes a message to connected clients subscribed to that order, prompting them to refresh the visible state and show a toast or banner notification. \\
+\hline
+\textbf{Requirements} & WebSocket or similar push mechanism; subscription tracking per user. \\
+\hline
+\textbf{Pre-condition} & Order exists and user has an active session or will see the update on next refresh. \\
+\hline
+\textbf{Post-condition} & Student has up-to-date information about their order status. \\
+\hline
+\textbf{Side effects} & Notification events may be logged for reliability monitoring. \\
+\hline
+\end{longtable}
+
+\paragraph{Kitchen Operations}
+
+\subparagraph{Kitchen Order Display and Queue Management}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Provide kitchen staff with a real-time view of active orders organized by pickup time.} \\
+\hline
+\textbf{Description} & Shows all incoming and in-progress orders with key details such as items, quantities, pickup time, and special instructions, enabling efficient preparation and fulfillment. \\
+\hline
+\textbf{Inputs} & Orders with statuses received, preparing, or ready. \\
+\hline
+\textbf{Source} & Orders database and order creation/status modules. \\
+\hline
+\textbf{Outputs} & Sorted list of orders with clear highlighting of approaching pickup times. \\
+\hline
+\textbf{Destination} & Kitchen display interface. \\
+\hline
+\textbf{Action} & The system continuously retrieves or subscribes to order updates, presents them ordered by pickup time, and visually distinguishes new or urgent orders. Staff actions on this screen update the order status. \\
+\hline
+\textbf{Requirements} & Stable connection between backend and kitchen device; role-based access for staff. \\
+\hline
+\textbf{Pre-condition} & Admin or kitchen staff user is authenticated. \\
+\hline
+\textbf{Post-condition} & Kitchen staff see an up-to-date queue and can act on each order. \\
+\hline
+\textbf{Side effects} & Status changes made here propagate to student views and analytics. \\
+\hline
+\end{longtable}
+
+\subparagraph{Admin Order Status Updates}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Allow admins and kitchen staff to progress orders through the workflow.} \\
+\hline
+\textbf{Description} & Provides controls for changing an order's status from received $\rightarrow$ preparing $\rightarrow$ ready $\rightarrow$ completed using the kitchen display or admin panel. \\
+\hline
+\textbf{Inputs} & Order identifier, selected new status. \\
+\hline
+\textbf{Source} & Kitchen display interface or admin order-management page. \\
+\hline
+\textbf{Outputs} & Updated status, visual feedback on the admin UI, and student notifications. \\
+\hline
+\textbf{Destination} & Orders database, student tracking view, audit logs. \\
+\hline
+\textbf{Action} & When staff selects a new status, the system validates the transition, performs the update, and broadcasts the change to subscribers. \\
+\hline
+\textbf{Requirements} & Role-based authorization; validation of allowed transitions. \\
+\hline
+\textbf{Pre-condition} & Order exists and user has the necessary privileges. \\
+\hline
+\textbf{Post-condition} & Order status reflects the new valid state. \\
+\hline
+\textbf{Side effects} & Status changes influence analytics such as completed orders and preparation times. \\
+\hline
+\end{longtable}
+
+\paragraph{Menu Administration}
+
+\subparagraph{Menu Item Administration}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Create, update, and delete cafeteria menu items.} \\
+\hline
+\textbf{Description} & Gives admins the ability to manage the menu catalogue including names in both languages, descriptions, pricing, category, dietary tags, allergens, nutritional information, and images. \\
+\hline
+\textbf{Inputs} & Menu item fields (name, description, price, category, tags, image URL, etc.), item identifier for edits/deletes. \\
+\hline
+\textbf{Source} & Admin menu management interface. \\
+\hline
+\textbf{Outputs} & New or updated menu records; confirmation messages; refreshed menu lists. \\
+\hline
+\textbf{Destination} & Menu database; student-facing menu views. \\
+\hline
+\textbf{Action} & On save, the system validates fields, writes changes to the database, and invalidates any relevant caches so that students see the latest version. Deletes mark items as removed or archive them according to policy. \\
+\hline
+\textbf{Requirements} & Admin authentication; validation rules for required fields and value ranges. \\
+\hline
+\textbf{Pre-condition} & Admin user is logged in. \\
+\hline
+\textbf{Post-condition} & Menu catalogue reflects the latest changes. \\
+\hline
+\textbf{Side effects} & Changes are logged in the audit log and may impact analytics for item popularity. \\
+\hline
+\end{longtable}
+
+\subparagraph{Menu Availability and Special Pricing}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Control real-time availability and promotional pricing of menu items.} \\
+\hline
+\textbf{Description} & Enables admins to toggle items as available/unavailable and configure special prices for daily promotions or limited-time offers. \\
+\hline
+\textbf{Inputs} & Item identifier, availability flag, optional special price, special status flag. \\
+\hline
+\textbf{Source} & Admin menu management screen. \\
+\hline
+\textbf{Outputs} & Updated availability and pricing fields for each menu item. \\
+\hline
+\textbf{Destination} & Menu database, student menu views, order validation module. \\
+\hline
+\textbf{Action} & When an admin updates availability or special pricing, the system saves the changes and immediately propagates them to the menu display and order validation logic so that unavailable items cannot be added to new orders. \\
+\hline
+\textbf{Requirements} & Consistent price rules; immediate propagation to front-end cache or API layer. \\
+\hline
+\textbf{Pre-condition} & Menu item exists. \\
+\hline
+\textbf{Post-condition} & Students see correct availability and promotional prices in real time. \\
+\hline
+\textbf{Side effects} & Promotional periods may affect revenue analytics and are recorded for reporting. \\
+\hline
+\end{longtable}
+
+\paragraph{Favorites Management}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Allow students to save and manage favorite menu items.} \\
+\hline
+\textbf{Description} & Provides a quick-access list of frequently ordered items so students can reorder them with fewer steps. \\
+\hline
+\textbf{Inputs} & Student identifier, menu item identifier, add/remove actions. \\
+\hline
+\textbf{Source} & ``Add to favorites'' buttons on menu cards; favorites page actions. \\
+\hline
+\textbf{Outputs} & Updated favorites list for each student. \\
+\hline
+\textbf{Destination} & Favorites table in the database; favorites page in the student interface. \\
+\hline
+\textbf{Action} & When a student marks or unmarks an item as favorite, the system updates the relation between the user and the item and refreshes the favorites view accordingly. \\
+\hline
+\textbf{Requirements} & Unique user--item relationships; safeguards against duplicates. \\
+\hline
+\textbf{Pre-condition} & Student is authenticated. \\
+\hline
+\textbf{Post-condition} & Favorites list accurately reflects the student's preferences. \\
+\hline
+\textbf{Side effects} & Favorite counts can be used for popularity analytics. \\
+\hline
+\end{longtable}
+
+\paragraph{Feedback \& Analytics}
+
+\subparagraph{Customer Feedback Submission}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Collect structured feedback from students about their experience.} \\
+\hline
+\textbf{Description} & Allows students to submit feedback categorized by topic (e.g., food quality, service, menu suggestion, general), optionally link it to a specific order, and provide a rating and comments. \\
+\hline
+\textbf{Inputs} & Student ID, category, rating, optional order ID, free-text message. \\
+\hline
+\textbf{Source} & Feedback form in the student interface. \\
+\hline
+\textbf{Outputs} & Feedback record stored in the feedback database; confirmation message. \\
+\hline
+\textbf{Destination} & Admin feedback management panel. \\
+\hline
+\textbf{Action} & On submission, the system validates required fields, stores the feedback entry with status pending, and acknowledges receipt to the student. \\
+\hline
+\textbf{Requirements} & Feedback storage schema; validation for categories and rating range. \\
+\hline
+\textbf{Pre-condition} & Student is authenticated. \\
+\hline
+\textbf{Post-condition} & Feedback entry exists and awaits review by admin. \\
+\hline
+\textbf{Side effects} & Feedback content may be used for service improvement reports. \\
+\hline
+\end{longtable}
+
+\subparagraph{Feedback Management (Admin)}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Enable admins to review and manage student feedback.} \\
+\hline
+\textbf{Description} & Provides an interface to filter, read, and update the status of feedback items, and optionally respond or record resolution notes. \\
+\hline
+\textbf{Inputs} & Feedback identifier, status updates, optional response or notes. \\
+\hline
+\textbf{Source} & Admin feedback management page. \\
+\hline
+\textbf{Outputs} & Updated feedback records with new statuses and notes. \\
+\hline
+\textbf{Destination} & Feedback database; optional student view of responses. \\
+\hline
+\textbf{Action} & Admins filter feedback by category or status, open individual records, change the status to reviewed, resolved, or dismissed, and save any comments; the system records these updates. \\
+\hline
+\textbf{Requirements} & Role-based admin access; audit logging for changes. \\
+\hline
+\textbf{Pre-condition} & Feedback entries exist. \\
+\hline
+\textbf{Post-condition} & Feedback statuses reflect current handling; unresolved items can be tracked. \\
+\hline
+\textbf{Side effects} & Statistics derived from feedback may appear in analytics. \\
+\hline
+\end{longtable}
+
+\subparagraph{Analytics and Reporting Dashboard}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Provide summarized analytics and reports for café operations.} \\
+\hline
+\textbf{Description} & Generates visual dashboards showing sales, order counts, popular items, peak hours, and other key performance metrics over configurable date ranges. \\
+\hline
+\textbf{Inputs} & Historical orders, revenue data, time filters, grouping parameters. \\
+\hline
+\textbf{Source} & Orders database and payment records. \\
+\hline
+\textbf{Outputs} & Charts, tables, and KPIs such as total revenue, total orders, average order value, and top-selling items. \\
+\hline
+\textbf{Destination} & Admin analytics page; CSV export files. \\
+\hline
+\textbf{Action} & When admins select a date range or report type, the system aggregates relevant data, computes metrics, renders charts, and prepares downloadable CSVs where applicable. \\
+\hline
+\textbf{Requirements} & Efficient aggregation queries; charting components; data export support. \\
+\hline
+\textbf{Pre-condition} & Sufficient historical data recorded. \\
+\hline
+\textbf{Post-condition} & Admins obtain up-to-date operational insights without altering raw data. \\
+\hline
+\textbf{Side effects} & Report generation load may influence database performance and should be monitored. \\
+\hline
+\end{longtable}
+
+\paragraph{System Configuration}
+
+\subparagraph{Language Toggle and Localization}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Switch the user interface between English and Arabic with proper layout.} \\
+\hline
+\textbf{Description} & Allows users to choose their preferred language and ensures all labels, messages, and menu item texts are displayed in that language, with right-to-left layout for Arabic. \\
+\hline
+\textbf{Inputs} & Language selection (EN or AR), translation dictionary entries, bilingual item fields. \\
+\hline
+\textbf{Source} & Language toggle control in the UI; translation resources. \\
+\hline
+\textbf{Outputs} & Localized interface text and properly oriented layout. \\
+\hline
+\textbf{Destination} & All visible pages and components in the web application. \\
+\hline
+\textbf{Action} & When the user changes the language, the system applies the selected locale, reloads translation strings, switches layout direction as needed, and persists the preference. \\
+\hline
+\textbf{Requirements} & Complete translation set; locale-aware UI components. \\
+\hline
+\textbf{Pre-condition} & User interface is loaded; translation bundles are available. \\
+\hline
+\textbf{Post-condition} & Application displays content consistently in the chosen language. \\
+\hline
+\textbf{Side effects} & Language choice stored for future sessions (e.g., in local storage). \\
+\hline
+\end{longtable}
+
+\subparagraph{Theme and Currency Presentation}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Manage visual theme (light/dark) and consistent currency display.} \\
+\hline
+\textbf{Description} & Provides toggling between light and dark modes and ensures that all prices are rendered using the UAE Dirham symbol and correct formatting. \\
+\hline
+\textbf{Inputs} & Theme selection, currency format configuration, price values. \\
+\hline
+\textbf{Source} & User preference controls and system configuration. \\
+\hline
+\textbf{Outputs} & Updated UI theme and formatted price strings. \\
+\hline
+\textbf{Destination} & All pages where monetary values or theming are visible. \\
+\hline
+\textbf{Action} & On theme change, the system updates global CSS or theme context; when prices are displayed, a formatting helper adds the correct symbol and decimal precision. \\
+\hline
+\textbf{Requirements} & Persistent preference storage; unified currency formatting function. \\
+\hline
+\textbf{Pre-condition} & User interface loaded. \\
+\hline
+\textbf{Post-condition} & Theme selection and currency display remain consistent across pages and sessions. \\
+\hline
+\textbf{Side effects} & None beyond cosmetic changes. \\
+\hline
+\end{longtable}
+
+\subparagraph{Session Management and Security Logging}
+
+\begin{longtable}{|p{3cm}|p{12cm}|}
+\hline
+\textbf{Function} & \multicolumn{1}{p{12cm}|}{Handle user sessions and record important security-related events.} \\
+\hline
+\textbf{Description} & Maintains login sessions for students and admins, manages automatic timeouts, and logs key actions such as logins, logouts, menu changes, and order status updates for accountability. \\
+\hline
+\textbf{Inputs} & User credentials, session tokens, action descriptors (e.g., ``menu item updated''). \\
+\hline
+\textbf{Source} & Authentication module, admin and student actions across the system. \\
+\hline
+\textbf{Outputs} & Active session records; audit log entries. \\
+\hline
+\textbf{Destination} & Sessions table; audit logs store. \\
+\hline
+\textbf{Action} & On login, the system creates a session with expiration; periodic checks invalidate expired sessions. For selected actions, the system writes an audit entry including user ID, timestamp, action type, and relevant identifiers. \\
+\hline
+\textbf{Requirements} & Secure token mechanisms; centralized logging strategy. \\
+\hline
+\textbf{Pre-condition} & User accounts and permissions are defined. \\
+\hline
+\textbf{Post-condition} & Valid sessions exist only for authenticated users; a trace of critical actions is preserved. \\
+\hline
+\textbf{Side effects} & Audit logs may be reviewed for troubleshooting or compliance. \\
+\hline
+\end{longtable}
+
+\paragraph{Summary of Functional Requirements by Category}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Category} & \textbf{Number of Requirements} \\
+\hline
+Student Authentication and Profile Management & 1 \\
+\hline
+Menu Display and Browsing & 1 \\
+\hline
+Meal Pre-Ordering & 1 \\
+\hline
+Shopping Cart Management & 1 \\
+\hline
+Order Checkout and Customization & 1 \\
+\hline
+Payment \& Transaction Management & 3 \\
+\hline
+Order Management & 6 \\
+\hline
+Kitchen Operations & 2 \\
+\hline
+Menu Administration & 2 \\
+\hline
+Favorites Management & 1 \\
+\hline
+Feedback \& Analytics & 3 \\
+\hline
+System Configuration & 3 \\
+\hline
+\textbf{Total} & \textbf{25 detailed requirements} \\
+\hline
+\end{tabular}
+\caption{Functional Requirements Summary by Category}
+\end{table}
+
+\textbf{Implementation Status:} The system successfully implements 78 out of 81 total functional requirements (\textbf{96\% completion rate}), covering authentication, menu management, ordering, payment processing, real-time tracking, analytics, and system configuration.
+
+\subsubsection{Non-Functional Requirements}
+
+\begin{enumerate}
+    \item \textbf{\textcolor{red}{Performance}}
+    \begin{itemize}
+        \item The system shall maintain at least a 99\% backend service uptime
+        \item The system shall ensure that order completion time does not exceed 2 minutes under normal operating conditions
+        \item The system shall be updated dynamically with real-time data through WebSocket connections
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Interface}}
+    \begin{itemize}
+        \item The system shall provide an intuitive user interface that requires no prior training to use
+        \item The system shall maintain a responsive layout for mobile devices
+        \item The system shall display readable text with appropriate font sizes and contrast ratios that meet WCAG guidelines
+        \item The system shall incorporate an Arabic language interface with Right-to-left (RTL) layout
+        \item The system shall support a multi-language toggle between English and Arabic
+        \item The system shall provide options to switch between dark and light mode
+        \item The system shall offer portion sizes (Small, Medium, Large) with automatic price adjustments
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Operational}}
+    \begin{itemize}
+        \item The system shall automatically expire inactive sessions after 30 minutes
+        \item The system shall log all administrative actions in an audit log
+        \item The system shall automatically apply a 10\% discount for first-time customers
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Resource}}
+    \begin{itemize}
+        \item The system shall utilize a scalable, cloud-based backend architecture
+        \item The system shall use horizontal database scaling using Neon PostgreSQL
+        \item The system shall maintain a modular design to facilitate future feature integration
+        \item The system shall optimize CPU, memory, and battery usage for mobile devices
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Verification}}
+    \begin{itemize}
+        \item The system shall be developed in accordance with AURAK's software development policies
+        \item The system shall ensure data encryption at rest and in transit
+        \item The system shall be tested on both Android and iOS devices
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Acceptance}}
+    \begin{itemize}
+        \item The system shall be accepted once it operates successfully on up-to-date versions of Android and iOS
+        \item The system shall support full compatibility with different device screen sizes and OS versions
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Documentation}}
+    \begin{itemize}
+        \item The system shall maintain comprehensive internal documentation
+        \item The system shall include language translation documentation
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Security}}
+    \begin{itemize}
+        \item The system shall encrypt all passwords through secure authentication
+        \item The system shall encrypt all data transmissions using SSL/TLS protocols
+        \item The system shall comply with PCI-DSS standards for payment handling
+        \item The system shall deactivate sessions after 30 minutes of inactivity
+        \item The system shall enforce Role-Based Access Control (RBAC)
+        \item The system shall be protected from SQL injection, XSS, and CSRF attacks
+        \item The system shall integrate with a PCI-compliant payment gateway
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Portability}}
+    \begin{itemize}
+        \item The system shall operate without errors on Android and iOS
+        \item The system shall provide a RESTful API architecture for interoperability
+        \item The system shall support deployment across various cloud environments
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Quality}}
+    \begin{itemize}
+        \item The system shall be implemented using modern frameworks and libraries
+        \item The system shall follow best practices for readability, structure, and reusability
+        \item The system shall provide consistent currency localization (UAE Dirham)
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Reliability}}
+    \begin{itemize}
+        \item The system shall maintain at least 99\% backend uptime
+        \item The system shall maintain reliable performance under different load conditions
+        \item The system shall support real-time synchronization across devices
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Maintainability}}
+    \begin{itemize}
+        \item The system shall utilize a modular design with component-based structure
+        \item The system shall comply with defined code standards and naming conventions
+        \item The system shall utilize a serverless PostgreSQL database
+        \item The system shall incorporate translations that are simple to configure
+    \end{itemize}
+
+    \item \textbf{\textcolor{red}{Safety}}
+    \begin{itemize}
+        \item The system shall implement safety strategies against SQL injection, XSS, and CSRF
+        \item The system shall ensure PCI-DSS compliance for financial data handling
+        \item The system shall maintain secure storage and transfer of transaction data
+    \end{itemize}
+\end{enumerate}
+
+\section{Analysis}
+
+\subsection{Use Case Diagram}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{report.png}
+\caption{Use Case Diagram}
+\label{fig:usecase}
+\end{figure}
+
+The system has two primary actors: \textbf{Student} and \textbf{Admin}. The \textbf{System} (Stripe Payment Gateway) acts as an external system actor.
+
+\textbf{Student Use Cases:}
+\begin{itemize}
+    \item \textbf{Authentication \& Profile}: Register Account, Login, View Profile, Update Profile
+    \item \textbf{Menu \& Browsing}: Browse Menu, Search Menu Items, Filter by Category, View Item Details
+    \item \textbf{Shopping Cart}: Add/Remove Items, Update Quantity, Customize Items, Select Size
+    \item \textbf{Ordering}: Place Order, Select Pickup Time, Choose Payment Method, View Order History, Cancel Order
+    \item \textbf{Favorites}: Add/Remove Favorites, View Favorites
+    \item \textbf{Feedback}: Submit Feedback
+    \item \textbf{Payment Management}: Save Payment Methods, Manage Payment Methods
+\end{itemize}
+
+\textbf{Admin Use Cases:}
+\begin{itemize}
+    \item \textbf{Authentication}: Login (Admin Access)
+    \item \textbf{Order Management}: View All Orders, Update Order Status, View Kitchen Display
+    \item \textbf{Menu Management}: Create/Update/Delete Menu Items, Manage Availability
+    \item \textbf{Feedback Management}: View/Respond to Feedback
+    \item \textbf{Analytics}: View Analytics Dashboard, Daily/Weekly Statistics
+    \item \textbf{Audit}: Create/View Audit Logs
+\end{itemize}
+
+\subsection{Class Diagram}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Class Diagram.pdf}
+\caption{Class Diagram}
+\label{fig:classdiagram}
+\end{figure}
+
+The system consists of the following main classes:
+
+\textbf{User Class:} Represents both students and administrators with attributes including id, email, password (hashed), firstName, lastName, studentId, role, and profile information. Methods include getUser, getUserByEmail, createUser, and updateUserProfile.
+
+\textbf{MenuItem Class:} Represents menu items with attributes including id, name, nameAr (Arabic), description, price, category, isAvailable, preparationTime, nutritionalInfo, allergens, dietary Tags, and sizeVariants. Methods include getAllMenuItems, createMenuItem, updateMenuItem, and deleteMenuItem.
+
+\textbf{Order Class:} Represents customer orders with attributes including id, userId, orderNumber, status, pickupTime, subtotal, tax, total, paymentMethod, and paymentStatus. Methods include createOrder, getOrderById, getUserOrders, updateOrderStatus, and cancelOrder.
+
+\textbf{OrderItem Class:} Represents individual items within an order with attributes including orderId, menuItemId, quantity, unitPrice, selectedSize, and customizations.
+
+\textbf{Relationships:}
+\begin{itemize}
+    \item User 1---* Order (one-to-many)
+    \item User 1---* Favorite (one-to-many)
+    \item User 1---* Feedback (one-to-many)
+    \item Order 1---* OrderItem (one-to-many)
+    \item MenuItem *---* Favorite (many-to-many)
+\end{itemize}
+
+\subsection{Sequence Diagrams}
+
+\subsubsection{Authentication \& User Management}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth,page=1]{Sequence Diagrams.pdf}
+\caption{Authentication \& User Management Sequence Diagram}
+\label{fig:seq_auth}
+\end{figure}
+
+\textbf{User Registration Flow:}
+The User enters registration data, which is sent to the API. The API checks email existence, hashes the password using bcrypt, creates the user in the database, and creates a session using Passport.js. The user is automatically logged in.
+
+\subsubsection{Menu Browsing \& Display}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth,page=2]{Sequence Diagrams.pdf}
+\caption{Menu Browsing \& Display Sequence Diagram}
+\label{fig:seq_menu}
+\end{figure}
+
+\textbf{Menu Browsing Flow:}
+The sequence begins with the Student browsing the menu, which fetches items from the API and DatabaseStorage. Students can search, filter by category, and view item details with real-time availability updates.
+
+\subsubsection{Order Tracking \& User Notifications}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth,page=3]{Sequence Diagrams.pdf}
+\caption{Order Tracking \& User Notifications Sequence Diagram}
+\label{fig:seq_tracking}
+\end{figure}
+
+\textbf{Order Status Update Flow (Admin):}
+The Admin views orders through KitchenDisplayPage. When status is updated, the API updates the database, creates an audit log entry, and broadcasts via WebSocket. The student's OrdersPage receives the real-time update and refreshes the UI.
+
+\subsubsection{Order Placement Flow}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth,page=4]{Sequence Diagrams.pdf}
+\caption{Order Placement Flow Sequence Diagram}
+\label{fig:seq_order}
+\end{figure}
+
+\textbf{Order Placement Flow (Card Payment):}
+The sequence begins with the Student browsing the menu and adding items to cart via CartContext. At checkout, a payment intent is created through Stripe. After successful payment, the order is created in the database, and a WebSocket broadcast notifies the admin kitchen display. The cart is cleared, and the student is redirected to the Orders Page.
+
+\subsection{Activity Diagram}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{Activity diagram.pdf}
+\caption{Activity Diagram - Complete User Journey}
+\label{fig:activity}
+\end{figure}
+
+\textbf{Complete User Journey:}
+The flow begins with user accessing the landing page. New users register (validate form, check email, hash password, create user, auto-login), while existing users login. Students are redirected to menu browsing where they can search, filter, and add items to cart. At checkout, first-time customers receive a 10\% discount. Users select pickup time and payment method. For card payments, Stripe processes the payment. Orders are created, broadcast via WebSocket, and users are redirected to order tracking.
+
+\textbf{Order Status Update Flow (Admin):}
+Admin views kitchen display, selects an order, and updates status through the workflow: received → preparing → ready → completed. The update is saved to database, logged in audit logs, and broadcast via WebSocket.
+
+\section{Design}
+
+\subsection{Database Design}
+
+\subsubsection{Database Schema}
+The database consists of nine main tables:
+
+\textbf{Users Table:} Stores user accounts (Primary Key: id UUID) with fields for email, password (hashed), firstName, lastName, studentId (8-digit, unique), role (student/admin), profileImageUrl, phoneNumber, preferredPickupLocation, dietaryRestrictions, allergies, and stripeCustomerId.
+
+\textbf{Menu Items Table:} Stores menu items (Primary Key: id integer) with fields for name, nameAr, description, descriptionAr, price, category, imageUrl, isAvailable, preparationTime, isSpecial, specialPrice, nutritionalInfo (JSONB), allergens, dietaryTags, and sizeVariants (JSONB).
+
+\textbf{Orders Table:} Stores orders (Primary Key: id integer, Foreign Key: userId) with fields for orderNumber (unique), status, pickupTime, specialInstructions, subtotal, tax, total, paymentMethod, paymentIntentId, and paymentStatus.
+
+\textbf{Order Items Table:} Links orders to menu items (Primary Keys: id, Foreign Keys: orderId, menuItemId) with fields for menuItemName, quantity, unitPrice, selectedSize, customizations, and subtotal.
+
+\textbf{Additional Tables:} Favorites (links users to menu items), Sessions (stores authentication data), Audit Logs (tracks admin actions), Feedback (stores customer feedback), and Payment Methods (stores saved Stripe payment methods).
+
+\subsubsection{Database Relationships}
+\begin{itemize}
+    \item \textbf{One-to-Many}: User → Orders, Favorites, Feedback, Payment Methods
+    \item \textbf{One-to-Many}: Order → Order Items
+    \item \textbf{Many-to-Many}: Users ↔ Menu Items (via Favorites)
+\end{itemize}
+
+\subsubsection{Indexing Strategy}
+Primary keys are automatically indexed. Unique constraints exist on users.email, users.studentId, and orders.orderNumber. An index on sessions.expire supports session cleanup. Foreign key indexes optimize join performance.
+
+\subsection{GUI Design}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{order.png}
+\caption{Student Menu \& Ordering Interface}
+\label{fig:gui_student}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{orderm.png}
+\caption{Order Management Interface}
+\label{fig:gui_orderm}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{pay.png}
+\caption{Payment \& Checkout Interface}
+\label{fig:gui_payment}
+\end{figure}
+
+\subsubsection{Design Principles}
+The GUI follows Material Design 3 principles:
+\begin{itemize}
+    \item \textbf{Efficiency First}: Minimize clicks from browse → order → pay
+    \item \textbf{Clear Role Hierarchy}: Distinct interfaces for students vs. admins
+    \item \textbf{Progressive Disclosure}: Critical information upfront, details on demand
+    \item \textbf{Mobile-First}: Optimized for students on mobile devices
+    \item \textbf{Desktop-Optimized}: Admin workflows designed for larger screens
+\end{itemize}
+
+\subsubsection{Typography}
+\textbf{Font Family:} Primary font is Inter (Google Fonts) with system-ui fallback. Roboto Mono is used for order numbers.
+
+\textbf{Type Scale:} H1 (2.5rem, weight 700), H2 (1.875rem, weight 600), H3 (1.5rem, weight 600), Body (1rem, weight 400), Small (0.875rem, weight 400).
+
+\subsubsection{Layout and Spacing}
+\textbf{Spacing Scale:} Micro (2px, 4px), Component internal (4-8px), Related elements (8-12px), Sections (16-24px).
+
+\textbf{Responsive Breakpoints:} Mobile (base), Small (640px), Tablet (768px), Desktop (1024px), Large Desktop (1280px).
+
+\subsubsection{Component Design}
+
+\textbf{Navigation:} Student header is sticky with backdrop blur. Admin sidebar is fixed at 256px width, collapsible on mobile.
+
+\textbf{Menu Cards:} Display image (4:3 aspect ratio), badge, title, description, nutrition info, and price with add button. Hover effects include shadow elevation.
+
+\textbf{Shopping Cart:} Drawer slides from right (full width on mobile, 384px on desktop) with scrollable items list and sticky footer.
+
+\subsubsection{Accessibility}
+\begin{itemize}
+    \item Minimum 44x44px touch targets for mobile
+    \item Visible focus indicators on all interactive elements
+    \item ARIA labels for icon-only buttons
+    \item Semantic HTML structure
+    \item WCAG AA color contrast compliance
+    \item Keyboard navigation support throughout
+\end{itemize}
+
+\subsection{Technical Choices}
+
+\subsubsection{Frontend Technology Stack}
+\textbf{React 18:} Component-based architecture with Hooks API and TypeScript integration for type safety.
+
+\textbf{Vite:} Fast development server with Hot Module Replacement (HMR) and optimized production builds with code splitting.
+
+\textbf{Wouter:} Lightweight routing library (~1KB) as an alternative to React Router.
+
+\textbf{shadcn/ui + Radix UI:} Accessible component primitives with customizable Tailwind CSS styling.
+
+\textbf{Tailwind CSS:} Utility-first CSS framework for rapid UI development with consistent design system.
+
+\textbf{TanStack Query:} Server state management with automatic background refetching and optimistic updates.
+
+\subsubsection{Backend Technology Stack}
+\textbf{Node.js + Express.js:} JavaScript runtime for server-side development with RESTful API architecture.
+
+\textbf{TypeScript:} Type safety across frontend and backend with compile-time error detection.
+
+\textbf{WebSocket (ws library):} Real-time bidirectional communication for order status updates.
+
+\textbf{Passport.js:} Authentication middleware with local strategy for email/password authentication.
+
+\textbf{bcryptjs:} Password hashing with industry-standard bcrypt algorithm (cost factor 10).
+
+\subsubsection{Database Technology Stack}
+\textbf{PostgreSQL:} Relational database with ACID compliance, JSONB support, arrays, and excellent performance for complex queries.
+
+\textbf{Drizzle ORM:} Type-safe database queries with SQL-like syntax and TypeScript inference.
+
+\textbf{Neon:} Serverless PostgreSQL platform with automatic backups, scaling, and WebSocket-based connections.
+
+\subsubsection{Payment Processing}
+\textbf{Stripe:} Industry-leading payment processor that is PCI-DSS compliant with comprehensive API for payment processing and support for saved payment methods.
+
+\subsubsection{Development and Deployment}
+\textbf{Replit:} Cloud-based development environment with integrated code editor, terminal, preview, and direct deployment capabilities (primary platform).
+
+\textbf{Testing Platforms:} Neon for database testing and Render for hosting testing.
+
+\section{Testing}
+
+\subsection{Testing Strategy}
+The QuickDineFlow system implements comprehensive testing across multiple levels:
+
+\subsubsection{Unit Testing}
+\textbf{Component Testing:} React components tested with React Testing Library. Test IDs (data-testid attributes) added to all interactive elements. Custom hooks (useAuth, useCart, useToast) tested in isolation.
+
+\textbf{Backend Unit Testing:} API route handlers tested in isolation. Database operations mocked for unit tests. Business logic and validation tested independently.
+
+\subsubsection{Integration Testing}
+\textbf{API Integration:} End-to-end API endpoint testing with test database. Authentication flow and payment processing tested with Stripe test mode.
+
+\textbf{Frontend-Backend Integration:} Full request/response cycle testing. Session management and WebSocket connection testing. Error handling and edge case testing.
+
+\subsubsection{End-to-End Testing}
+\textbf{User Flow Testing:}
+\begin{itemize}
+    \item Order placement: Browse → Cart → Checkout → Payment → Confirmation
+    \item Order tracking: Place Order → Status Updates → Completion
+    \item Admin workflow: Login → Manage Menu → Update Orders → View Analytics
+    \item Authentication: Registration → Login → Logout
+\end{itemize}
+
+\subsubsection{Manual Testing}
+\textbf{Functional Testing:} All user stories tested manually. Cross-browser testing (Chrome, Firefox, Safari, Edge). Responsive design testing on various screen sizes.
+
+\textbf{Usability Testing:} First-time user experience, task completion time measurement, error recovery, and mobile device testing.
+
+\subsection{Test Coverage Areas}
+\begin{itemize}
+    \item \textbf{Authentication}: Registration, login, session management, role-based access control
+    \item \textbf{Menu Management}: CRUD operations, filtering, search, availability toggle
+    \item \textbf{Order Processing}: Cart operations, pickup time validation, order creation, cancellation
+    \item \textbf{Payment Processing}: Stripe integration, cash payments, payment method saving
+    \item \textbf{Real-time Updates}: WebSocket connections, status broadcasting, reconnection handling
+    \item \textbf{Security}: SQL injection prevention, XSS/CSRF protection, authentication bypass attempts
+\end{itemize}
+
+\subsection{Performance Testing}
+Concurrent user simulation, database query performance under load, API response time measurement, WebSocket scalability, memory usage monitoring, and CPU utilization under high traffic.
+
+\subsection{Security Testing}
+SQL injection attempts, XSS/CSRF attacks, authentication bypass attempts, password encryption verification, payment data handling (PCI compliance), and audit log integrity.
+
+\subsection{Browser Compatibility Testing}
+\textbf{Supported Browsers:} Chrome (latest 2 versions), Firefox (latest 2 versions), Safari (latest version), Edge (latest 2 versions).
+
+\subsection{Mobile Device Testing}
+iOS devices (iPhone, iPad), Android devices (various screen sizes), touch interaction testing, responsive layout verification, and performance on mobile networks.
+
+\section{Evolution}
+
+\subsection{Development Timeline}
+\textbf{Phase 1: Foundation (Weeks 1-2):} Project setup on Replit, database schema design, basic authentication system, core API structure.
+
+\textbf{Phase 2: Core Features (Weeks 3-4):} Menu browsing interface, shopping cart functionality, order placement system, basic admin interface.
+
+\textbf{Phase 3: Payment Integration (Week 5):} Stripe integration, payment processing, order confirmation system.
+
+\textbf{Phase 4: Real-time Features (Week 6):} WebSocket implementation, order status tracking, kitchen display system.
+
+\textbf{Phase 5: Advanced Features (Weeks 7-8):} Analytics dashboard, feedback system, favorites management, menu management UI.
+
+\textbf{Phase 6: Polish and Testing (Weeks 9-10):} UI/UX improvements, bilingual support (English/Arabic), dark/light theme support, comprehensive testing, bug fixes, and optimization.
+
+\subsection{Feature Evolution}
+\textbf{Added Features Beyond Initial Requirements:}
+\begin{itemize}
+    \item \textbf{Size Variants System:} Support for Small, Medium, Large with automatic price modifiers
+    \item \textbf{Customer Feedback System:} Comprehensive feedback with categories, ratings, and admin management
+    \item \textbf{First-Time Customer Discount:} Automatic 10\% discount for new customers
+    \item \textbf{Language and Theme Features:} Complete bilingual support (180+ translated terms), automatic RTL layout for Arabic, dark/light mode switching
+    \item \textbf{Payment Methods Management:} Backend infrastructure for saving payment methods via Stripe SetupIntent flow
+\end{itemize}
+
+\subsection{Technical Evolution}
+\textbf{Architecture Improvements:}
+\begin{itemize}
+    \item Migrated from local state to React Context for cart management
+    \item Implemented TanStack Query for server state management
+    \item Added proper database indexing for frequently queried fields
+    \item Implemented connection pooling
+    \item Modular component structure with separation of concerns
+\end{itemize}
+
+\textbf{Performance Optimizations:}
+\begin{itemize}
+    \item \textbf{Frontend:} Code splitting, lazy loading of images, optimistic UI updates, memoization
+    \item \textbf{Backend:} Query optimization, response caching, efficient WebSocket broadcasting, connection pooling
+\end{itemize}
+
+\subsection{Future Evolution Plans}
+\textbf{Planned Enhancements:}
+\begin{itemize}
+    \item \textbf{Notification System:} Email and SMS notifications for order status changes
+    \item \textbf{Recommendation Engine:} Personalized menu recommendations based on order history with machine learning
+    \item \textbf{Loyalty Program:} Points-based reward system with discount coupons
+    \item \textbf{Advanced Analytics:} Predictive analytics for demand forecasting, inventory management integration
+    \item \textbf{Mobile Applications:} Native iOS and Android applications, PWA enhancements
+    \item \textbf{Campus Card Integration:} Integration with university ID card system for direct payment
+    \item \textbf{Multi-Location Support:} Support for multiple cafeteria locations with location-based menu management
+\end{itemize}
+
+\subsection{Lessons Learned}
+\textbf{Technical Lessons:}
+\begin{itemize}
+    \item TypeScript's type safety significantly reduced runtime errors
+    \item Component reusability saved significant development time
+    \item Proper database schema design prevented major refactoring
+    \item WebSocket implementation required careful connection management
+\end{itemize}
+
+\textbf{Process Lessons:}
+\begin{itemize}
+    \item Iterative development improved quality
+    \item Early user testing revealed usability issues earlier
+    \item Documentation alongside development helped knowledge transfer
+    \item Implementing test IDs early made automated testing easier
+\end{itemize}
+
+\section{Impact of the solution on the environment, economy, and the society}
+
+\subsection{Environmental Impact}
+\textbf{Reduced Food Waste:}
+\begin{itemize}
+    \item Precise demand forecasting through pre-orders reduces food waste
+    \item Real-time order data enables kitchen to prepare appropriate quantities
+    \item \textbf{Estimated Impact:} 20-25\% reduction in food waste through better demand forecasting
+\end{itemize}
+
+\textbf{Digital Transformation:}
+\begin{itemize}
+    \item Elimination of paper menus and order forms
+    \item Digital receipts instead of printed receipts
+    \item \textbf{Estimated Impact:} 90\% reduction in paper consumption
+    \item Cloud-based infrastructure with optimized resource usage
+    \item Serverless architecture reduces idle server energy consumption
+\end{itemize}
+
+\subsection{Economic Impact}
+\textbf{Cost Savings for Institution:}
+\begin{itemize}
+    \item \textbf{Operational Efficiency:} Reduced labor costs through automated order management, better inventory management
+    \item \textbf{Revenue Optimization:} Increased order volume through convenience, peak hour management
+    \item \textbf{Estimated Savings:} 20-30\% reduction in food waste costs, 15-20\% reduction in peak-hour labor requirements, 10-15\% increase in order volume
+\end{itemize}
+
+\textbf{Economic Benefits for Students:}
+\begin{itemize}
+    \item \textbf{Time Savings:} Students save 10-15 minutes per meal by skipping queues
+    \item \textbf{Financial Transparency:} Clear pricing and order totals, digital receipts for expense tracking
+    \item \textbf{Value for Money:} Better meal planning, reduced impulse purchases
+\end{itemize}
+
+\subsection{Social Impact}
+\textbf{Improved Student Experience:}
+\begin{itemize}
+    \item \textbf{Convenience and Accessibility:} System accessible 24/7, better time management, mobile-first design
+    \item \textbf{Health and Nutrition:} Nutritional information and allergen warnings help students make healthier choices, dietary accommodations promote inclusive dining
+    \item \textbf{Inclusive Design:} Bilingual support (English/Arabic) ensures accessibility for diverse student population, WCAG AA accessibility compliance
+\end{itemize}
+
+\textbf{Educational Value:}
+\begin{itemize}
+    \item Students gain experience with modern web applications
+    \item Exposure to e-commerce concepts and digital payment systems
+    \item Understanding of real-time systems and notifications
+\end{itemize}
+
+\textbf{Social Inclusion:}
+\begin{itemize}
+    \item Bilingual interface with RTL layout for Arabic speakers
+    \item WCAG AA compliance ensures accessibility for students with disabilities
+    \item Keyboard navigation and screen reader compatibility
+    \item Same system access for all students regardless of background
+\end{itemize}
+
+\textbf{Community Building:}
+\begin{itemize}
+    \item Feedback system creates sense of community involvement
+    \item Admin responses show that student voices are heard
+    \item Continuous improvement based on student needs
+\end{itemize}
+
+\textbf{Work-Life Balance for Staff:}
+\begin{itemize}
+    \item Better visibility into upcoming orders
+    \item Reduced stress from managing long queues
+    \item More organized workflow through kitchen display system
+    \item Better work planning through order analytics
+\end{itemize}
+
+\subsection{Measurable Impact Metrics}
+\textbf{Environmental Metrics:}
+\begin{itemize}
+    \item Food waste reduction: Target 20-25\%
+    \item Paper consumption reduction: ~90\%
+    \item Energy efficiency through cloud operations
+\end{itemize}
+
+\textbf{Economic Metrics:}
+\begin{itemize}
+    \item Operational cost savings: 15-25\% reduction
+    \item Revenue increase: 10-15\%
+    \item Student time savings: 10-15 minutes per meal
+\end{itemize}
+
+\textbf{Social Metrics:}
+\begin{itemize}
+    \item User satisfaction: Target 4.5/5 stars
+    \item System adoption: Target 80\%+ of student population
+    \item Accessibility compliance: WCAG AA standard
+    \item Language support: 100\% bilingual coverage
+\end{itemize}
+
+\section{Conclusion}
+
+\subsection{Project Summary}
+QuickDineFlow represents a successful implementation of a modern, web-based cafeteria ordering system that addresses real-world challenges in institutional dining. The system successfully combines user-friendly interfaces for students with powerful administrative tools for kitchen staff, all while maintaining high standards for security, performance, and accessibility.
+
+\subsection{Key Achievements}
+\textbf{Technical Achievements:}
+\begin{itemize}
+    \item Successfully implemented full-stack web application using modern technologies (React, Node.js, PostgreSQL)
+    \item Integrated real-time communication through WebSocket technology
+    \item Implemented secure payment processing through Stripe
+    \item Achieved bilingual support with proper RTL layout for Arabic
+    \item Created responsive, mobile-first design that works across all devices
+\end{itemize}
+
+\textbf{Functional Achievements:}
+\begin{itemize}
+    \item Delivered 78 out of 81 core functional requirements (\textbf{96\% implementation rate})
+    \item Implemented comprehensive non-functional requirements including security, performance, and usability
+    \item Created additional features beyond initial requirements (size variants, feedback system, language/theme support)
+    \item Achieved WCAG AA accessibility compliance
+\end{itemize}
+
+\textbf{User Experience Achievements:}
+\begin{itemize}
+    \item Created intuitive interface requiring minimal training
+    \item Reduced order placement time significantly through streamlined workflows
+    \item Provided real-time order tracking for transparency
+    \item Ensured inclusive design supporting diverse user needs
+\end{itemize}
+
+\subsection{Lessons Learned}
+\textbf{Technical Insights:}
+\begin{itemize}
+    \item TypeScript's type safety significantly improved code quality and reduced bugs
+    \item Component reusability and design system consistency accelerated development
+    \item Proper database schema design from the start prevented major refactoring
+    \item Real-time features require careful consideration of connection management and error handling
+\end{itemize}
+
+\textbf{Process Insights:}
+\begin{itemize}
+    \item Iterative development with small, testable increments improved quality
+    \item Early user testing revealed usability issues that were easier to fix
+    \item Maintaining documentation alongside development facilitated knowledge transfer
+    \item Implementing test infrastructure early made automated testing feasible
+\end{itemize}
+
+\subsection{Challenges Overcome}
+\textbf{Technical Challenges:}
+\begin{itemize}
+    \item Implemented WebSocket server for live order status updates
+    \item Successfully integrated Stripe with proper error handling
+    \item Implemented complete translation system with RTL layout
+    \item Created comprehensive schema supporting all features
+    \item Balanced client-side and server-side state effectively
+\end{itemize}
+
+\subsection{Future Directions}
+\textbf{Short-Term Enhancements:}
+\begin{itemize}
+    \item Complete frontend UI for saved payment methods
+    \item Backend API integration for analytics dashboard
+    \item Email/SMS notification system
+    \item Enhanced CSV export functionality
+\end{itemize}
+
+\textbf{Long-Term Vision:}
+\begin{itemize}
+    \item Multi-location support
+    \item Advanced analytics with machine learning
+    \item Integration with inventory management systems
+    \item Expansion to other institutional services
+\end{itemize}
+
+\subsection{Final Remarks}
+QuickDineFlow demonstrates that modern web technologies can effectively solve real-world problems in institutional settings. The system's success lies not just in its technical implementation, but in its focus on user needs, accessibility, and sustainable practices. The project serves as a foundation for future enhancements and demonstrates the potential for digital transformation in traditional service industries.
+
+The system is ready for deployment on Replit and has been thoroughly tested using Neon and Render platforms. With its modular architecture and comprehensive feature set, QuickDineFlow is well-positioned to serve as a reliable, scalable solution for institutional cafeteria management.
+
+\section{Bibliography}
+
+\subsection{Technical Documentation}
+\begin{enumerate}
+    \item React Documentation. (2024). \textit{React - A JavaScript library for building user interfaces}. https://react.dev/
+    \item Node.js Documentation. (2024). \textit{Node.js - JavaScript runtime}. https://nodejs.org/
+    \item Express.js Documentation. (2024). \textit{Express - Web framework for Node.js}. https://expressjs.com/
+    \item PostgreSQL Documentation. (2024). \textit{PostgreSQL: The World's Most Advanced Open Source Relational Database}. https://www.postgresql.org/docs/
+    \item Drizzle ORM Documentation. (2024). \textit{Drizzle ORM - TypeScript ORM}. https://orm.drizzle.team/
+    \item Stripe Documentation. (2024). \textit{Stripe API Reference}. https://stripe.com/docs/api
+    \item Vite Documentation. (2024). \textit{Vite - Next Generation Frontend Tooling}. https://vitejs.dev/
+    \item Tailwind CSS Documentation. (2024). \textit{Tailwind CSS - A utility-first CSS framework}. https://tailwindcss.com/
+    \item Radix UI Documentation. (2024). \textit{Radix UI - Unstyled, accessible components}. https://www.radix-ui.com/
+    \item TanStack Query Documentation. (2024). \textit{TanStack Query - Data synchronization for React}. https://tanstack.com/query
+\end{enumerate}
+
+\subsection{Design and UX Resources}
+\begin{enumerate}
+    \setcounter{enumi}{10}
+    \item Material Design. (2024). \textit{Material Design 3 - Design system}. https://m3.material.io/
+    \item Web Content Accessibility Guidelines (WCAG) 2.1. (2018). \textit{W3C Recommendation}. https://www.w3.org/TR/WCAG21/
+    \item Google Fonts. (2024). \textit{Inter - Open source font family}. https://fonts.google.com/specimen/Inter
+\end{enumerate}
+
+\subsection{Security and Best Practices}
+\begin{enumerate}
+    \setcounter{enumi}{13}
+    \item OWASP. (2024). \textit{OWASP Top 10 - Web Application Security Risks}. https://owasp.org/www-project-top-ten/
+    \item PCI Security Standards Council. (2024). \textit{PCI DSS Quick Reference Guide}. https://www.pcisecuritystandards.org/
+    \item bcrypt Documentation. (2024). \textit{bcrypt - Password hashing function}. https://github.com/kelektiv/node.bcrypt.js
+\end{enumerate}
+
+\subsection{Development Platforms}
+\begin{enumerate}
+    \setcounter{enumi}{16}
+    \item Replit Documentation. (2024). \textit{Replit - Build, test, and deploy}. https://docs.replit.com/
+    \item Neon Documentation. (2024). \textit{Neon - Serverless Postgres}. https://neon.tech/docs
+    \item Render Documentation. (2024). \textit{Render - Cloud platform}. https://render.com/docs
+\end{enumerate}
+
+\subsection{Academic and Research}
+\begin{enumerate}
+    \setcounter{enumi}{19}
+    \item Sommerville, I. (2016). \textit{Software Engineering} (10th ed.). Pearson Education.
+    \item Pressman, R. S., \& Maxim, B. R. (2019). \textit{Software Engineering: A Practitioner's Approach} (9th ed.). McGraw-Hill Education.
+    \item Fowler, M. (2019). \textit{Refactoring: Improving the Design of Existing Code} (2nd ed.). Addison-Wesley Professional.
+\end{enumerate}
+
+\subsection{Web Standards}
+\begin{enumerate}
+    \setcounter{enumi}{22}
+    \item World Wide Web Consortium (W3C). (2024). \textit{HTML Living Standard}. https://html.spec.whatwg.org/
+    \item World Wide Web Consortium (W3C). (2024). \textit{CSS Specifications}. https://www.w3.org/Style/CSS/
+    \item ECMA International. (2024). \textit{ECMAScript Language Specification}. https://tc39.es/ecma262/
+\end{enumerate}
+
+\section{Appendix}
+
+\subsection{Environment Variables Configuration}
+\textbf{Required Environment Variables:}
+\begin{itemize}
+    \item \texttt{DATABASE\_URL}: PostgreSQL connection string
+    \item \texttt{SESSION\_SECRET}: Random secret string (minimum 32 characters)
+    \item \texttt{STRIPE\_SECRET\_KEY}: Stripe secret key
+    \item \texttt{VITE\_STRIPE\_PUBLIC\_KEY}: Stripe publishable key
+    \item \texttt{PORT}: Server port (default: 5000)
+    \item \texttt{NODE\_ENV}: Environment (development/production)
+\end{itemize}
+
+\subsection{Database Schema Summary}
+\textbf{Tables:} users, sessions, menu\_items, orders, order\_items, favorites, feedback, audit\_logs, payment\_methods
+
+\textbf{Key Relationships:} Users have many Orders, Favorites, Feedback, Payment Methods. Orders have many Order Items. Order Items reference Menu Items. Favorites link Users to Menu Items (many-to-many).
+
+\subsection{API Endpoints Summary}
+\textbf{Authentication:} POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me
+
+\textbf{Menu:} GET /api/menu, GET /api/menu/:id, POST /api/menu (admin), PATCH /api/menu/:id (admin), DELETE /api/menu/:id (admin)
+
+\textbf{Orders:} GET /api/orders, GET /api/orders/:id, POST /api/orders, PATCH /api/orders/:id (admin), DELETE /api/orders/:id
+
+\textbf{Favorites:} GET /api/favorites, POST /api/favorites, DELETE /api/favorites/:id
+
+\textbf{Payment:} POST /api/payment/create-intent, POST /api/payment/confirm, GET /api/payment-methods, POST /api/payment-methods, DELETE /api/payment-methods/:id
+
+\textbf{Feedback:} GET /api/feedback (admin), POST /api/feedback, PATCH /api/feedback/:id (admin)
+
+\textbf{Analytics:} GET /api/analytics/revenue, GET /api/analytics/orders, GET /api/analytics/popular-items
+
+\subsection{Technology Stack Summary}
+\textbf{Frontend:} React 18.3.1, TypeScript 5.6.3, Vite 7.2.2, Wouter 3.3.5, TanStack Query 5.60.5, Tailwind CSS 3.4.17, shadcn/ui + Radix UI, Stripe.js 8.1.0
+
+\textbf{Backend:} Node.js 18+, Express.js 4.21.2, TypeScript 5.6.3, Passport.js 0.7.0, bcryptjs 3.0.3, WebSocket (ws 8.18.0), Stripe 19.1.0
+
+\textbf{Database:} PostgreSQL (via Neon), Drizzle ORM 0.39.1, Drizzle Kit 0.18.1
+
+\textbf{Development Tools:} Replit (development and deployment), Neon (database testing), Render (hosting testing)
+
+\subsection{Key Features Implementation Status}
+\textbf{Fully Implemented (78/81 Requirements):} Authentication and user management, menu browsing and display, shopping cart and ordering, payment processing (Stripe + Cash), order tracking and history, admin menu management, kitchen display system, analytics dashboard, feedback system, favorites management, bilingual support (English/Arabic), dark/light theme support
+
+\textbf{Partially Implemented:} Saved payment methods (backend complete, frontend UI pending), Analytics backend API (UI ready, data integration pending)
+
+\textbf{Not Implemented:} Email/SMS notifications, Campus card integration, Personalized recommendations
+
+\subsection{Security Measures}
+\textbf{Authentication:} Password hashing with bcryptjs (cost factor 10), session-based authentication, secure session cookies (httpOnly, sameSite), session expiration (30 minutes)
+
+\textbf{Authorization:} Role-based access control (student/admin), route protection middleware, user ownership verification
+
+\textbf{Data Protection:} SQL injection prevention (parameterized queries), XSS protection (React escaping), CSRF protection (same-site cookies), PCI-DSS compliance (Stripe integration), audit logging for admin actions
+
+\subsection{Performance Optimizations}
+\textbf{Frontend:} Code splitting, lazy image loading, optimistic UI updates, memoization of expensive computations, efficient React rendering
+
+\textbf{Backend:} Database query optimization, connection pooling, efficient WebSocket broadcasting, response caching where appropriate
+
+\textbf{Database:} Proper indexing on frequently queried fields, foreign key constraints for data integrity, efficient join operations
+
+\section{Work Distribution}
+
+\subsection{Project Team Structure}
+This project was developed as a collaborative effort with clear division of responsibilities across different aspects of the system.
+
+\subsection{Development Responsibilities}
+
+\subsubsection{Frontend Development}
+\textbf{Responsibilities:} React component development and architecture, UI/UX design implementation, state management (React Context, TanStack Query), routing and navigation, responsive design implementation, bilingual support (English/Arabic) with RTL layout, theme system (dark/light mode), integration with backend APIs, payment UI integration (Stripe Elements), real-time updates via WebSocket client
+
+\textbf{Technologies Used:} React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Wouter
+
+\subsubsection{Backend Development}
+\textbf{Responsibilities:} Express.js server setup and configuration, RESTful API endpoint development, database schema design and implementation, authentication and authorization system, session management, WebSocket server implementation, Stripe payment integration, business logic implementation, error handling and validation, security measures implementation
+
+\textbf{Technologies Used:} Node.js, Express.js, TypeScript, PostgreSQL, Drizzle ORM, Passport.js, bcryptjs, WebSocket (ws library), Stripe SDK
+
+\subsubsection{Database Design and Management}
+\textbf{Responsibilities:} Database schema design, table relationships and constraints, indexing strategy, migration scripts, seed data creation, query optimization, database connection management
+
+\textbf{Technologies Used:} PostgreSQL, Drizzle ORM, Neon (hosting)
+
+\subsubsection{Testing and Quality Assurance}
+\textbf{Responsibilities:} Unit testing strategy, integration testing, end-to-end testing, manual testing procedures, cross-browser testing, mobile device testing, accessibility testing, performance testing, security testing
+
+\textbf{Testing Approach:} Test ID implementation for automated testing, manual test case execution, browser compatibility verification, mobile responsiveness verification
+
+\subsubsection{Documentation}
+\textbf{Responsibilities:} Project documentation, API documentation, user guides, installation guides, development guides, design guidelines, code comments and inline documentation
+
+\subsection{Feature Implementation Distribution}
+\textbf{Core Features:}
+\begin{itemize}
+    \item \textbf{Authentication System}: Backend (authentication middleware, session management), Frontend (Login/Register pages, auth context, protected routes)
+    \item \textbf{Menu System}: Backend (Menu CRUD APIs, category management), Frontend (Menu browsing, search, filtering, item details)
+    \item \textbf{Ordering System}: Backend (Order creation, status management, WebSocket broadcasting), Frontend (Shopping cart, checkout flow, order tracking)
+    \item \textbf{Payment System}: Backend (Stripe integration, payment intent creation), Frontend (Payment UI, Stripe Elements integration)
+    \item \textbf{Admin Dashboard}: Backend (Admin APIs, analytics endpoints), Frontend (Admin interface, menu management, kitchen display, analytics)
+\end{itemize}
+
+\textbf{Additional Features:}
+\begin{itemize}
+    \item \textbf{Bilingual Support}: Frontend (Translation system, RTL layout, language context)
+    \item \textbf{Theme System}: Frontend (Dark/light mode, theme context, CSS variables)
+    \item \textbf{Feedback System}: Backend (Feedback APIs, status management), Frontend (Feedback forms, admin feedback management)
+    \item \textbf{Favorites System}: Backend (Favorites APIs), Frontend (Favorites UI, quick reordering)
+\end{itemize}
+
+\subsection{Time Allocation}
+\textbf{Project Phases:} Planning and Design (10\%), Core Development (50\%), Feature Development (20\%), Testing and QA (10\%), Documentation (5\%), Deployment and Finalization (5\%)
+
+\subsection{Skills and Expertise Applied}
+\textbf{Frontend Skills:} React development, TypeScript programming, CSS/Tailwind styling, responsive design, UI/UX design principles, state management, API integration
+
+\textbf{Backend Skills:} Node.js/Express development, database design and management, API design and development, authentication and security, real-time communication (WebSocket), payment integration
+
+\textbf{General Skills:} Software engineering principles, version control (Git), testing methodologies, documentation writing, problem-solving, project management
+
+\subsection{Challenges and Solutions}
+\textbf{Technical Challenges:}
+\begin{itemize}
+    \item Real-time updates: Implemented WebSocket server
+    \item Payment integration: Used Stripe SDK with proper error handling
+    \item Bilingual support: Created translation system with RTL support
+    \item State management: Balanced client and server state effectively
+\end{itemize}
+
+\textbf{Collaboration Challenges:}
+\begin{itemize}
+    \item Code organization: Established clear project structure
+    \item Communication: Maintained documentation and code comments
+    \item Testing: Implemented test IDs for reliable testing
+\end{itemize}
+
+\subsection{Lessons Learned from Collaboration}
+\textbf{Technical Lessons:} Clear separation of concerns improved maintainability. TypeScript helped catch errors early in development. Component reusability accelerated development. Proper documentation facilitated knowledge sharing.
+
+\textbf{Process Lessons:} Iterative development improved quality. Early testing revealed issues sooner. Regular communication prevented misunderstandings. Code reviews improved code quality.
+
+\end{document}
+
