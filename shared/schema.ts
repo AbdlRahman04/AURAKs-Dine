@@ -73,7 +73,7 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as any);
 
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
@@ -101,7 +101,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   orderNumber: true,
   createdAt: true,
   updatedAt: true,
-});
+} as any);
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
@@ -167,7 +167,7 @@ export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   adminResponse: true,
   createdAt: true,
   updatedAt: true,
-});
+} as any);
 
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type Feedback = typeof feedback.$inferSelect;
