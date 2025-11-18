@@ -2,10 +2,6 @@
 
 A web-based cafeteria ordering system that enables students to pre-order meals online, skip queues, and pick up orders at their convenience. The system features dual interfaces: a student-facing menu browsing and ordering system, and an admin panel for kitchen staff to manage menu items and track orders.
 
-## 📥 Coming from Replit?
-
-If you downloaded this project from Replit, **start here**: See [`REPLIT_TO_LOCAL_SETUP.md`](REPLIT_TO_LOCAL_SETUP.md) for Replit-specific setup instructions.
-
 ## 🚀 Quick Start Guide
 
 If you've just downloaded this project from GitHub and want to run it on your computer, follow these simple steps:
@@ -100,6 +96,20 @@ Then open your web browser and go to:
 - Press Enter
 
 You should see the QuickDineFlow website!
+
+## 📱 Install QuickDineFlow like a Native App
+
+QuickDineFlow now ships as a Progressive Web App (PWA). After running the app locally or in production:
+
+1. Open the site in Chrome, Edge, Safari, or any modern mobile browser.
+2. Look for the **“Install”** / **“Add to Home Screen”** prompt in the address bar menu.
+3. Confirm the prompt, and the app will appear on your desktop or mobile home screen with offline support.
+
+### Offline Support & Caching
+
+- Core shell assets (HTML, manifest, favicon, and icons) are pre-cached, so the installer always loads instantly.
+- Dynamic requests fall back to cached responses if the network drops, and navigation requests fall back to the cached shell.
+- To clear cached data, remove the app from your device or clear the browser storage for the site.
 
 ## 📖 What You Can Do
 
