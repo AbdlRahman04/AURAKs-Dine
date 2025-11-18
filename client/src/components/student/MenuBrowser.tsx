@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Search, Filter, Heart, AlertCircle, Info } from 'lucide-react';
 import type { MenuItem } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardFooter, CardHeader } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ import { formatCurrency, getCategoryColor } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 const CATEGORIES = ['All', 'Breakfast', 'Lunch', 'Snacks', 'Beverages'];
 
@@ -29,6 +31,7 @@ export default function MenuBrowser() {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const { addItem } = useCart();
   const { language } = useLanguage();
+  const { toast } = useToast();
   
   // Helper function to get localized item name with fallback
   const getItemName = (item: MenuItem) => {
@@ -46,6 +49,52 @@ export default function MenuBrowser() {
 
   const { data: favorites } = useQuery<number[]>({
     queryKey: ['/api/favorites'],
+  });
+
+  type FavoritePayload = { menuItemId: number; itemName: string };
+
+  const invalidateFavorites = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['/api/favorites'], exact: true });
+  };
+
+  const addFavoriteMutation = useMutation<void, Error, FavoritePayload>({
+    mutationFn: async ({ menuItemId }) => {
+      await apiRequest('POST', '/api/favorites', { menuItemId });
+    },
+    onSuccess: async (_, variables) => {
+      await invalidateFavorites();
+      toast({
+        title: 'Added to Favorites',
+        description: `${variables.itemName} was added to your favorites.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Unable to add favorite',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const removeFavoriteMutation = useMutation<void, Error, FavoritePayload>({
+    mutationFn: async ({ menuItemId }) => {
+      await apiRequest('DELETE', `/api/favorites/${menuItemId}`);
+    },
+    onSuccess: async (_, variables) => {
+      await invalidateFavorites();
+      toast({
+        title: 'Removed from Favorites',
+        description: `${variables.itemName} was removed from your favorites.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Unable to remove favorite',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
   });
 
   const filteredItems = useMemo(() => {
@@ -74,6 +123,15 @@ export default function MenuBrowser() {
       setQuantity(1);
       setCustomizations('');
       setSelectedSize('');
+    }
+  };
+
+  const handleFavoriteToggle = (item: MenuItem, isFavorite: boolean) => {
+    const payload = { menuItemId: item.id, itemName: getItemName(item) };
+    if (isFavorite) {
+      removeFavoriteMutation.mutate(payload);
+    } else {
+      addFavoriteMutation.mutate(payload);
     }
   };
 
@@ -138,13 +196,19 @@ export default function MenuBrowser() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <Card
-              key={item.id}
-              className="overflow-hidden hover-elevate cursor-pointer"
-              onClick={() => setSelectedItem(item)}
-              data-testid={`card-menu-item-${item.id}`}
-            >
+          {filteredItems.map((item) => {
+            const isFavorite = favorites?.includes(item.id) ?? false;
+            const isFavoriteMutating =
+              (addFavoriteMutation.isPending && addFavoriteMutation.variables?.menuItemId === item.id) ||
+              (removeFavoriteMutation.isPending && removeFavoriteMutation.variables?.menuItemId === item.id);
+
+            return (
+              <Card
+                key={item.id}
+                className="overflow-hidden hover-elevate cursor-pointer"
+                onClick={() => setSelectedItem(item)}
+                data-testid={`card-menu-item-${item.id}`}
+              >
               {/* Image */}
               <div className="relative h-48 bg-muted">
                 {item.imageUrl ? (
@@ -162,9 +226,6 @@ export default function MenuBrowser() {
                   <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
                     Special Offer
                   </Badge>
-                )}
-                {favorites?.includes(item.id) && (
-                  <Heart className="absolute top-2 right-2 w-6 h-6 text-red-500 fill-red-500" />
                 )}
               </div>
 
@@ -200,19 +261,40 @@ export default function MenuBrowser() {
                     {item.preparationTime} min
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedItem(item);
-                  }}
-                  data-testid={`button-add-${item.id}`}
-                >
-                  Add
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFavoriteToggle(item, isFavorite);
+                    }}
+                    disabled={isFavoriteMutating}
+                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    data-testid={`button-favorite-${item.id}`}
+                    className={`border ${
+                      isFavorite
+                        ? 'text-red-500 border-red-200 dark:border-red-800 bg-red-500/10'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItem(item);
+                    }}
+                    data-testid={`button-add-${item.id}`}
+                  >
+                    Add
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
