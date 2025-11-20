@@ -18,6 +18,7 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { apiRequest } from '@/lib/queryClient';
+import aurakLogo from '@/assets/aurak-logo.png';
 
 export default function StudentHeader() {
   const { user, isAdmin } = useAuth();
@@ -57,9 +58,14 @@ export default function StudentHeader() {
             {/* Logo */}
             <Link 
               href="/menu" 
-              className="text-xl sm:text-2xl font-bold text-brand-red hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 sm:gap-3 text-xl sm:text-2xl font-bold text-brand-red hover:opacity-90 transition-opacity"
             >
-              AURAK'S Dine
+              <img
+                src={aurakLogo}
+                alt="AURAK's Dine logo"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow"
+              />
+              <span>AURAK'S Dine</span>
             </Link>
 
             {/* Navigation */}

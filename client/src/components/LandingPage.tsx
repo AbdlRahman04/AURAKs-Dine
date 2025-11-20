@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, ShoppingBag, TrendingUp, Utensils } from "lucide-react";
 import { useLocation } from "wouter";
+import aurakLogo from "@/assets/aurak-logo.png";
 
 export default function LandingPage() {
   const [, setLocation] = useLocation();
@@ -12,6 +13,13 @@ export default function LandingPage() {
       <div className="relative bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
           <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <img
+                src={aurakLogo}
+                alt="AURAK's Dine logo"
+                className="h-20 w-20 sm:h-24 sm:w-24 object-contain drop-shadow-md"
+              />
+            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-6">
               AURAK'S Dine
             </h1>
