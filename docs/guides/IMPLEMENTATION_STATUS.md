@@ -6,7 +6,7 @@
 - ✅ FR-01: Student registration (via Replit Auth)
 - ✅ FR-02: Secure authentication (OpenID Connect)
 - ✅ FR-03: Password reset (handled by Replit Auth)
-- ✅ FR-04: 8-digit student ID support
+- ✅ FR-04: 10-digit student ID support
 - ✅ FR-05: Profile management page
 
 ### Menu Browsing and Display

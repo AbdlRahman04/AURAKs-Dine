@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(255) NULL,
     last_name VARCHAR(255) NULL,
     profile_image_url VARCHAR(500) NULL,
-    student_id VARCHAR(8) UNIQUE NULL COMMENT '8-digit student ID (FR-04)',
+    student_id VARCHAR(10) UNIQUE NULL COMMENT '10-digit student ID (FR-04)',
     role VARCHAR(20) NOT NULL DEFAULT 'student' COMMENT 'student or admin (FR-26: role-based access)',
     preferred_pickup_location VARCHAR(255) NULL COMMENT 'FR-05: profile preferences',
     phone_number VARCHAR(20) NULL COMMENT 'FR-05: contact details',

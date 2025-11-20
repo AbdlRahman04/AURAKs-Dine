@@ -22,15 +22,15 @@ This document contains all functional requirements extracted from the QuickDineF
 - **Location**: Replit Auth integration
 
 ### FR-04: Student ID Support
-- **Description**: Support for 8-digit student ID field
-- **Implementation**: Student ID stored as unique 8-character varchar field
+- **Description**: Support for 10-digit student ID field
+- **Implementation**: Student ID stored as unique 10-character varchar field
 - **Location**: `shared/schema.ts` (users table), `client/src/pages/ProfilePage.tsx`
 
 ### FR-05: Profile Management
 - **Description**: Users can view and update their profile information
 - **Fields**:
   - First name and last name
-  - Student ID (8 digits)
+  - Student ID (10 digits)
   - Phone number
   - Preferred pickup location
   - Dietary restrictions (comma-separated array)

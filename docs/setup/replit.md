@@ -75,7 +75,7 @@ Preferred communication style: Simple, everyday language.
 **Schema Design**
 - `users` table: stores student/admin profiles with custom authentication
   - Email and hashed password for authentication
-  - Supports 8-digit student IDs (optional for students)
+  - Supports 10-digit student IDs (optional for students)
   - Role-based access (student/admin)
   - Profile information (firstName, lastName, email, studentId)
   - Optional profile fields (profileImageUrl, phoneNumber, pickupLocation, dietary preferences)

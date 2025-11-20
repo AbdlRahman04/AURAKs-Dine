@@ -1169,7 +1169,7 @@ Admin views kitchen display, selects an order, and updates status through the wo
 \subsubsection{Database Schema}
 The database consists of nine main tables:
 
-\textbf{Users Table:} Stores user accounts (Primary Key: id UUID) with fields for email, password (hashed), firstName, lastName, studentId (8-digit, unique), role (student/admin), profileImageUrl, phoneNumber, preferredPickupLocation, dietaryRestrictions, allergies, and stripeCustomerId.
+\textbf{Users Table:} Stores user accounts (Primary Key: id UUID) with fields for email, password (hashed), firstName, lastName, studentId (10-digit, unique), role (student/admin), profileImageUrl, phoneNumber, preferredPickupLocation, dietaryRestrictions, allergies, and stripeCustomerId.
 
 \textbf{Menu Items Table:} Stores menu items (Primary Key: id integer) with fields for name, nameAr, description, descriptionAr, price, category, imageUrl, isAvailable, preparationTime, isSpecial, specialPrice, nutritionalInfo (JSONB), allergens, dietaryTags, and sizeVariants (JSONB).
 

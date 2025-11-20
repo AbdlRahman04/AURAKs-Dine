@@ -49,7 +49,7 @@ This document provides a line-by-line verification that the MySQL schema matches
 
 ### Class Diagram Attributes:
 - ✅ Inherits all User attributes → **SQL**: All in `users` table ✅ **EXACT MATCH**
-- ✅ `studentId` (string) → **SQL**: `student_id VARCHAR(8) UNIQUE` ✅ **EXACT MATCH**
+- ✅ `studentId` (string) → **SQL**: `student_id VARCHAR(10) UNIQUE` ✅ **EXACT MATCH**
 
 ### Class Diagram Methods:
 - `viewMenu()` → Application logic (queries `menu_items` table)

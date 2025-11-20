@@ -74,7 +74,7 @@ This document describes the MySQL database structure for the QuickDineFlow appli
 - `id` (VARCHAR(36), PK): Unique user identifier (UUID)
 - `email` (VARCHAR(255), UNIQUE): User email address
 - `password` (VARCHAR(255)): Hashed password (null for OAuth users)
-- `student_id` (VARCHAR(8), UNIQUE): 8-digit student ID
+- `student_id` (VARCHAR(10), UNIQUE): 10-digit student ID
 - `role` (VARCHAR(20)): 'student' or 'admin'
 - `dietary_restrictions` (JSON): Array of dietary preferences
 - `allergies` (JSON): Array of allergen information

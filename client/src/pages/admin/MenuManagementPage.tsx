@@ -176,7 +176,7 @@ function MenuItemForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="name">Name (English) *</Label>
@@ -263,7 +263,7 @@ function MenuItemForm({
             type="url"
             value={formData.imageUrl || ''}
             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://..."
+            placeholder="https://… or /menu-images/iced-latte.jpg"
             data-testid="input-menu-image"
           />
         </div>
@@ -510,7 +510,7 @@ export default function MenuManagementPage() {
               {filteredItems.map((item) => (
                 <Card key={item.id} className="overflow-hidden">
                   {item.imageUrl && (
-                    <div className="h-48 overflow-hidden bg-muted">
+                    <div className="overflow-hidden bg-muted h-56 md:h-64">
                       <img
                         src={item.imageUrl}
                         alt={item.name}

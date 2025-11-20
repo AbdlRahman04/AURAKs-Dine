@@ -142,10 +142,10 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID (8 digits)</Label>
+                <Label htmlFor="studentId">Student ID (10 digits)</Label>
                 <Input
                   id="studentId"
-                  maxLength={8}
+                  maxLength={10}
                   value={formData.studentId}
                   onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                   data-testid="input-student-id"

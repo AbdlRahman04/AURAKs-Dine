@@ -135,12 +135,12 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID (Optional)</Label>
+              <Label htmlFor="studentId">Student ID (Optional, 10 digits)</Label>
               <Input
                 id="studentId"
                 data-testid="input-student-id"
-                placeholder="12345678"
-                maxLength={8}
+                placeholder="1234567890"
+                maxLength={10}
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
               />

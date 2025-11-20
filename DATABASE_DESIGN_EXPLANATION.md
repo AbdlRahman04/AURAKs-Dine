@@ -37,7 +37,7 @@
 - password (Hashed)
 - first_name
 - last_name
-- student_id (8 digits, Unique)
+- student_id (10 digits, Unique)
 - role (student/admin)
 - phone_number
 - dietary_restrictions

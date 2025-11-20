@@ -184,6 +184,15 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 - To make it accessible online, you'll need to deploy it to a hosting service
 - This is a development version - for production use, you'll need additional security configurations
 
+## 📷 Local Menu Photos
+
+- Place all food/drink photos in `client/public/menu-images/`
+- Reference them from the admin form using a leading slash, e.g. `/menu-images/iced-latte.jpg`
+- Avoid spaces in filenames (use `arabic-coffee.jpg`) or URL-encode them (`Arabic%20Coffee.jpg`)
+- Files inside `public/` are copied to the final build, so these paths work in dev and production
+- Follow the design guideline recommendation of ~400×300 px (4:3) and keep file sizes optimized
+- You can still paste full URLs if you want to mix hosted and local images
+
 ## 🤝 Getting Help
 
 If you encounter issues:

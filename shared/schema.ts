@@ -33,7 +33,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  studentId: varchar("student_id", { length: 8 }).unique(), // FR-04: 8-digit student ID
+  studentId: varchar("student_id", { length: 10 }).unique(), // FR-04: 10-digit student ID
   role: varchar("role", { length: 20 }).notNull().default('student'), // student or admin (FR-26: role-based access)
   preferredPickupLocation: varchar("preferred_pickup_location"), // FR-05: profile preferences
   phoneNumber: varchar("phone_number"), // FR-05: contact details

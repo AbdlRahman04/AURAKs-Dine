@@ -141,7 +141,7 @@ export default function MenuBrowser() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i}>
-              <Skeleton className="h-48 w-full rounded-t-lg" />
+              <Skeleton className="w-full rounded-t-lg h-56 md:h-64" />
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-full mt-2" />
@@ -210,7 +210,7 @@ export default function MenuBrowser() {
                 data-testid={`card-menu-item-${item.id}`}
               >
               {/* Image */}
-              <div className="relative h-48 bg-muted">
+              <div className="relative h-56 md:h-64 bg-muted">
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}

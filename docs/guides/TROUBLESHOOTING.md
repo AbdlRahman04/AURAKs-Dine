@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
   first_name VARCHAR,
   last_name VARCHAR,
   profile_image_url VARCHAR,
-  student_id VARCHAR(8) UNIQUE,
+  student_id VARCHAR(10) UNIQUE,
   role VARCHAR(20) NOT NULL DEFAULT 'student',
   preferred_pickup_location VARCHAR,
   phone_number VARCHAR,

@@ -104,7 +104,7 @@ Attributes:
 - firstName: string
 - lastName: string
 - profileImageUrl: string
-- studentId: string (unique, 8 digits)
+- studentId: string (unique, 10 digits)
 - role: string ('student' | 'admin')
 - preferredPickupLocation: string
 - phoneNumber: string

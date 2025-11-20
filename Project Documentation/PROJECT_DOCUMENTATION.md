@@ -51,7 +51,7 @@ The software was developed on **Replit**, a cloud-based development platform tha
 - Students must be able to register accounts using their email addresses
 - Students should be able to log in securely to access their accounts
 - Students need the ability to view and update their profile information
-- Profile should support optional 8-digit student ID registration
+- Profile should support optional 10-digit student ID registration
 - Students should be able to set dietary preferences and allergies
 - Profile should allow setting preferred pickup location
 
@@ -253,7 +253,7 @@ The database consists of the following main tables:
 
 **Users Table (`users`):**
 - Primary Key: `id` (UUID)
-- Fields: `email` (unique), `password` (hashed), `firstName`, `lastName`, `studentId` (8-digit, unique), `role` (student/admin), `profileImageUrl`, `phoneNumber`, `preferredPickupLocation`, `dietaryRestrictions` (array), `allergies` (array), `stripeCustomerId`, `createdAt`, `updatedAt`
+- Fields: `email` (unique), `password` (hashed), `firstName`, `lastName`, `studentId` (10-digit, unique), `role` (student/admin), `profileImageUrl`, `phoneNumber`, `preferredPickupLocation`, `dietaryRestrictions` (array), `allergies` (array), `stripeCustomerId`, `createdAt`, `updatedAt`
 
 **Menu Items Table (`menu_items`):**
 - Primary Key: `id` (auto-increment integer)
