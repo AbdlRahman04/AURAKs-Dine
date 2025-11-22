@@ -110,7 +110,7 @@ export default function LoginPage() {
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Don't have an account? </span>
               <Button
-                variant="link"
+                variant="ghost"
                 className="p-0 h-auto"
                 onClick={() => setLocation('/register')}
                 data-testid="link-register"

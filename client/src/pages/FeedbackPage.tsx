@@ -201,7 +201,7 @@ export default function FeedbackPage() {
                           <SelectContent>
                             {recentOrders?.slice(0, 10).map((order) => (
                               <SelectItem key={order.id} value={order.id.toString()}>
-                                Order #{order.orderNumber} - {new Date(order.createdAt).toLocaleDateString()}
+                                Order #{order.orderNumber} - {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "Unknown date"}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -306,7 +306,7 @@ export default function FeedbackPage() {
 }
 
 function MyFeedbackList() {
-  const { data: myFeedback, isLoading } = useQuery({
+  const { data: myFeedback, isLoading } = useQuery<any[]>({
     queryKey: ["/api/feedback/my"],
   });
 
@@ -362,8 +362,14 @@ function MyFeedbackList() {
           </div>
           <p className="text-sm text-muted-foreground">{feedback.message}</p>
           <p className="text-xs text-muted-foreground">
-            {new Date(feedback.createdAt).toLocaleDateString()} at{" "}
-            {new Date(feedback.createdAt).toLocaleTimeString()}
+            {feedback.createdAt ? (
+              <>
+                {new Date(feedback.createdAt).toLocaleDateString()} at{" "}
+                {new Date(feedback.createdAt).toLocaleTimeString()}
+              </>
+            ) : (
+              "Unknown date"
+            )}
           </p>
         </div>
       ))}

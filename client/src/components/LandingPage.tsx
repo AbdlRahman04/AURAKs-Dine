@@ -15,10 +15,17 @@ export default function LandingPage() {
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <img
-                src={aurakLogo}
-                alt="AURAK's Dine logo"
-                className="h-20 w-20 sm:h-24 sm:w-24 object-contain drop-shadow-md"
-              />
+  src={aurakLogo}
+  alt="AURAK's Dine logo"
+  className="
+    h-20 w-20 sm:h-24 sm:w-24
+    object-contain drop-shadow 
+    rounded-xl
+    transition-all duration-300
+    hover:scale-110 hover:shadow-[0_0_10px_rgba(255,60,40,0.5)]
+  "
+/>
+
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-6">
               AURAK'S Dine

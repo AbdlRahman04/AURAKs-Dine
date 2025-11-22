@@ -72,12 +72,12 @@ export default function FavoritesPage() {
             {favorites.map((item) => (
               <Card key={item.id} className="overflow-hidden hover-elevate" data-testid={`card-favorite-${item.id}`}>
                 {/* Image */}
-                <div className="relative h-56 md:h-64 bg-muted">
+                <div className="relative h-56 md:h-64 bg-muted overflow-hidden">
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">

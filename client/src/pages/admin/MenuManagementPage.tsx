@@ -514,7 +514,7 @@ export default function MenuManagementPage() {
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                     </div>
                   )}

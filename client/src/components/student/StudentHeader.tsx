@@ -62,9 +62,16 @@ export default function StudentHeader() {
             >
               <img
                 src={aurakLogo}
-                alt="AURAK's Dine logo"
-                className="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow"
-              />
+                  alt="AURAK's Dine logo"
+                   className="
+              h-10 w-10 sm:h-12 sm:w-12
+              object-contain drop-shadow 
+              rounded-xl
+              transition-all duration-300
+              hover:scale-110 hover:shadow-[0_0_10px_rgba(255,60,40,0.5)]
+"
+            />
+
               <span>AURAK'S Dine</span>
             </Link>
 
