@@ -6,11 +6,22 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { Pool as PgPool } from "pg";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
+
+// Create a standard PostgreSQL pool for session store
+// Note: For Neon databases, use the "Pooled connection" string, not the "Direct connection" string
+// The pooled connection uses standard PostgreSQL protocol compatible with connect-pg-simple
+const sessionPool = new PgPool({
+  connectionString: process.env.DATABASE_URL,
+  // Increase timeout for Neon connections
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+});
 
 const getOidcConfig = memoize(
   async () => {
@@ -26,8 +37,8 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    pool: sessionPool,
+    createTableIfMissing: true, // Automatically create sessions table if it doesn't exist
     ttl: sessionTtl,
     tableName: "sessions",
   });

@@ -70,7 +70,7 @@ You have two options to run the website:
 This runs everything on one port - simpler to use!
 
 ```bash
-npm run dev
+   Copy-Item .env.example .env
 ```
 
 Then open your web browser and go to:
@@ -165,6 +165,7 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 - `npm run build` - Build the project for production
 - `npm run start` - Start the production server
 - `npm run check` - Check TypeScript types
+- `npm run db:init` - Run the database
 
 ## 💡 Tips for Beginners
 

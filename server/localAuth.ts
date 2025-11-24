@@ -4,14 +4,38 @@ import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import { Pool as PgPool } from "pg";
 import { storage } from "./storage";
+
+// Create a standard PostgreSQL pool for session store
+// Note: For Neon databases, use the "Pooled connection" string, not the "Direct connection" string
+// The pooled connection uses standard PostgreSQL protocol compatible with connect-pg-simple
+const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
+
+// Clean connection string - remove channel_binding if present (can cause issues)
+let sessionConnectionString = process.env.DATABASE_URL || '';
+if (isNeon && sessionConnectionString.includes('channel_binding=require')) {
+  // Remove channel_binding parameter as it can cause connection issues
+  sessionConnectionString = sessionConnectionString.replace(/[&?]channel_binding=require/g, '');
+}
+
+const sessionPool = new PgPool({
+  connectionString: sessionConnectionString,
+  // Increase timeout for Neon connections
+  connectionTimeoutMillis: isNeon ? 30000 : 10000, // Longer timeout for Neon
+  idleTimeoutMillis: 30000,
+  // Additional options for Neon compatibility
+  ssl: isNeon ? { rejectUnauthorized: false } : undefined,
+  // Increase max connections for better reliability
+  max: 10,
+});
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    pool: sessionPool,
+    createTableIfMissing: true, // Automatically create sessions table if it doesn't exist
     ttl: sessionTtl,
     tableName: "sessions",
   });

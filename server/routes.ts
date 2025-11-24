@@ -415,6 +415,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin User Management routes
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const { id } = req.params;
+      const { role } = req.body;
+
+      // Validate role
+      if (role !== 'student' && role !== 'admin') {
+        return res.status(400).json({ message: "Invalid role. Must be 'student' or 'admin'" });
+      }
+
+      // Get the target user
+      const targetUser = await storage.getUser(id);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // SECURITY: Prevent admins from demoting other admins
+      if (targetUser.role === 'admin' && role === 'student') {
+        return res.status(403).json({ 
+          message: "Cannot demote admin users. Admins cannot remove admin privileges from other admins." 
+        });
+      }
+
+      // SECURITY: Prevent self-demotion
+      if (id === adminId && role === 'student') {
+        return res.status(403).json({ 
+          message: "Cannot remove your own admin role" 
+        });
+      }
+
+      // Store previous role for audit log
+      const previousRole = targetUser.role;
+
+      // Update user role
+      const updatedUser = await storage.updateUserRole(id, role);
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: adminId,
+        action: 'updated_user_role',
+        entityType: 'user',
+        entityId: id,
+        details: { 
+          previousRole,
+          newRole: role,
+          targetUserEmail: targetUser.email,
+          targetUserName: `${targetUser.firstName} ${targetUser.lastName}`
+        },
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
   // Order routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {

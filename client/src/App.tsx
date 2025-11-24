@@ -16,9 +16,11 @@ import FavoritesPage from "@/pages/FavoritesPage";
 import ProfilePage from "@/pages/ProfilePage";
 import FeedbackPage from "@/pages/FeedbackPage";
 import KitchenDisplayPage from "@/pages/admin/KitchenDisplayPage";
+import AllOrdersPage from "@/pages/admin/AllOrdersPage";
 import FeedbackManagementPage from "@/pages/admin/FeedbackManagementPage";
 import MenuManagementPage from "@/pages/admin/MenuManagementPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import UserManagementPage from "@/pages/admin/UserManagementPage";
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -74,8 +76,9 @@ function Router() {
           {/* Admin Routes - with access control */}
           <Route path="/admin" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
           <Route path="/admin/menu" component={() => <RequireAdmin><MenuManagementPage /></RequireAdmin>} />
-          <Route path="/admin/orders" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
+          <Route path="/admin/orders" component={() => <RequireAdmin><AllOrdersPage /></RequireAdmin>} />
           <Route path="/admin/feedback" component={() => <RequireAdmin><FeedbackManagementPage /></RequireAdmin>} />
+          <Route path="/admin/users" component={() => <RequireAdmin><UserManagementPage /></RequireAdmin>} />
           <Route path="/admin/analytics" component={() => <RequireAdmin><AnalyticsPage /></RequireAdmin>} />
           
           {/* Fallback to 404 - only for unmatched routes (must have at least one character after /) */}

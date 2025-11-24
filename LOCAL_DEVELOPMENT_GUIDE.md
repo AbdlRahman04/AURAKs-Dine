@@ -146,10 +146,14 @@ Then login with that email to access admin features.
 - Another Vite dev server is running
 - Kill the process using port 5173, or change it in `vite.config.ts`
 
-### "Cannot connect to database"
+### "Cannot connect to database" or "ETIMEDOUT" errors
 - Check your `DATABASE_URL` in `.env`
+- **For Neon databases**: Make sure you're using the **"Pooled connection"** string, not the "Direct connection" string
+  - In Neon dashboard, click "Connect" → Select "Pooled connection" tab
+  - Copy that connection string (it should work with `connect-pg-simple`)
+  - The direct connection uses WebSockets and won't work with the session store
 - Make sure your database is accessible
-- Verify SSL settings if required
+- Verify SSL settings if required (`?sslmode=require` should be in the connection string)
 
 ### "Login not working"
 - Make sure both frontend and backend are running
