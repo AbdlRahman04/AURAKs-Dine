@@ -2,100 +2,102 @@
 
 A web-based cafeteria ordering system that enables students to pre-order meals online, skip queues, and pick up orders at their convenience. The system features dual interfaces: a student-facing menu browsing and ordering system, and an admin panel for kitchen staff to manage menu items and track orders.
 
-## 🚀 Quick Start Guide
+## 🚀 How to Run Locally
 
-If you've just downloaded this project from GitHub and want to run it on your computer, follow these simple steps:
+Follow these steps to get QuickDineFlow running on your machine.
 
 ### Prerequisites
 
-Before you begin, make sure you have these installed on your computer:
+Make sure you have the following ready before you begin:
 
-1. **Node.js** (version 18 or higher)
-   - Download from: https://nodejs.org/
-   - This includes npm (Node Package Manager) automatically
+| Requirement | Details |
+|---|---|
+| **Node.js** (v18+) | Download from [nodejs.org](https://nodejs.org/) — this includes npm automatically |
+| **PostgreSQL Database** | Use a free cloud DB from [Neon](https://neon.tech) or any PostgreSQL provider. You'll need the connection string |
+| **Stripe Account** | Sign up free at [stripe.com](https://stripe.com) and grab your test API keys from the [dashboard](https://dashboard.stripe.com/test/apikeys) |
 
-2. **A PostgreSQL Database**
-   - You can use a free database from [Neon](https://neon.tech) or any PostgreSQL provider
-   - You'll need the connection string (URL) to your database
+---
 
-3. **Stripe Account** (for payment processing)
-   - Sign up for a free account at: https://stripe.com
-   - Get your test API keys from the dashboard
+### Step 1 — Navigate to the Project Directory
 
-### Step 1: Install Dependencies
+Open a terminal (PowerShell on Windows, Terminal on Mac/Linux) and `cd` into the project folder:
 
-Open a terminal/command prompt in the project folder and run:
+```bash
+# Example — adjust the path to wherever you cloned/downloaded the project
+cd path/to/QuickDineFlow
+```
+
+---
+
+### Step 2 — Install Dependencies
+
+Install all required packages via npm:
 
 ```bash
 npm install
 ```
 
-This will download all the required packages. It may take a few minutes the first time.
+> This may take a few minutes the first time.
 
-### Step 2: Set Up Environment Variables
+---
 
-1. Copy the example environment file:
+### Step 3 — Configure Environment Variables
+
+1. **Copy the example `.env` file:**
+
    ```bash
-   # On Windows (PowerShell)
+   # Windows (PowerShell)
    Copy-Item .env.example .env
-   
-   # On Mac/Linux
+
+   # Mac / Linux
    cp .env.example .env
    ```
 
-2. Open the `.env` file in a text editor and fill in your values:
+2. **Open `.env` in a text editor** and fill in your values:
 
-   - **DATABASE_URL**: Your PostgreSQL connection string
-     - Example: `postgresql://user:password@host:5432/database?sslmode=require`
-     - If using Neon, you can copy this from your Neon dashboard
-   
-   - **SESSION_SECRET**: A random secret string for security
-     - You can generate one using: `openssl rand -base64 32`
-     - Or just use any long random string like: `my-super-secret-key-12345`
-   
-   - **STRIPE_SECRET_KEY**: Your Stripe secret key (starts with `sk_test_` for testing)
-     - Get this from: https://dashboard.stripe.com/test/apikeys
-   
-   - **VITE_STRIPE_PUBLIC_KEY**: Your Stripe public key (starts with `pk_test_` for testing)
-     - Get this from the same Stripe dashboard page
-   
-   - **PORT**: The port number (default is 5000, you can leave it as is)
+   | Variable | What to put | Where to get it |
+   |---|---|---|
+   | `DATABASE_URL` | Your PostgreSQL connection string | Neon dashboard or your DB provider |
+   | `SESSION_SECRET` | Any long random string | Run `openssl rand -base64 32` or make one up |
+   | `STRIPE_SECRET_KEY` | Starts with `sk_test_...` | [Stripe API Keys](https://dashboard.stripe.com/test/apikeys) |
+   | `VITE_STRIPE_PUBLIC_KEY` | Starts with `pk_test_...` | Same Stripe page |
+   | `PORT` | Server port (default `5000`) | Leave as-is unless it conflicts |
 
-### Step 3: Run the Application
+---
 
-You have two options to run the website:
+### Step 4 — Initialize the Database
 
-#### Option A: Integrated Mode (Recommended for Beginners)
-
-This runs everything on one port - simpler to use!
+Push the database schema and seed it with initial data:
 
 ```bash
-   Copy-Item .env.example .env
+# Create the database tables
+npm run db:push
+
+# Seed with starter menu items (optional but recommended)
+npm run db:seed
 ```
 
-Then open your web browser and go to:
-**http://localhost:5000**
+---
 
-#### Option B: Separate Mode
+### Step 5 — Run the Website
 
-This runs the frontend and backend separately:
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Then open your browser and go to **http://localhost:5000** — you should see QuickDineFlow! 🎉
+
+#### Alternative: Separate Frontend & Backend
+
+If you prefer to run them on separate ports (useful for frontend development):
 
 ```bash
 npm run dev:separate
 ```
 
-Then open your web browser and go to:
-**http://localhost:5173**
-
-### Step 4: Access the Website
-
-- Open your web browser (Chrome, Firefox, Edge, etc.)
-- Type the URL in the address bar:
-  - For Integrated Mode: `http://localhost:5000`
-  - For Separate Mode: `http://localhost:5173`
-- Press Enter
-
-You should see the QuickDineFlow website!
+The frontend will be at **http://localhost:5173** and the backend at **http://localhost:5000**.
 
 ## 📱 Install QuickDineFlow like a Native App
 
