@@ -128,6 +128,10 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 - Track kitchen display
 - View analytics
 
+> **Test Admin Credentials:**  
+> Email: `admin@quickdine.com`  
+> Password: `admin`
+
 ## 🛠️ Troubleshooting
 
 ### "Cannot find module" error

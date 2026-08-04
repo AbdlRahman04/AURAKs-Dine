@@ -1,9 +1,32 @@
 import "dotenv/config";
 import { db } from './db';
 import { menuItems, users } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
 
 async function seed() {
   console.log('Seeding database...');
+
+  // Create admin user for testing
+  const adminEmail = 'admin@quickdine.com';
+  const adminPassword = 'admin';
+  
+  const [existingAdmin] = await db.select().from(users).where(eq(users.email, adminEmail));
+  
+  if (!existingAdmin) {
+    console.log('Creating test admin user...');
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    await db.insert(users).values({
+      email: adminEmail,
+      password: hashedPassword,
+      firstName: 'Test',
+      lastName: 'Admin',
+      role: 'admin',
+    });
+    console.log(`✅ Created test admin user: ${adminEmail} (password: ${adminPassword})`);
+  } else {
+    console.log(`ℹ️ Admin user ${adminEmail} already exists.`);
+  }
 
   // Create expanded menu items with AED prices and UAE/Middle Eastern options
   const sampleMenuItems = [
