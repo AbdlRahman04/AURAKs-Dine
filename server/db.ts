@@ -22,13 +22,13 @@ if (isNeon) {
   neonConfig.webSocketConstructor = ws;
   pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
   db = neonDrizzle({ client: pool, schema });
-  
+
   console.log('[Database] Using Neon serverless driver');
 } else {
   // Use regular PostgreSQL driver (for local PostgreSQL)
   pool = new PgPool({ connectionString: process.env.DATABASE_URL });
   db = pgDrizzle({ client: pool, schema });
-  
+
   console.log('[Database] Using local PostgreSQL driver');
 }
 
