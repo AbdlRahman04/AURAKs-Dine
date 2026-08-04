@@ -28,6 +28,7 @@ Thumbs.db
 
 # Documentation (consolidated into DEVELOPER_NOTES.md, kept locally only)
 DEVELOPER_NOTES.md
+FIX_SESSION_TIMEOUT.md
 Project Documentation/
 docs/
 database/*.md
