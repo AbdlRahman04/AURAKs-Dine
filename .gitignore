@@ -25,3 +25,11 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Documentation (consolidated into DEVELOPER_NOTES.md, kept locally only)
+DEVELOPER_NOTES.md
+Project Documentation/
+docs/
+database/*.md
+server/START_SERVER_WITH_NEON.md
+scripts/generate_requirements_doc.py
