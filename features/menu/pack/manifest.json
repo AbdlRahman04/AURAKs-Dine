@@ -1,0 +1,7 @@
+{
+  "name": "menu",
+  "version": "1.0.0",
+  "tables": ["menu_items"],
+  "files": ["client/public/menu-images/"],
+  "stableKey": "name"
+}

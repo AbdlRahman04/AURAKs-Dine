@@ -4,6 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+exports/
 
 # Environment variables
 .env
@@ -26,11 +27,10 @@ yarn-error.log*
 # OS
 Thumbs.db
 
-# Documentation (consolidated into DEVELOPER_NOTES.md, kept locally only)
+# Local-only notes (committed docs/ are kept for the team)
 DEVELOPER_NOTES.md
 FIX_SESSION_TIMEOUT.md
 Project Documentation/
-docs/
 database/*.md
 server/START_SERVER_WITH_NEON.md
 scripts/generate_requirements_doc.py

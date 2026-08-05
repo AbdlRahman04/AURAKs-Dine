@@ -4,7 +4,7 @@ A web-based cafeteria ordering system that enables students to pre-order meals o
 
 ## 🚀 How to Run Locally
 
-Follow these steps to get QuickDineFlow running on your machine.
+Follow these steps to get QuickDineFlow running on your machine. The same codebase works with **local PostgreSQL** (dev) and **Render Postgres** (deploy)—you only change `DATABASE_URL`.
 
 ### Prerequisites
 
@@ -13,7 +13,7 @@ Make sure you have the following ready before you begin:
 | Requirement | Details |
 |---|---|
 | **Node.js** (v18+) | Download from [nodejs.org](https://nodejs.org/) — this includes npm automatically |
-| **PostgreSQL Database** | Use a free cloud DB from [Neon](https://neon.tech) or any PostgreSQL provider. You'll need the connection string |
+| **PostgreSQL Database** | Install [PostgreSQL](https://www.postgresql.org/download/) locally for dev; use **Render Postgres** (or Neon) for cloud deploy |
 | **Stripe Account** | Sign up free at [stripe.com](https://stripe.com) and grab your test API keys from the [dashboard](https://dashboard.stripe.com/test/apikeys) |
 
 ---
@@ -37,7 +37,7 @@ Install all required packages via npm:
 npm install
 ```
 
-> This may take a few minutes the first time.
+> This may take a few minutes the first time. Packages live in `node_modules/` (Node.js does not use a Python `venv`).
 
 ---
 
@@ -53,29 +53,65 @@ npm install
    cp .env.example .env
    ```
 
-2. **Open `.env` in a text editor** and fill in your values:
+2. **Open `.env` in a text editor** and fill in your non-database values:
 
    | Variable | What to put | Where to get it |
    |---|---|---|
-   | `DATABASE_URL` | Your PostgreSQL connection string | Neon dashboard or your DB provider |
    | `SESSION_SECRET` | Any long random string | Run `openssl rand -base64 32` or make one up |
    | `STRIPE_SECRET_KEY` | Starts with `sk_test_...` | [Stripe API Keys](https://dashboard.stripe.com/test/apikeys) |
    | `VITE_STRIPE_PUBLIC_KEY` | Starts with `pk_test_...` | Same Stripe page |
    | `PORT` | Server port (default `5000`) | Leave as-is unless it conflicts |
 
+3. **Choose a database** (Option A or Option B below) and set `DATABASE_URL`.
+
+> **Tip:** Put a local URL in `.env.local` so it overrides `.env`. That way you can keep a Neon URL in `.env` for deployment without swapping files.
+
 ---
 
-### Step 4 — Initialize the Database
+### Step 4 — Database Setup
 
-Push the database schema and seed it with initial data:
+#### Option A: Local PostgreSQL (development)
 
-```bash
-# Create the database tables
-npm run db:push
+1. Install PostgreSQL and make sure the service is running (Windows: check Services for `postgresql`).
+2. Create the app database and apply schema + seed data:
 
-# Seed with starter menu items (optional but recommended)
-npm run db:seed
-```
+   ```bash
+   # Creates the "quickdineflow" database if it does not exist
+   npm run db:setup-local
+   ```
+
+3. Create `.env.local` with your local connection string (adjust user/password if needed):
+
+   ```env
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/quickdineflow
+   ```
+
+4. Push schema and seed (admin user + menu items):
+
+   ```bash
+   npm run db:setup
+   ```
+
+   Or run the full local flow in one go (after `.env.local` exists):
+
+   ```bash
+   npm run db:setup-local-full
+   ```
+
+#### Option B: Render Postgres (cloud deploy)
+
+1. Push to GitHub and create a Render Blueprint from [`render.yaml`](render.yaml).
+2. Set Stripe keys on the Render service (see [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md)).
+3. After deploy, run `npm run db:setup` in the Render shell.
+4. Optionally promote local menu content with `npm run pack:import`.
+
+#### Option C: Neon (optional)
+
+1. Create a project at [neon.tech](https://neon.tech).
+2. Copy the **pooled** connection string.
+3. Set it in `.env`, then `npm run db:setup`.
+
+The app auto-detects Neon vs standard Postgres from the URL. Prefer **local Postgres** for day-to-day testing and **Render Postgres** for deployment.
 
 ---
 
@@ -104,7 +140,7 @@ The frontend will be at **http://localhost:5173** and the backend at **http://lo
 QuickDineFlow now ships as a Progressive Web App (PWA). After running the app locally or in production:
 
 1. Open the site in Chrome, Edge, Safari, or any modern mobile browser.
-2. Look for the **“Install”** / **“Add to Home Screen”** prompt in the address bar menu.
+2. Look for the **"Install"** / **"Add to Home Screen"** prompt in the address bar menu.
 3. Confirm the prompt, and the app will appear on your desktop or mobile home screen with offline support.
 
 ### Offline Support & Caching
@@ -139,8 +175,8 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 - Delete the `node_modules` folder and `package-lock.json`, then run `npm install` again
 
 ### "DATABASE_URL must be set" error
-- Make sure you created a `.env` file in the root directory
-- Check that your `.env` file has the `DATABASE_URL` variable set correctly
+- Make sure you created a `.env` file (and/or `.env.local`) in the root directory
+- Check that `DATABASE_URL` is set correctly for local Postgres or Neon
 
 ### "Port already in use" error
 - Another program might be using port 5000 or 5173
@@ -153,25 +189,32 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 
 ### Database connection errors
 - Verify your `DATABASE_URL` is correct
+- For local Postgres: ensure the service is running and credentials match
+- For Neon: use the **pooled** connection string with `sslmode=require`
 - Make sure your database is accessible (not blocked by firewall)
-- Check if your database provider requires SSL connections
 
 ## 📚 Additional Resources
 
-- **Development Guide**: See `DEVELOPMENT_GUIDE.md` for more detailed technical information
-- **Design Guidelines**: See `design_guidelines.md` for UI/UX specifications
-- **Implementation Status**: See `IMPLEMENTATION_STATUS.md` for feature completion status
+- **Development Guide**: See [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md) for local workflow and feature modules
+- **Render Deploy**: See [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) for GitHub → Render + Postgres
+- **AI Feature Prompt**: See [`docs/FEATURE_DEVELOPMENT_PROMPT.md`](docs/FEATURE_DEVELOPMENT_PROMPT.md) for plug-and-play feature work
 
 ## 🎯 Available Commands
 
 - `npm run dev` - Start the development server (integrated mode)
 - `npm run dev:separate` - Start frontend and backend separately
-- `npm run dev:frontend` - Start only the frontend
-- `npm run dev:backend` - Start only the backend
 - `npm run build` - Build the project for production
 - `npm run start` - Start the production server
 - `npm run check` - Check TypeScript types
-- `npm run db:init` - Run the database
+- `npm run db:push` - Push schema from feature schemas via Drizzle
+- `npm run db:seed` - Seed admin user and menu items (safe to re-run)
+- `npm run db:setup` - Run `db:push` then `db:seed` (works for local or Render Postgres)
+- `npm run db:setup-local` - Create the local `quickdineflow` database
+- `npm run db:setup-local-full` - Create local DB, then push + seed
+- `npm run smoke` - Smoke-test health, menu, and admin login
+- `npm run pack:export -- menu` - Export menu pack for staging
+- `npm run pack:import -- menu --file exports/menu-v1.0.0.json` - Import menu pack
+- `npm run make-admin` - Promote an existing user to admin by email
 
 ## 💡 Tips for Beginners
 
@@ -181,14 +224,16 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 
 3. **Use test Stripe keys**: When developing, use Stripe's test keys (they start with `sk_test_` and `pk_test_`). These won't charge real money.
 
-4. **Database setup**: If you're new to databases, Neon (https://neon.tech) offers a free PostgreSQL database that's easy to set up.
+4. **Database setup**: Use local PostgreSQL for day-to-day development. Deploy to Render with Postgres via `render.yaml` (see docs).
 
-5. **Hot reload**: When you make changes to the code, the website will automatically refresh in your browser - this is called "hot reload" and it's very convenient!
+5. **Feature modules**: Backend features live under `features/` with pack export/import for menu content. See [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md).
+
+6. **Hot reload**: When you make changes to the code, the website will automatically refresh in your browser.
 
 ## 📝 Notes
 
 - The website runs on your local computer only (localhost) - it's not accessible from the internet
-- To make it accessible online, you'll need to deploy it to a hosting service
+- To deploy online, push to GitHub and use Render (see [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md))
 - This is a development version - for production use, you'll need additional security configurations
 
 ## 📷 Local Menu Photos
@@ -197,7 +242,7 @@ QuickDineFlow now ships as a Progressive Web App (PWA). After running the app lo
 - Reference them from the admin form using a leading slash, e.g. `/menu-images/iced-latte.jpg`
 - Avoid spaces in filenames (use `arabic-coffee.jpg`) or URL-encode them (`Arabic%20Coffee.jpg`)
 - Files inside `public/` are copied to the final build, so these paths work in dev and production
-- Follow the design guideline recommendation of ~400×300 px (4:3) and keep file sizes optimized
+- Follow the design guideline recommendation of ~400×300 px (4:3) and keep file sizes optimized
 - You can still paste full URLs if you want to mix hosted and local images
 
 ## 🤝 Getting Help
@@ -211,4 +256,3 @@ If you encounter issues:
 ---
 
 **Happy coding! 🎉**
-

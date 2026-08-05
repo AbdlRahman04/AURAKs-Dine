@@ -1,0 +1,6 @@
+{
+  "name": "favorites",
+  "version": "1.0.0",
+  "tables": ["favorites"],
+  "portable": false
+}

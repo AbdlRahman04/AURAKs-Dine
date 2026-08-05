@@ -1,0 +1,7 @@
+{
+  "name": "payments",
+  "version": "1.0.0",
+  "tables": ["payment_methods"],
+  "portable": false,
+  "note": "Stripe payment methods are environment-specific and are not exported via packs."
+}

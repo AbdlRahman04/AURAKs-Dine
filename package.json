@@ -1,5 +1,5 @@
 {
-  "name": "rest-express",
+  "name": "quickdineflow",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -9,12 +9,17 @@
     "dev:backend": "cross-env NODE_ENV=development SEPARATE_MODE=true tsx server/index.ts",
     "dev:separate": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "db:init": "tsx server/init-db.ts",
     "db:seed": "tsx server/seed.ts",
-    "make-admin": "tsx scripts/make-admin.ts"
+    "db:setup": "npm run db:push && npm run db:seed",
+    "db:setup-local": "tsx scripts/setup-local-db.ts",
+    "db:setup-local-full": "npm run db:setup-local && npm run db:setup",
+    "make-admin": "tsx scripts/make-admin.ts",
+    "smoke": "tsx scripts/smoke-test.ts",
+    "pack:export": "tsx scripts/pack-export.ts",
+    "pack:import": "tsx scripts/pack-import.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

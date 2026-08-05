@@ -94,8 +94,8 @@ export default function AllOrdersPage() {
 
   // Sort by pickup time (or created time if no pickup time)
   const sortedOrders = [...filteredOrders].sort((a, b) => {
-    const timeA = new Date(a.pickupTime || a.createdAt).getTime();
-    const timeB = new Date(b.pickupTime || b.createdAt).getTime();
+    const timeA = new Date(a.pickupTime || a.createdAt || 0).getTime();
+    const timeB = new Date(b.pickupTime || b.createdAt || 0).getTime();
     return timeB - timeA; // Most recent first
   });
 
@@ -207,7 +207,7 @@ export default function AllOrdersPage() {
                           Pickup: {formatTime(new Date(order.pickupTime))}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Created: {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
+                          Created: {order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm') : '—'}
                         </p>
                       </div>
                       <Badge className={statusColors[order.status as keyof typeof statusColors]}>

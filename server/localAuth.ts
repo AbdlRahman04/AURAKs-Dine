@@ -6,29 +6,12 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { Pool as PgPool } from "pg";
 import { storage } from "./storage";
+import { getPgPoolOptions } from "./database";
+import { sanitizeUser } from "./sanitizeUser";
 
-// Create a standard PostgreSQL pool for session store
-// Note: For Neon databases, use the "Pooled connection" string, not the "Direct connection" string
-// The pooled connection uses standard PostgreSQL protocol compatible with connect-pg-simple
-const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
-
-// Clean connection string - remove channel_binding if present (can cause issues)
-let sessionConnectionString = process.env.DATABASE_URL || '';
-if (isNeon && sessionConnectionString.includes('channel_binding=require')) {
-  // Remove channel_binding parameter as it can cause connection issues
-  sessionConnectionString = sessionConnectionString.replace(/[&?]channel_binding=require/g, '');
-}
-
-const sessionPool = new PgPool({
-  connectionString: sessionConnectionString,
-  // Increase timeout for Neon connections
-  connectionTimeoutMillis: isNeon ? 30000 : 10000, // Longer timeout for Neon
-  idleTimeoutMillis: 30000,
-  // Additional options for Neon compatibility
-  ssl: isNeon ? { rejectUnauthorized: false } : undefined,
-  // Increase max connections for better reliability
-  max: 10,
-});
+// Session store uses the standard `pg` driver for both local Postgres and Neon.
+// For Neon, use the pooled connection string (compatible with connect-pg-simple).
+const sessionPool = new PgPool(getPgPoolOptions());
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -75,7 +58,7 @@ export async function setupAuth(app: Express) {
           }
 
           if (!user.password) {
-            return done(null, false, { message: "Please use Replit Auth to sign in" });
+            return done(null, false, { message: "Account has no password set. Please register again or contact support." });
           }
 
           const isMatch = await bcrypt.compare(password, user.password);
@@ -143,7 +126,7 @@ export async function setupAuth(app: Express) {
           console.error("Login after registration failed");
           return res.status(500).json({ message: "Registration successful, but login failed" });
         }
-        res.json(user);
+        res.json(sanitizeUser(user));
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -172,7 +155,7 @@ export async function setupAuth(app: Express) {
         if (err) {
           return res.status(500).json({ message: "Login failed" });
         }
-        res.json(user);
+        res.json(sanitizeUser(user));
       });
     })(req, res, next);
   });

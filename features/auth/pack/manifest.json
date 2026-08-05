@@ -1,0 +1,7 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "tables": ["users", "sessions"],
+  "portable": false,
+  "note": "Auth data is environment-specific and is not exported/imported via packs."
+}

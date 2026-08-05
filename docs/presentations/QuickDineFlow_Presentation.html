@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickDineFlow - Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .slide {
+            background: white;
+            width: 90%;
+            max-width: 1200px;
+            min-height: 80vh;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 60px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            page-break-after: always;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        .slide h1 {
+            font-size: 3.5em;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .slide h2 {
+            font-size: 2.5em;
+            color: #764ba2;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .slide h3 {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+
+        .slide p {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .slide ul {
+            font-size: 1.2em;
+            line-height: 2;
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+
+        .slide li {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .column {
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .column h3 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 1.8em;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .feature-item strong {
+            color: #667eea;
+            font-size: 1.2em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 96%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tech-item {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .metric-card {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 1.2em;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 15px 30px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #999;
+            font-size: 1em;
+        }
+
+        .title-slide {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .title-slide h1 {
+            color: white;
+            font-size: 4.5em;
+            margin-bottom: 20px;
+        }
+
+        .title-slide h2 {
+            color: rgba(255,255,255,0.9);
+            font-size: 2em;
+            margin-bottom: 50px;
+        }
+
+        .team-info {
+            margin-top: 60px;
+            font-size: 1.5em;
+        }
+
+        .thank-you {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .thank-you h1 {
+            color: white;
+            font-size: 5em;
+            margin-bottom: 30px;
+        }
+
+        .thank-you h2 {
+            color: rgba(255,255,255,0.9);
+            font-size: 2.5em;
+        }
+
+        @media print {
+            .slide {
+                display: flex !important;
+                page-break-after: always;
+            }
+            .navigation {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- SLIDE 1: Title -->
+        <div class="slide active title-slide">
+            <h1>QuickDineFlow</h1>
+            <h2>Smart Cafeteria Ordering System</h2>
+            <p style="font-size: 1.5em; margin-top: 40px;">Revolutionizing Student Dining Experience</p>
+            <div class="team-info">
+                <p><strong>Team Members:</strong></p>
+                <p>[Member 1], [Member 2], [Member 3], [Member 4], [Member 5], [Member 6]</p>
+                <p style="margin-top: 40px; font-size: 1.2em;">[Date]</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: Problem & Solution -->
+        <div class="slide">
+            <span class="slide-number">2 / 8</span>
+            <h2>Problem & Solution</h2>
+            <div class="two-column">
+                <div class="column">
+                    <h3>❌ Problems</h3>
+                    <ul>
+                        <li><strong>Long Queues</strong><br>Students waste 10-15 minutes per meal</li>
+                        <li><strong>Inefficient Orders</strong><br>Kitchen staff struggle with order management</li>
+                        <li><strong>Wasted Time</strong><br>Limited visibility into upcoming orders</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>✅ Our Solution</h3>
+                    <ul>
+                        <li><strong>Pre-order Online</strong><br>Order meals in advance</li>
+                        <li><strong>Skip Queues</strong><br>Pick up at convenience</li>
+                        <li><strong>Real-time Tracking</strong><br>Track order status live</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Student Features -->
+        <div class="slide">
+            <span class="slide-number">3 / 8</span>
+            <h2>Student Features</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>📱 Menu Browsing</strong>
+                    Browse by categories: Breakfast, Lunch, Snacks, Beverages
+                </div>
+                <div class="feature-item">
+                    <strong>🔍 Search & Filter</strong>
+                    Find items quickly with search and dietary filters
+                </div>
+                <div class="feature-item">
+                    <strong>🛒 Shopping Cart</strong>
+                    Customize orders with special instructions and sizes
+                </div>
+                <div class="feature-item">
+                    <strong>⏰ Pickup Scheduling</strong>
+                    Select pickup time slots (15-minute advance notice)
+                </div>
+                <div class="feature-item">
+                    <strong>💳 Payment Options</strong>
+                    Pay via Stripe (card) or cash on pickup
+                </div>
+                <div class="feature-item">
+                    <strong>📊 Real-time Tracking</strong>
+                    Track orders: Received → Preparing → Ready → Completed
+                </div>
+                <div class="feature-item">
+                    <strong>⭐ Favorites</strong>
+                    Save favorite items for quick reordering
+                </div>
+                <div class="feature-item">
+                    <strong>🌍 Bilingual Support</strong>
+                    English/Arabic with RTL layout support
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Admin Dashboard -->
+        <div class="slide">
+            <span class="slide-number">4 / 8</span>
+            <h2>Admin Dashboard Features</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>📝 Menu Management</strong>
+                    Create, edit, and delete menu items with full details
+                </div>
+                <div class="feature-item">
+                    <strong>🍽️ Kitchen Display</strong>
+                    Real-time order board organized by pickup time
+                </div>
+                <div class="feature-item">
+                    <strong>📈 Analytics Dashboard</strong>
+                    Daily/weekly/monthly sales reports and trends
+                </div>
+                <div class="feature-item">
+                    <strong>✅ Order Management</strong>
+                    Update order status through workflow stages
+                </div>
+                <div class="feature-item">
+                    <strong>📊 Popular Items</strong>
+                    Track top-selling items by quantity and revenue
+                </div>
+                <div class="feature-item">
+                    <strong>⏰ Peak Hours</strong>
+                    Analyze order volume by hour of day
+                </div>
+                <div class="feature-item">
+                    <strong>💬 Feedback Management</strong>
+                    View and respond to customer feedback
+                </div>
+                <div class="feature-item">
+                    <strong>🔒 Audit Logging</strong>
+                    Track all administrative actions for accountability
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Technical Architecture -->
+        <div class="slide">
+            <span class="slide-number">5 / 8</span>
+            <h2>Technical Architecture</h2>
+            <div class="tech-stack">
+                <div class="tech-item">React 18 + TypeScript</div>
+                <div class="tech-item">Tailwind CSS + shadcn/ui</div>
+                <div class="tech-item">Node.js + Express.js</div>
+                <div class="tech-item">PostgreSQL (Neon)</div>
+                <div class="tech-item">Drizzle ORM</div>
+                <div class="tech-item">WebSocket</div>
+                <div class="tech-item">Stripe API</div>
+                <div class="tech-item">Replit Deployment</div>
+            </div>
+            <div style="margin-top: 40px;">
+                <h3>Architecture Layers</h3>
+                <ul style="font-size: 1.3em; margin-top: 20px;">
+                    <li><strong>Frontend:</strong> React 18 with TypeScript for type-safe, component-based UI</li>
+                    <li><strong>Backend:</strong> Node.js and Express.js RESTful API</li>
+                    <li><strong>Database:</strong> PostgreSQL with Drizzle ORM for type-safe operations</li>
+                    <li><strong>Real-time:</strong> WebSocket for instant order status updates</li>
+                    <li><strong>Payments:</strong> Stripe (PCI-DSS compliant)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Impact & Benefits -->
+        <div class="slide">
+            <span class="slide-number">6 / 8</span>
+            <h2>Impact & Benefits</h2>
+            <div class="three-column">
+                <div class="column">
+                    <h3 style="color: #4caf50;">🌱 Environmental</h3>
+                    <ul>
+                        <li>20-25% reduction in food waste</li>
+                        <li>90% reduction in paper consumption</li>
+                        <li>Energy-efficient cloud operations</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: #2196f3;">💰 Economic</h3>
+                    <ul>
+                        <li>15-25% operational cost savings</li>
+                        <li>10-15% revenue increase</li>
+                        <li>10-15 minutes saved per student per meal</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: #9c27b0;">👥 Social</h3>
+                    <ul>
+                        <li>WCAG AA accessibility compliance</li>
+                        <li>Bilingual English/Arabic support</li>
+                        <li>Mobile-first responsive design</li>
+                        <li>Better time management for students</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="metrics" style="margin-top: 40px;">
+                <div class="metric-card">
+                    <div class="metric-value">96%</div>
+                    <div class="metric-label">Features Complete</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">78/81</div>
+                    <div class="metric-label">Requirements Done</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">Production Ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Implementation Status & Future -->
+        <div class="slide">
+            <span class="slide-number">7 / 8</span>
+            <h2>Implementation Status & Future</h2>
+            <h3>Current Status</h3>
+            <div class="progress-bar">
+                <div class="progress-fill">96% Complete</div>
+            </div>
+            <ul style="font-size: 1.2em; margin-top: 30px;">
+                <li>✅ 78 out of 81 functional requirements implemented</li>
+                <li>✅ All core features fully tested and operational</li>
+                <li>✅ Production-ready and deployed on Replit</li>
+                <li>⚠️ Minor features (email notifications, saved payment UI) in progress</li>
+            </ul>
+            <h3 style="margin-top: 50px;">Future Enhancements</h3>
+            <div class="feature-grid" style="margin-top: 20px;">
+                <div class="feature-item">
+                    <strong>📧 Notifications</strong>
+                    Email & SMS order updates
+                </div>
+                <div class="feature-item">
+                    <strong>🎯 Recommendations</strong>
+                    Personalized menu suggestions
+                </div>
+                <div class="feature-item">
+                    <strong>🎁 Loyalty Program</strong>
+                    Points-based reward system
+                </div>
+                <div class="feature-item">
+                    <strong>📱 Mobile Apps</strong>
+                    Native iOS & Android applications
+                </div>
+                <div class="feature-item">
+                    <strong>💳 Campus Card</strong>
+                    Integration with ID card system
+                </div>
+                <div class="feature-item">
+                    <strong>🏢 Multi-Location</strong>
+                    Support for multiple cafeterias
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Thank You -->
+        <div class="slide thank-you">
+            <h1>Thank You!</h1>
+            <h2>Questions?</h2>
+            <p style="font-size: 1.5em; margin-top: 60px;">We'd be happy to demonstrate the system live</p>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        <button class="nav-btn" onclick="window.print()">Print/PDF</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            if (n >= totalSlides) currentSlide = 0;
+            if (n < 0) currentSlide = totalSlides - 1;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function previousSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextSlide();
+            if (touchEndX > touchStartX + 50) previousSlide();
+        }
+    </script>
+</body>
+</html>
+

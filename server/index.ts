@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./config"; // Must be first — loads .env.local then .env before other modules
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";

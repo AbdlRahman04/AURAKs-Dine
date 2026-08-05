@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../server/config"; // Must be first — loads .env.local then .env before other modules
 import { db } from '../server/db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';

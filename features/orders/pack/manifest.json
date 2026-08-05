@@ -1,0 +1,7 @@
+{
+  "name": "orders",
+  "version": "1.0.0",
+  "tables": ["orders", "order_items", "audit_logs"],
+  "portable": false,
+  "note": "Live orders are environment-specific and are not exported via packs."
+}

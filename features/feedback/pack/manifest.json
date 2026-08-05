@@ -1,0 +1,6 @@
+{
+  "name": "feedback",
+  "version": "1.0.0",
+  "tables": ["feedback"],
+  "portable": false
+}

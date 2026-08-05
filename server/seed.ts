@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./config"; // Must be first — loads .env.local then .env before other modules
 import { db } from './db';
 import { menuItems, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -7,9 +7,10 @@ import bcrypt from 'bcryptjs';
 async function seed() {
   console.log('Seeding database...');
 
-  // Create admin user for testing
-  const adminEmail = 'admin@quickdine.com';
-  const adminPassword = 'admin';
+  // Create/update admin user for testing
+  // Credentials are configurable via env vars, with sensible defaults
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@quickdine.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
   
   const [existingAdmin] = await db.select().from(users).where(eq(users.email, adminEmail));
   
@@ -25,7 +26,11 @@ async function seed() {
     });
     console.log(`✅ Created test admin user: ${adminEmail} (password: ${adminPassword})`);
   } else {
-    console.log(`ℹ️ Admin user ${adminEmail} already exists.`);
+    // Update the password so re-running seed always resets to the known test password
+    console.log(`ℹ️ Admin user ${adminEmail} already exists — resetting password...`);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    await db.update(users).set({ password: hashedPassword, role: 'admin' }).where(eq(users.email, adminEmail));
+    console.log(`✅ Admin password reset for: ${adminEmail} (password: ${adminPassword})`);
   }
 
   // Create expanded menu items with AED prices and UAE/Middle Eastern options
@@ -452,7 +457,13 @@ async function seed() {
     },
   ];
 
-  await db.insert(menuItems).values(sampleMenuItems);
+  const existingMenu = await db.select().from(menuItems).limit(1);
+  if (existingMenu.length === 0) {
+    await db.insert(menuItems).values(sampleMenuItems);
+    console.log(`✅ Seeded ${sampleMenuItems.length} menu items`);
+  } else {
+    console.log('ℹ️ Menu items already exist — skipping menu seed');
+  }
 
   console.log('Database seeded successfully with AED prices and UAE/Middle Eastern menu items!');
 }

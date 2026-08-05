@@ -183,7 +183,7 @@ export default function RegisterPage() {
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>
               <Button
-                variant="link"
+                variant="ghost"
                 className="p-0 h-auto"
                 onClick={() => setLocation('/login')}
                 data-testid="link-login"
