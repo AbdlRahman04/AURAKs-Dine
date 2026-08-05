@@ -18,7 +18,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 const CATEGORIES = ["All", "Breakfast", "Lunch", "Snacks", "Beverages"];
 
@@ -42,12 +43,16 @@ export default function MenuBrowser() {
       ? item.descriptionAr
       : item.description;
 
+  const { isAuthenticated } = useAuth();
+
   const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
   });
 
   const { data: favorites } = useQuery<number[]>({
     queryKey: ["/api/favorites"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: isAuthenticated,
   });
 
   type FavoritePayload = { menuItemId: number; itemName: string };

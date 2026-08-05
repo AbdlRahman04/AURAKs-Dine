@@ -25,25 +25,15 @@ import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
-function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isAdmin } = useAuth();
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isAdmin) {
-      setLocation('/menu');
+    if (!isLoading && !isAuthenticated) {
+      setLocation('/login');
     }
-  }, [isAdmin, setLocation]);
-
-  if (!isAdmin) {
-    return null;
-  }
-
-  return <>{children}</>;
-}
-
-function Router() {
-  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+  }, [isLoading, isAuthenticated, setLocation]);
 
   if (isLoading) {
     return (
@@ -53,38 +43,70 @@ function Router() {
     );
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { isAdmin, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAdmin) {
+      setLocation('/menu');
+    }
+  }, [isAdmin, isLoading, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
+function HomePage() {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <MenuPage /> : <LandingPage />;
+}
+
+function Router() {
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={LandingPage} />
-          <Route path="/login" component={LoginPage} />
-          <Route path="/register" component={RegisterPage} />
-          <Route path="/:rest*" component={LandingPage} />
-        </>
-      ) : (
-        <>
-          {/* Student Routes */}
-          <Route path="/" component={MenuPage} />
-          <Route path="/menu" component={MenuPage} />
-          <Route path="/checkout" component={CheckoutPage} />
-          <Route path="/orders" component={OrdersPage} />
-          <Route path="/favorites" component={FavoritesPage} />
-          <Route path="/feedback" component={FeedbackPage} />
-          <Route path="/profile" component={ProfilePage} />
-          
-          {/* Admin Routes - with access control */}
-          <Route path="/admin" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
-          <Route path="/admin/menu" component={() => <RequireAdmin><MenuManagementPage /></RequireAdmin>} />
-          <Route path="/admin/orders" component={() => <RequireAdmin><AllOrdersPage /></RequireAdmin>} />
-          <Route path="/admin/feedback" component={() => <RequireAdmin><FeedbackManagementPage /></RequireAdmin>} />
-          <Route path="/admin/users" component={() => <RequireAdmin><UserManagementPage /></RequireAdmin>} />
-          <Route path="/admin/analytics" component={() => <RequireAdmin><AnalyticsPage /></RequireAdmin>} />
-          
-          {/* Fallback to 404 - only for unmatched routes (must have at least one character after /) */}
-          <Route path="/:rest+" component={NotFound} />
-        </>
-      )}
+      {/* Public routes */}
+      <Route path="/" component={HomePage} />
+      <Route path="/menu" component={MenuPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+
+      {/* Protected student routes */}
+      <Route path="/checkout" component={() => <RequireAuth><CheckoutPage /></RequireAuth>} />
+      <Route path="/orders" component={() => <RequireAuth><OrdersPage /></RequireAuth>} />
+      <Route path="/favorites" component={() => <RequireAuth><FavoritesPage /></RequireAuth>} />
+      <Route path="/feedback" component={() => <RequireAuth><FeedbackPage /></RequireAuth>} />
+      <Route path="/profile" component={() => <RequireAuth><ProfilePage /></RequireAuth>} />
+
+      {/* Admin routes */}
+      <Route path="/admin" component={() => <RequireAdmin><KitchenDisplayPage /></RequireAdmin>} />
+      <Route path="/admin/menu" component={() => <RequireAdmin><MenuManagementPage /></RequireAdmin>} />
+      <Route path="/admin/orders" component={() => <RequireAdmin><AllOrdersPage /></RequireAdmin>} />
+      <Route path="/admin/feedback" component={() => <RequireAdmin><FeedbackManagementPage /></RequireAdmin>} />
+      <Route path="/admin/users" component={() => <RequireAdmin><UserManagementPage /></RequireAdmin>} />
+      <Route path="/admin/analytics" component={() => <RequireAdmin><AnalyticsPage /></RequireAdmin>} />
+
+      <Route path="/:rest*">
+        {() => <NotFound />}
+      </Route>
     </Switch>
   );
 }

@@ -3,38 +3,33 @@
 // PWA functionality: offline support, caching, and app shell
 // ==============================
 
-// Cache names for different types of resources
-const SHELL_CACHE = "quickdineflow-shell-v1"; // Core app shell (HTML, manifest, icons)
-const RUNTIME_CACHE = "quickdineflow-runtime-v1"; // Dynamic assets fetched at runtime
+const SHELL_CACHE = "quickdineflow-shell-v3";
+const RUNTIME_CACHE = "quickdineflow-runtime-v3";
 
-// List of core files to cache during service worker installation
-// These are the "app shell" necessary to load the PWA offline
-const SHELL_ASSETS = [
-  "/", // Root HTML
-  "/index.html", // Main HTML
-  "/manifest.webmanifest", // PWA manifest
-  "/favicon.png", // Favicon
-  "/icons/icon-192.png", // App icons
+// Static assets safe to pre-cache (no hashed build filenames)
+const PRECACHE_ASSETS = [
+  "/manifest.webmanifest",
+  "/favicon.png",
+  "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon-512-maskable.png",
 ];
 
-// ==============================
-// Install event
-// Pre-caches the app shell so the PWA can work offline
-// ==============================
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS))
+    caches.open(SHELL_CACHE).then((cache) =>
+      Promise.allSettled(
+        PRECACHE_ASSETS.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn(`Failed to pre-cache ${url}:`, err);
+          }),
+        ),
+      ),
+    ),
   );
-  // Activate this SW immediately, bypass waiting
   self.skipWaiting();
 });
 
-// ==============================
-// Activate event
-// Cleans up old caches and takes control of clients immediately
-// ==============================
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
@@ -43,55 +38,72 @@ self.addEventListener("activate", (event) => {
         Promise.all(
           cacheNames
             .filter(
-              (name) => name !== SHELL_CACHE && name !== RUNTIME_CACHE
+              (name) => name !== SHELL_CACHE && name !== RUNTIME_CACHE,
             )
-            .map((name) => caches.delete(name)) // Delete old/unused caches
-        )
+            .map((name) => caches.delete(name)),
+        ),
       )
-      .then(() => self.clients.claim()) // Take control of all pages
+      .then(() => self.clients.claim()),
   );
 });
 
-// ==============================
-// Fetch event
-// Intercepts network requests to serve cached content when offline
-// ==============================
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Only handle GET requests (skip POST, PUT, etc.)
   if (request.method !== "GET") return;
 
-  const sameOrigin = request.url.startsWith(self.location.origin);
-  if (!sameOrigin) return; // Only handle same-origin requests
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-  // Serve app shell assets from cache first
-  if (SHELL_ASSETS.includes(new URL(request.url).pathname)) {
+  // Never intercept API requests
+  if (url.pathname.startsWith("/api/")) return;
+
+  // Navigation (HTML pages): always network-first so deploys get fresh bundle hashes
+  if (request.mode === "navigate") {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request))
+      fetch(request)
+        .then((response) => {
+          const cloned = response.clone();
+          caches.open(SHELL_CACHE).then((cache) => cache.put("/index.html", cloned));
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match("/index.html");
+          if (cached) return cached;
+          throw new Error("Offline and no cached app shell available.");
+        }),
     );
     return;
   }
 
-  // For other requests, try network first, then cache dynamically
+  // Hashed build assets: cache-first (filename changes on each deploy)
+  if (url.pathname.startsWith("/assets/")) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((response) => {
+            const cloned = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
+            return response;
+          }),
+      ),
+    );
+    return;
+  }
+
+  // Other static files: network-first with runtime cache fallback
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Clone response before caching
         const cloned = response.clone();
         caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
         return response;
       })
       .catch(async () => {
-        // If network fails, try to serve from cache
         const cached = await caches.match(request);
         if (cached) return cached;
-
-        // If navigation request (like visiting a page), return app shell
-        if (request.mode === "navigate") return caches.match("/index.html");
-
-        // Otherwise, throw error (no offline fallback)
         throw new Error("Network request failed and no cache available.");
-      })
+      }),
   );
 });
