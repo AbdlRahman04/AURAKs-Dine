@@ -5,22 +5,22 @@
 | Environment | Purpose | Location | Data rules |
 |---|---|---|---|
 | Local | Development and smoke testing | `localhost:5000` or separate Vite/API ports | Use local PostgreSQL and test data |
-| Production | Deployed user traffic | Render service defined by `render.yaml` | Use production secrets and managed PostgreSQL |
+| Production | Deployed user traffic | Vercel frontend + Render backend + Neon PostgreSQL | Use production secrets and managed PostgreSQL |
 
 ## Prerequisites
 
 - Node.js 18 or newer.
-- PostgreSQL for local development or a Render PostgreSQL database.
+- PostgreSQL for local development or a Neon PostgreSQL database.
 - Required environment variables from `.env.example`.
 - Stripe test keys for development; production keys only in protected deployment configuration.
 
 ## Deploy
 
 1. Push the approved source changes to the repository.
-2. Deploy using the Render Blueprint in `render.yaml`.
-3. Configure `STRIPE_SECRET_KEY` and `VITE_STRIPE_PUBLIC_KEY` in Render without committing their values.
-4. To enable password reset emails, set `APP_URL` to the deployed public origin, add a Resend API key as `RESEND_API_KEY`, and set `PASSWORD_RESET_FROM_EMAIL` to a sender verified with Resend. Without these settings, password reset requests return a service unavailable response.
-5. Confirm the service builds with `npm run build`.
+2. Deploy the Express backend to Render and the React frontend to Vercel.
+3. Configure the Neon pooled `DATABASE_URL`, CORS origin, and secrets without committing their values.
+4. To enable password reset emails, set `APP_URL` to the deployed frontend origin, add a Resend API key as `RESEND_API_KEY`, and set `PASSWORD_RESET_FROM_EMAIL` to a sender verified with Resend. Without these settings, password reset requests return a service unavailable response.
+5. Confirm the services build with `npm run build`.
 6. Apply the database schema and seed data with `npm run db:setup` when appropriate.
 7. Confirm the `/api/health` health check and key user flows.
 

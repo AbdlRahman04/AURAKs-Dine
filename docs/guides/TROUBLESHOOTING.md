@@ -1,85 +1,104 @@
-# Troubleshooting Registration Issues
+# QuickDineFlow Troubleshooting
 
-## Registration Error: "Failed to register: Unknown error"
+## Application does not start
 
-If you're getting this error when trying to register a new account, it's likely because the database tables haven't been created yet.
-
-### Solution 1: Initialize Database Tables
-
-Run this command to create all necessary database tables:
+Confirm dependencies and environment configuration:
 
 ```bash
-npm run db:init
+npm install
+npm run check
 ```
 
-If this command fails, try Solution 2.
+Make sure `.env.local` exists and contains a valid `DATABASE_URL` and `SESSION_SECRET`. Start the application with:
 
-### Solution 2: Check Your Database Connection
-
-1. **Verify your DATABASE_URL in `.env` file:**
-   - It should look like: `postgresql://user:password@host:port/database?sslmode=require`
-   - For Neon databases, you can get the connection string from your Neon dashboard
-
-2. **Test the connection:**
-   - Make sure your database is accessible
-   - Check if your database provider requires SSL connections
-
-### Solution 3: Manual Table Creation
-
-If the automatic initialization doesn't work, you can create the tables manually using your database management tool (pgAdmin, DBeaver, or Neon's SQL editor).
-
-The main table you need is the `users` table. Here's the SQL:
-
-```sql
-CREATE TABLE IF NOT EXISTS users (
-  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR UNIQUE NOT NULL,
-  password VARCHAR,
-  first_name VARCHAR,
-  last_name VARCHAR,
-  profile_image_url VARCHAR,
-  student_id VARCHAR(10) UNIQUE,
-  role VARCHAR(20) NOT NULL DEFAULT 'student',
-  preferred_pickup_location VARCHAR,
-  phone_number VARCHAR,
-  dietary_restrictions TEXT[],
-  allergies TEXT[],
-  stripe_customer_id VARCHAR,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
+```bash
+npm run dev
 ```
 
-### Solution 4: Check Server Logs
+If port `5000` is already in use, set another port in `.env.local`:
 
-1. Look at the terminal where the server is running
-2. Try to register again
-3. Check the error message - it should now show more details about what went wrong
-4. The improved error logging will show:
-   - If the table doesn't exist: "Database table 'users' does not exist"
-   - If there's a duplicate: "Email or student ID already exists"
-   - Other database errors with more details
+```env
+PORT=5001
+```
 
-### Common Issues
+Then open `http://localhost:5001`.
 
-**Issue:** "Database table 'users' does not exist"
-- **Fix:** Run `npm run db:init` to create the tables
+## Database connection errors
 
-**Issue:** "Email already registered"
-- **Fix:** Use a different email address, or the account already exists
+Check that PostgreSQL is running and that the connection string points to the intended database:
 
-**Issue:** Connection errors
-- **Fix:** Check your DATABASE_URL in the `.env` file
-- Make sure your database is running and accessible
-- Verify network/firewall settings
+```env
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/quickdineflow
+```
 
-**Issue:** "getaddrinfo ENOTFOUND host"
-- **Fix:** Your DATABASE_URL is incorrect or contains placeholder values
-- Update your `.env` file with the correct database connection string
+Common causes:
 
-## After Fixing
+- PostgreSQL is stopped;
+- username or password is incorrect;
+- the database does not exist;
+- the connection string contains unescaped URL characters;
+- a hosted database requires SSL or a pooled connection string.
 
-Once the tables are created, try registering again. The registration should work!
+For a new local database, run:
 
-If you still encounter issues, check the server terminal output for detailed error messages.
+```bash
+npm run db:setup-local-full
+```
 
+If the database already exists, run:
+
+```bash
+npm run db:setup
+```
+
+Do not manually create individual application tables unless the schema tools fail and the database has been reviewed first.
+
+## Registration or login fails
+
+1. Confirm the server is running.
+2. Confirm the database schema has been applied.
+3. Check the server terminal for the actual error.
+4. Confirm the browser is calling the correct API origin.
+5. Confirm cookies are enabled.
+
+For the split deployment, verify:
+
+- Vercel has `VITE_API_URL` set to the Render backend URL;
+- Render has `FRONTEND_ORIGIN` set to the exact Vercel origin;
+- authenticated requests send credentials;
+- production cookies use HTTPS and `SameSite=None`.
+
+## Admin access fails
+
+Use the configured seed administrator or promote an existing user:
+
+```bash
+npm run make-admin -- your-email@example.com
+```
+
+Log out and log back in after changing the role so the session is refreshed. See [Admin Access](ADMIN_ACCESS.md).
+
+## Health check fails after deployment
+
+Open:
+
+```text
+https://your-backend.onrender.com/api/health
+```
+
+Then inspect Render logs for:
+
+- missing environment variables;
+- database connection failures;
+- migration or seed errors;
+- startup crashes.
+
+The free Render service may sleep after inactivity. The first request after sleep can take longer than usual.
+
+## Safe recovery process
+
+1. Read the server logs before changing data.
+2. Confirm the active `DATABASE_URL`.
+3. Verify a database recovery option before schema changes.
+4. Run `npm run db:push` only against the intended database.
+5. Do not commit secrets while troubleshooting.

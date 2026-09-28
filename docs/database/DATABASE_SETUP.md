@@ -105,7 +105,7 @@ For the broader local workflow, see [README.md](../../README.md). The recommende
 
 Only continue here after the local app works. A hosted database is useful when teammates need shared data or when you are preparing a deployment; it is not required for cloning, setup, or local use.
 
-- **Render:** The repository's deployment target provisions a hosted PostgreSQL database with the web service. Follow [Render deployment instructions](../RENDER_DEPLOY.md) when you are ready to deploy.
-- **Neon:** Neon is an optional hosted PostgreSQL provider. If you use it, configure its connection string in the deployment environment, not in a committed file. Keep local development pointed at your local database unless you intentionally need shared data.
+- **Neon:** The recommended free deployment database. Use the pooled connection string as `DATABASE_URL` on the Render backend. Configure it in the deployment environment, not in a committed file.
+- **Render:** Hosts the Express backend only. Follow [Render backend deployment instructions](../RENDER_DEPLOY.md) when you are ready to deploy.
 
 Never commit `.env`, `.env.local`, database passwords, session secrets, or real payment keys.

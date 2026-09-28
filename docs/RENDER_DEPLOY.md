@@ -1,20 +1,23 @@
 # Render Deployment Guide
 
-Deploy QuickDineFlow from GitHub to Render (web service + Postgres).
+Deploy the QuickDineFlow Express backend to Render and connect it to Neon PostgreSQL.
 
 ## Architecture
 
 - **Web service:** Node build (`npm run build`) + start (`npm run start`)
-- **Database:** Render Postgres — connection string injected as `DATABASE_URL`
+- **Database:** Neon PostgreSQL — pooled connection string configured as `DATABASE_URL`
 - Driver: standard `pg` (same as local). Neon serverless is only used if the URL contains `neon.tech`.
 
 ## Steps
 
-1. Push this repo to GitHub.
-2. In [Render](https://dashboard.render.com), create a **Blueprint** from `render.yaml` (or New → Blueprint).
-3. Set manual env vars on the web service:
+1. Push this repository to GitHub.
+2. Create a Render web service connected to the repository.
+3. Set the Neon pooled connection string and these environment variables on the web service:
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+   - `FRONTEND_ORIGIN`
+   - `APP_URL`
    - `STRIPE_SECRET_KEY`
-   - `VITE_STRIPE_PUBLIC_KEY` (needed at **build** time for Vite)
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` (required before running the seed; use a unique password of at least 12 characters)
 4. After first deploy, open the Render shell (or use a one-off job) and run:
 
@@ -34,20 +37,32 @@ Deploy QuickDineFlow from GitHub to Render (web service + Postgres).
    SMOKE_TARGET=render SMOKE_BASE_URL=https://YOUR-SERVICE.onrender.com npm run smoke
    ```
 
+7. Deploy the React frontend to Vercel with:
+   - `VITE_API_URL=https://YOUR-SERVICE.onrender.com`
+   - `VITE_STRIPE_PUBLIC_KEY=pk_test_...`
+
 ## Environment variables
 
 | Variable | Source |
 |----------|--------|
-| `DATABASE_URL` | Render Postgres (from blueprint) |
-| `SESSION_SECRET` | Auto-generated in blueprint |
+| `DATABASE_URL` | Neon pooled PostgreSQL connection string |
+| `SESSION_SECRET` | Manually generated secret |
+| `FRONTEND_ORIGIN` | Vercel frontend origin |
+| `APP_URL` | Public Vercel frontend origin |
 | `NODE_ENV` | `production` |
 | `STRIPE_SECRET_KEY` | Manual |
-| `VITE_STRIPE_PUBLIC_KEY` | Manual (build-time) |
 | `PORT` | Set by Render |
+
+Vercel-only build variables:
+
+| Variable | Source |
+|----------|--------|
+| `VITE_API_URL` | Render backend URL |
+| `VITE_STRIPE_PUBLIC_KEY` | Stripe publishable test key |
 
 ## Notes
 
-- Free Postgres may sleep; first request can be slow.
+- The free Render backend may sleep; the first request can be slow.
 - Do not commit `.env` or `.env.local`.
-- Before deploying the admin cost and analytics update, apply `migrations/20260927_admin_analytics_cost_snapshots.sql` to the Render database. It only adds nullable columns and leaves historical costs unknown. Do not use `db:push` if it prompts to truncate or otherwise modify unrelated data; resolve that schema drift separately.
-- For other schema changes, run `npm run db:push` against the Render database (shell or local with Render URL temporarily — prefer shell).
+- Before deploying the admin cost and analytics update, apply `migrations/20260927_admin_analytics_cost_snapshots.sql` to the Neon database. It only adds nullable columns and leaves historical costs unknown. Do not use `db:push` if it prompts to truncate or otherwise modify unrelated data; resolve that schema drift separately.
+- For other schema changes, run `npm run db:push` against the intended Neon database, preferably from the Render shell.

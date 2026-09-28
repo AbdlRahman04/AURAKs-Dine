@@ -58,7 +58,7 @@ After promoting a user to admin:
 
 1. **Log out** from your current session
 2. **Log back in** with the admin account
-3. **Navigate to** `https://your-app.onrender.com/admin`
+3. **Navigate to** your deployed frontend's `/admin` route, for example `https://your-frontend.vercel.app/admin`
 4. You should now see the admin dashboard
 
 ## Admin Panel Features
@@ -88,12 +88,12 @@ If the script says "User not found":
 2. Check that you're using the correct email address
 3. The script will show you all available users if it can't find your email
 
-### On Render Deployment
+### On Hosted Deployment
 
-If you're deploying on Render:
+If the backend is deployed on Render and the frontend on Vercel:
 1. Make sure your database is properly connected
-2. Run the make-admin script locally pointing to your production database, OR
-3. Use Render's database console to run the SQL update directly
+2. Run the `make-admin` script from a controlled environment pointing to the intended Neon database, OR
+3. Use the database provider's SQL editor to run the role update directly
 
 ## Security Note
 

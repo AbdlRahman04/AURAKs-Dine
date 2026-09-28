@@ -1,11 +1,11 @@
 # QuickDineFlow Development Guide
 
-Local-first workflow for building and testing features before deploying to Render.
+Local-first workflow for building and testing features before deploying the frontend to Vercel and the API to Render.
 
 ## Stack
 
 - **Runtime:** Node.js 20.19+ or 22.12+ (packages in `node_modules/` via `npm install`)
-- **Database:** PostgreSQL (local for development, Render Postgres for deployment)
+- **Database:** PostgreSQL (local for development, Neon Postgres for deployment)
 - **ORM:** Drizzle (`shared/schema.ts` re-exports feature schemas)
 - **Auth:** Email/password via Passport (`server/localAuth.ts`)
 
@@ -77,8 +77,8 @@ Packs do not export users, passwords, sessions, live orders, or Stripe payment m
 
 ## Feature workflow
 
-Use [FEATURE_DEVELOPMENT_PROMPT.md](FEATURE_DEVELOPMENT_PROMPT.md) for the project feature-development prompt.
+Keep feature-specific backend logic inside `features/<feature>/` and update shared schemas when a feature changes persisted data.
 
 ## Deploy
 
-See [RENDER_DEPLOY.md](RENDER_DEPLOY.md).
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for the overall deployment model and [RENDER_DEPLOY.md](RENDER_DEPLOY.md) for the backend service.

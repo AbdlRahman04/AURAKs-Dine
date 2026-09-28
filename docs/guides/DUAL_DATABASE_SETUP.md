@@ -18,7 +18,7 @@ npm run db:setup-local-full
 
 ## Deployment
 
-Render provides `DATABASE_URL` to the web service defined in [`render.yaml`](../../render.yaml). Follow the [Render deployment guide](../RENDER_DEPLOY.md) to configure deployment-only secrets through Render.
+Neon provides the pooled `DATABASE_URL` used by the Render web service. Follow the [Render backend deployment guide](../RENDER_DEPLOY.md) to configure the hosted database connection and deployment-only secrets.
 
 Neon is also supported when its pooled PostgreSQL connection string is provided as `DATABASE_URL`. Do not put a hosted database connection string in a committed file.
 

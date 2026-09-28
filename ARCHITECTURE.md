@@ -53,7 +53,7 @@ The application supports authenticated users and administrator access. Frontend 
 
 - Local secrets and connection settings belong in `.env` or `.env.local` and must not be committed.
 - `.env.example` documents expected variable names without real secret values.
-- Render configuration is defined in `render.yaml`.
+- Hosted deployment configuration is documented in `DEPLOYMENT.md` and `docs/RENDER_DEPLOY.md`.
 - `NODE_ENV`, `DATABASE_URL`, `SESSION_SECRET`, and Stripe keys differ by environment.
 
 ## Important trade-offs

@@ -91,36 +91,42 @@ npm run smoke
 
 Local PostgreSQL is the primary development target. Set up hosted deployment after the local app and database workflows are working.
 
-### Render: recommended full-stack deployment
+### Free split deployment: Vercel + Render + Neon
 
-The repository includes [`render.yaml`](render.yaml), which provisions a Render web service and Render PostgreSQL database.
+The recommended free deployment uses Vercel for the React frontend, Render for the Express API, and Neon for PostgreSQL. Follow [`DEPLOYMENT.md`](DEPLOYMENT.md) and [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) for deployment instructions.
 
 1. Push the repository to GitHub.
-2. In the [Render Dashboard](https://dashboard.render.com), choose **New → Blueprint** and select the repository.
-3. Confirm the services defined in `render.yaml`.
+2. Create a Render web service connected to the repository.
+3. Configure the Neon pooled connection string as `DATABASE_URL`.
 4. Add these environment variables to the Render web service:
 
    - `STRIPE_SECRET_KEY`
-   - `VITE_STRIPE_PUBLIC_KEY` — required during the frontend build
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+   - `FRONTEND_ORIGIN`
+   - `APP_URL`
    - `ADMIN_EMAIL`
    - `ADMIN_PASSWORD`
 
-   Render supplies `DATABASE_URL` from the linked PostgreSQL database and generates `SESSION_SECRET` from the blueprint.
-
-5. Deploy the service. The build and start commands are already configured:
+5. Deploy the service. The build and start commands are:
 
    ```text
    npm install && npm run build
    npm run start
    ```
 
-6. After the first deploy, open the Render service shell and initialize the database:
+6. After the first deploy, open the Render service shell and initialize the Neon database:
 
    ```bash
    npm run db:setup
    ```
 
-7. Verify the deployed health endpoint:
+7. Deploy the frontend to Vercel with these build-time variables:
+
+   - `VITE_API_URL` — the Render service URL
+   - `VITE_STRIPE_PUBLIC_KEY` — the Stripe publishable test key
+
+8. Verify the deployed health endpoint:
 
    ```text
    https://<your-service>.onrender.com/api/health
@@ -134,18 +140,7 @@ SMOKE_TARGET=render SMOKE_BASE_URL=https://<your-service>.onrender.com npm run s
 
 See [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) for Render-specific operational notes.
 
-### Vercel: frontend-only option
-
-The current repository is not configured for a complete Vercel deployment. The Express server starts a long-running process, uses server-side sessions, and supports WebSockets; the frontend also calls same-origin `/api` and `/ws` routes. There is no `vercel.json` or Vercel serverless adapter in the project.
-
-To use Vercel, deploy the backend and database on Render (or another Node-compatible host) first, then adapt the frontend to use the backend URL and configure CORS, cookies, API routing, and WebSockets. After that adaptation, deploy the Vite frontend to Vercel with:
-
-```bash
-npm install
-npm run build
-```
-
-For the current codebase, deploy the combined application to Render instead.
+Vercel hosts only the frontend in this architecture. The Express API, sessions, WebSockets, and PostgreSQL access remain on the Render backend and Neon database. See [docs/RENDER_DEPLOY.md](docs/RENDER_DEPLOY.md) for the cross-origin cookie and CORS requirements.
 
 ## Useful commands
 
@@ -181,6 +176,6 @@ Place local menu images in `client/public/menu-images/`. Reference them in the a
 
 - [`DEPLOYMENT.md`](DEPLOYMENT.md) — deployment and operations overview
 - [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) — Render deployment details
-- [`docs/guides/DEVELOPMENT_GUIDE.md`](docs/guides/DEVELOPMENT_GUIDE.md) — development workflow
+- [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md) — development workflow
 - [`docs/guides/ADMIN_ACCESS.md`](docs/guides/ADMIN_ACCESS.md) — admin access management
 - [`SECURITY.md`](SECURITY.md) — security and privacy notes

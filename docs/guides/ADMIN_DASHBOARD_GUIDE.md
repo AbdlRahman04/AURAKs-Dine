@@ -21,7 +21,7 @@ This guide will help you understand and use all the features available in the Qu
 
 1. **Make sure you have admin access** (see `ADMIN_ACCESS.md` if you need to promote your account)
 2. **Log in** to your account
-3. **Navigate to** `https://your-app.onrender.com/admin`
+3. **Navigate to** your deployed frontend's `/admin` route, for example `https://your-frontend.vercel.app/admin`
 
 ### Step 2: Understanding the Layout
 
