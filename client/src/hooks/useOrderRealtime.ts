@@ -16,8 +16,10 @@ export function useOrderRealtime() {
     const connect = () => {
       if (disposed) return;
 
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+      const configuredApiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+      const socketBase = configuredApiUrl || window.location.origin;
+      const websocketUrl = socketBase.replace(/^http/, "ws").replace(/\/$/, "");
+      socket = new WebSocket(`${websocketUrl}/ws`);
 
       socket.onopen = () => {
         reconnectDelay.current = 1_000;

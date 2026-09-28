@@ -6,6 +6,21 @@ import { observeRequests } from "./observability";
 
 const app = express();
 
+const frontendOrigin = process.env.FRONTEND_ORIGIN?.replace(/\/$/, "");
+if (frontendOrigin) {
+  app.use((req, res, next) => {
+    const requestOrigin = req.headers.origin;
+    if (requestOrigin === frontendOrigin) {
+      res.header("Access-Control-Allow-Origin", frontendOrigin);
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header("Access-Control-Allow-Headers", "Content-Type");
+      res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+    }
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+}
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

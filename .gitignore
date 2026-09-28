@@ -42,7 +42,6 @@ server/START_SERVER_WITH_NEON.md
 scripts/generate_requirements_doc.py
 
 # Local-only planning and academic artifacts
-docs/FREE_DEPLOYMENT_STRATEGY.md
 docs/FRONTEND_ONLY_STRATEGY.md
 docs/FEATURE_DEVELOPMENT_PROMPT.md
 docs/PROJECT_REPORT_GUIDE.md

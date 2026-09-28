@@ -1,6 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { queryClient } from "./lib/queryClient";
+import { apiUrl, queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -183,7 +183,7 @@ function ClientObservability() {
         ? navigation?.loadEventEnd || navigation?.domContentLoadedEventEnd || performance.now()
         : performance.now() - routeStartedAt.current;
       const payload = JSON.stringify({ kind: "page_load", page, durationMs: Math.max(0, durationMs) });
-      void fetch("/api/observability/events", {
+      void fetch(apiUrl("/api/observability/events"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: payload,
@@ -211,7 +211,7 @@ function ClientObservability() {
     const report = (event: "script_error" | "unhandled_rejection" | "resource_error") => {
       const page = telemetryPages.has(window.location.pathname) ? window.location.pathname : undefined;
       if (!page) return;
-      void fetch("/api/observability/events", {
+      void fetch(apiUrl("/api/observability/events"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "client_error", event, page }),

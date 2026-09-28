@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { apiUrl } from '@/lib/queryClient';
 
 type MonitoringData = {
   generatedAt: string;
@@ -101,7 +102,7 @@ export default function MonitoringPage() {
   const query = useQuery<MonitoringData>({
     queryKey: ['/api/observability'],
     queryFn: async () => {
-      const response = await fetch('/api/observability', { credentials: 'include', cache: 'no-store' });
+      const response = await fetch(apiUrl('/api/observability'), { credentials: 'include', cache: 'no-store' });
       if (!response.ok) throw new Error('We could not load app health. Please try again.');
       return response.json();
     },

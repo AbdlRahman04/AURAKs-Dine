@@ -13,6 +13,7 @@ This folder contains the maintained documentation that ships with the repository
 
 - [Local development workflow](DEVELOPMENT_GUIDE.md)
 - [Local database setup](database/DATABASE_SETUP.md)
+- [Free deployment strategy](FREE_DEPLOYMENT_STRATEGY.md)
 - [Render backend deployment](RENDER_DEPLOY.md)
 - [Troubleshooting](guides/TROUBLESHOOTING.md)
 

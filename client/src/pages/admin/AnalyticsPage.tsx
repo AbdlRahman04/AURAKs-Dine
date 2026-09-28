@@ -29,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
+import { apiUrl } from '@/lib/queryClient';
 
 type Summary = {
   sales: number;
@@ -162,7 +163,7 @@ export default function AnalyticsPage() {
     enabled: rangeIsValid,
     queryFn: async () => {
       const params = new URLSearchParams({ startDate, endDate });
-      const response = await fetch(`/api/analytics?${params}`, { credentials: 'include' });
+      const response = await fetch(apiUrl(`/api/analytics?${params}`), { credentials: 'include' });
       if (!response.ok) throw new Error('Could not load analytics for the selected dates.');
       return response.json();
     },
@@ -172,7 +173,7 @@ export default function AnalyticsPage() {
     setExporting(true);
     try {
       const params = new URLSearchParams({ startDate, endDate });
-      const response = await fetch(`/api/analytics/export?${params}`, { credentials: 'include' });
+      const response = await fetch(apiUrl(`/api/analytics/export?${params}`), { credentials: 'include' });
       if (!response.ok) throw new Error('The report could not be exported. Please try again.');
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
