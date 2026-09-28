@@ -10,10 +10,7 @@ QuickDineFlow uses PostgreSQL databases. The database connection is configured t
 
 ### Where Database Configuration is Stored
 
-The database connection is configured in **environment variables**, not in files within the `database/` folder. The `database/` folder contains:
-- SQL schema files (`mysql_schema.sql`) - for reference/documentation
-- Setup guides and documentation
-- **NOT** the actual database connection configuration
+The database connection is configured in **environment variables**. The application schema is defined in TypeScript with Drizzle; the `database/` folder contains documentation, not the live database or its connection configuration.
 
 ### Environment Variables
 
@@ -23,7 +20,7 @@ The database connection is stored in your `.env` file (or Replit Secrets):
 DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 ```
 
-## Accessing Different Database Types
+## Accessing PostgreSQL Environments
 
 ### 1. Neon Database (Cloud PostgreSQL)
 
@@ -138,11 +135,6 @@ DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
    - **Location**: `shared/schema.ts`
    - **Used by**: Application code for type-safe database operations
 
-2. **`database/mysql_schema.sql`**
-   - **Purpose**: SQL schema reference (for MySQL compatibility reference)
-   - **Location**: `database/mysql_schema.sql`
-   - **Note**: This is for reference only; the app uses PostgreSQL
-
 3. **`drizzle.config.ts`**
    - **Purpose**: Drizzle Kit configuration for migrations
    - **Reads**: `process.env.DATABASE_URL`
@@ -242,5 +234,5 @@ console.log(process.env.DATABASE_URL)
 - **Configuration files**: `.env` (local) or Replit Secrets (Replit)
 - **Connection code**: `server/db.ts`
 - **Schema definitions**: `shared/schema.ts`
-- **The `database/` folder**: Contains documentation and SQL reference files, NOT connection configuration
+- **The `database/` folder**: Contains database documentation, NOT connection configuration
 

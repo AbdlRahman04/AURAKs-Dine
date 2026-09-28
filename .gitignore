@@ -14,6 +14,11 @@ exports/
 # IDE
 .vscode/
 .idea/
+.cursor/
+
+# Local AI tooling and package-manager state
+.agents/
+.config/
 
 # Local development
 .local/
@@ -27,7 +32,8 @@ yarn-error.log*
 # OS
 Thumbs.db
 
-# Local-only notes (committed docs/ are kept for the team)
+# Local-only notes and superseded project documentation.
+# Maintained documentation belongs in docs/ and is committed with the project.
 DEVELOPER_NOTES.md
 FIX_SESSION_TIMEOUT.md
 Project Documentation/

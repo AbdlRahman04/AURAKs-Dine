@@ -5,15 +5,12 @@ import MenuHero from "@/components/student/MenuHero";
 
 export default function MenuPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-menu student-page-shell min-h-screen flex flex-col">
       <StudentHeader />
-
-      {/* New hero banner section */}
-      <MenuHero />
-
-      <div className="flex-grow mt-6">
+      <main id="main-content" className="flex-1">
+        <MenuHero />
         <MenuBrowser />
-      </div>
+      </main>
 
       <Footer />
     </div>

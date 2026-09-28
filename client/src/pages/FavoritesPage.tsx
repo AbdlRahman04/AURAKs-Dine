@@ -16,8 +16,9 @@ export default function FavoritesPage() {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  const { data: favorites, isLoading } = useQuery<MenuItem[]>({
+  const { data: favorites, isLoading, isError, refetch } = useQuery<MenuItem[]>({
     queryKey: ['/api/favorites/items'],
+    refetchOnMount: 'always',
   });
 
   const removeFavoriteMutation = useMutation({
@@ -43,7 +44,7 @@ export default function FavoritesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-page-shell student-favorites-page min-h-screen bg-background flex flex-col">
       <StudentHeader />
       <div className="flex-grow">
 
@@ -67,6 +68,12 @@ export default function FavoritesPage() {
               </Card>
             ))}
           </div>
+        ) : isError && !favorites ? (
+          <Card role="alert" className="p-8 text-center">
+            <h2 className="mb-2 text-lg font-semibold">We couldn&apos;t load your favorites</h2>
+            <p className="mb-5 text-sm text-muted-foreground">Check your connection and try again.</p>
+            <Button variant="outline" onClick={() => refetch()}>Try again</Button>
+          </Card>
         ) : favorites && favorites.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map((item) => (
@@ -87,8 +94,11 @@ export default function FavoritesPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-2 right-2 bg-background/80 backdrop-blur hover:bg-background"
+                    className="favorite-remove-button"
                     onClick={() => removeFavoriteMutation.mutate(item.id)}
+                    disabled={removeFavoriteMutation.isPending}
+                    aria-label={`Remove ${item.name} from favorites`}
+                    title="Remove from favorites"
                     data-testid={`button-unfavorite-${item.id}`}
                   >
                     <Heart className="w-5 h-5 text-red-500 fill-red-500" />

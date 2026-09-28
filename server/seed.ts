@@ -3,14 +3,17 @@ import { db } from './db';
 import { menuItems, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { regionalDishes } from '../features/menu/seedData';
 
 async function seed() {
   console.log('Seeding database...');
 
-  // Create/update admin user for testing
-  // Credentials are configurable via env vars, with sensible defaults
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@quickdine.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+  // Never create or reset an administrator with a publicly guessable default.
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword || adminPassword.length < 12) {
+    throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD (at least 12 characters) before seeding.');
+  }
   
   const [existingAdmin] = await db.select().from(users).where(eq(users.email, adminEmail));
   
@@ -24,13 +27,13 @@ async function seed() {
       lastName: 'Admin',
       role: 'admin',
     });
-    console.log(`✅ Created test admin user: ${adminEmail} (password: ${adminPassword})`);
+    console.log(`✅ Created admin user: ${adminEmail}`);
   } else {
-    // Update the password so re-running seed always resets to the known test password
+    // Re-running the seed resets this admin account to the explicitly configured password.
     console.log(`ℹ️ Admin user ${adminEmail} already exists — resetting password...`);
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     await db.update(users).set({ password: hashedPassword, role: 'admin' }).where(eq(users.email, adminEmail));
-    console.log(`✅ Admin password reset for: ${adminEmail} (password: ${adminPassword})`);
+    console.log(`✅ Admin password reset for: ${adminEmail}`);
   }
 
   // Create expanded menu items with AED prices and UAE/Middle Eastern options
@@ -457,15 +460,25 @@ async function seed() {
     },
   ];
 
-  const existingMenu = await db.select().from(menuItems).limit(1);
+  const existingMenu = await db.select({ name: menuItems.name }).from(menuItems);
   if (existingMenu.length === 0) {
-    await db.insert(menuItems).values(sampleMenuItems);
-    console.log(`✅ Seeded ${sampleMenuItems.length} menu items`);
+    await db.insert(menuItems).values([...sampleMenuItems, ...regionalDishes]);
+    console.log(`✅ Seeded ${sampleMenuItems.length + regionalDishes.length} menu items`);
   } else {
-    console.log('ℹ️ Menu items already exist — skipping menu seed');
+    const existingNames = new Set(existingMenu.map((item) => item.name));
+    const missingRegionalDishes = regionalDishes.filter(
+      (item) => !existingNames.has(item.name),
+    );
+
+    if (missingRegionalDishes.length > 0) {
+      await db.insert(menuItems).values(missingRegionalDishes);
+      console.log(`✅ Added ${missingRegionalDishes.length} new regional dishes`);
+    } else {
+      console.log('ℹ️ Regional dishes already exist — skipping menu additions');
+    }
   }
 
-  console.log('Database seeded successfully with AED prices and UAE/Middle Eastern menu items!');
+  console.log('Database seeded successfully with AED prices and regional Middle Eastern menu items!');
 }
 
 seed()

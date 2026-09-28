@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   varchar,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -25,7 +26,10 @@ export const feedback = pgTable("feedback", {
   adminResponse: text("admin_response"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("feedback_user_created_idx").on(table.userId, table.createdAt),
+  index("feedback_order_id_idx").on(table.orderId),
+]);
 
 export const insertFeedbackSchema = createInsertSchema(feedback).omit(
   { id: true, status: true, adminResponse: true, createdAt: true, updatedAt: true } as any,

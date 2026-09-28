@@ -119,7 +119,8 @@ Manage your entire menu - add new items, edit existing ones, set prices, mark it
    - **Description (Arabic)** - Optional Arabic description
    - **Category** * - Select from: Breakfast, Lunch, Dinner, Beverages, Snacks, Desserts, Salads, Sandwiches, Specials
    - **Price (AED)** * - Set the price in UAE Dirhams
-   - **Image URL** - Add a link to an image (optional)
+   - **Menu Image** - Drop an image or choose one from your device; supported images are converted to optimized WebP and stored in PostgreSQL
+   - **Image URL fallback** - Optionally use an existing hosted or bundled image URL
    - **Prep Time** - Estimated preparation time in minutes
    - **Available for Order** - Toggle to show/hide from menu
    - **Special Item** - Mark as today's special
@@ -160,6 +161,8 @@ Manage your entire menu - add new items, edit existing ones, set prices, mark it
 
 ### Tips
 - Use high-quality images for better customer appeal
+- Prefer uploading an image; the server resizes it and stores the WebP binary in the database
+- Images must be no larger than 10 MB before conversion
 - Set accurate prep times to help customers plan
 - Use dietary tags to help customers with restrictions
 - Mark popular items as specials to boost sales
@@ -260,58 +263,38 @@ Dismissed (if not actionable)
 **Location**: `/admin/analytics`
 
 ### What It Does
-View business insights, sales trends, popular items, and performance metrics.
+View filtered sales and operating performance, compare it with the preceding period, and export the summary and detailed records together.
 
 ### How to Use
 
 #### Key Metrics
 
-The dashboard displays three main metrics:
-- **Total Revenue** - Total sales in AED
-- **Total Orders** - Number of orders placed
-- **Average Order Value** - Average amount per order
+The dashboard includes sales, order volume, average order value, cancellations, recorded gross contribution, time to ready, feedback rating, and completed orders. It also shows daily sales, hourly demand, all menu item results, payment and order status, turnaround records, and feedback categories.
+
+Gross contribution is calculated from the unit cost saved with each order item. It excludes labor, overhead, and payment fees. If any line items have no recorded cost, the dashboard marks contribution as unavailable and shows cost coverage. Older orders remain cost-unknown unless their original costs can be verified.
 
 #### Date Range Selection
 
-Use the dropdown to view:
-- **Today** - Current day's data
-- **Last 7 Days** - Week overview
-- **Last 30 Days** - Month overview
+Choose Today, 7 days, or 30 days, or enter a custom start and end date. Date boundaries use Asia/Dubai time. KPI comparisons use the immediately preceding period of equal length.
 
 #### Charts and Reports
 
-1. **Revenue Over Time**
-   - Line chart showing daily revenue trends
-   - Export to CSV for external analysis
-
-2. **Popular Items**
-   - Top-selling menu items
-   - Shows quantity sold and revenue generated
-   - Export to CSV
-
-3. **Peak Hours**
-   - Bar chart showing order volume by hour
-   - Identify busiest times
-   - Export to CSV
-
-4. **Order Trends**
-   - Bar chart showing daily order volume
-   - Track growth over time
-   - Export to CSV
+1. **Sales by day** shows subtotals for non-cancelled orders.
+2. **Demand by hour** shows all 24 hours, including quiet periods.
+3. **Menu item performance** lists item quantities, sales, and cost coverage.
+4. **Payments, status, turnaround, and feedback** support collection, staffing, and service decisions.
 
 #### Exporting Data
 
-Click "Export CSV" buttons to download data for:
-- External analysis
-- Reporting
-- Spreadsheet applications
+Click **Export full report** to download an Excel workbook. It includes KPI comparisons, daily and hourly trends, item performance, every matching order and order item, payment status, turnaround records, and feedback metadata. Customer-identifying fields and free-text feedback are omitted.
 
 ### Tips
 - Check analytics regularly to spot trends
 - Use peak hours data to optimize staffing
 - Monitor popular items to ensure stock
 - Track revenue trends to set goals
-- Export data monthly for record-keeping
+- Keep menu unit costs current to improve contribution coverage
+- Export the full workbook for reporting and record-keeping
 
 ---
 

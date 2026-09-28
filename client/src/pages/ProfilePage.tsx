@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -14,7 +15,7 @@ import Footer from '@/components/Footer';
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { data: user } = useQuery<User>({
+  const { data: user, isLoading, refetch } = useQuery<User>({
     queryKey: ['/api/auth/user'],
   });
 
@@ -91,7 +92,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-page-shell student-profile-page min-h-screen bg-background flex flex-col">
       <StudentHeader />
       <div className="flex-grow">
 
@@ -104,6 +105,22 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {isLoading ? (
+              <div className="space-y-6" role="status" aria-label="Loading profile" aria-busy="true">
+                <div className="flex items-center gap-4"><Skeleton className="h-20 w-20 rounded-full" /><div className="space-y-2"><Skeleton className="h-4 w-48" /><Skeleton className="h-3 w-28" /></div></div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {Array.from({ length: 7 }, (_, index) => <div key={index} className="space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-10 w-full" /></div>)}
+                </div>
+                <Skeleton className="h-11 w-full" />
+                <span className="sr-only">Loading profile</span>
+              </div>
+            ) : !user ? (
+              <div className="py-8 text-center" role="alert">
+                <p className="mb-2 font-medium">We couldn&apos;t load your profile</p>
+                <p className="mb-5 text-sm text-muted-foreground">Check your connection and try again.</p>
+                <Button type="button" variant="outline" onClick={() => refetch()}>Try again</Button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Profile Picture */}
               <div className="flex items-center gap-4">
@@ -219,6 +236,7 @@ export default function ProfilePage() {
                 {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </form>
+            )}
           </CardContent>
         </Card>
       </div>

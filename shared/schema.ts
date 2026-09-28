@@ -6,6 +6,7 @@
 export {
   sessions,
   users,
+  passwordResetTokens,
   type UpsertUser,
   type User,
 } from "../features/auth/schema";
@@ -13,6 +14,8 @@ export {
 export {
   menuItems,
   insertMenuItemSchema,
+  menuItemInputSchema,
+  updateMenuItemSchema,
   type InsertMenuItem,
   type MenuItem,
 } from "../features/menu/schema";
@@ -130,6 +133,26 @@ export const paymentMethodsRelations = relations(paymentMethods, ({ one }) => ({
 export type OrderWithItems = Order & {
   items: (OrderItem & { menuItem?: MenuItem })[];
   user?: User;
+  customer?: {
+    firstName: string | null;
+    lastName: string | null;
+    preferredPickupLocation: string | null;
+  };
+};
+
+export type PaginatedOrders = {
+  items: OrderWithItems[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
+export type PaginatedMenuItems = {
+  items: MenuItem[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  total: number;
 };
 
 export type MenuItemWithFavorite = MenuItem & {

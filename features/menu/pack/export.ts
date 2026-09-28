@@ -9,24 +9,33 @@ const MANIFEST_PATH = path.resolve(
 
 export async function exportMenuPack() {
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
-  const items = await menuStorage.getAllMenuItems();
+  const items = await menuStorage.getAllMenuItemsWithImages();
 
   const localImages: string[] = [];
-  for (const item of items) {
+  const databaseImages: Array<{ name: string; file: string; data: Buffer }> = [];
+  const exportedItems = items.map(({ id, imageData, ...item }) => {
+    if (imageData) {
+      const file = `menu-item-${id}.webp`;
+      databaseImages.push({ name: item.name, file, data: imageData });
+      return { ...item, imageUrl: null };
+    }
+
     if (item.imageUrl?.startsWith("/menu-images/")) {
       localImages.push(item.imageUrl);
     }
-  }
+    return item;
+  });
 
   const pack = {
     ...manifest,
     exportedAt: new Date().toISOString(),
     data: {
-      menu_items: items.map(
-        ({ id: _id, createdAt: _c, updatedAt: _u, ...rest }) => rest,
+      menu_items: exportedItems.map(
+        ({ createdAt: _c, updatedAt: _u, ...rest }) => rest,
       ),
     },
-    files: localImages,
+    files: [...localImages, ...databaseImages.map((image) => `/menu-images/${image.file}`)],
+    image_files: databaseImages.map(({ name, file }) => ({ name, file })),
   };
 
   const version = manifest.version as string;
@@ -43,6 +52,9 @@ export async function exportMenuPack() {
     if (fs.existsSync(src)) {
       fs.copyFileSync(src, path.join(imagesOut, path.basename(src)));
     }
+  }
+  for (const image of databaseImages) {
+    fs.writeFileSync(path.join(imagesOut, image.file), image.data);
   }
 
   // Bump patch version in manifest

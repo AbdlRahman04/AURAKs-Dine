@@ -1,5 +1,5 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,12 +8,10 @@ import { format } from 'date-fns';
 import { formatCurrency, formatTime } from '@/lib/utils';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Order, OrderItem } from '@shared/schema';
+import { flattenOrderPages, useOrders } from '@/hooks/useOrders';
+import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import AdminSidebar from '@/components/admin/AdminSidebar';
-
-type OrderWithItems = Order & {
-  items: OrderItem[];
-};
+import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton';
 
 const statusColors = {
   received: 'bg-blue-500',
@@ -34,35 +32,13 @@ const statusLabels = {
 export default function KitchenDisplayPage() {
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const { isConnected } = useOrderRealtime();
 
   // Fetch all orders (admin users get all orders, students get their own)
-  const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
-    queryKey: ['/api/orders'],
-    refetchInterval: 5000, // Poll every 5 seconds for now (will be replaced with WebSocket)
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useOrders({
+    refetchInterval: isConnected ? false : 30_000,
   });
-
-  // Setup WebSocket for real-time updates
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'ORDER_STATUS_UPDATE') {
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-          toast({
-            title: 'Order Updated',
-            description: `Order status changed`,
-          });
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    };
-
-    return () => ws.close();
-  }, [toast]);
+  const orders = flattenOrderPages(data);
 
   // Update order status mutation
   const updateStatusMutation = useMutation({
@@ -101,26 +77,24 @@ export default function KitchenDisplayPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="admin-shell flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading orders...</p>
-          </div>
+        <div className="admin-main min-w-0 flex-1">
+          <AdminPageSkeleton label="kitchen orders" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="admin-shell flex min-h-screen bg-background">
       <AdminSidebar />
       
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6">
+      <div className="admin-main flex-1 min-w-0 overflow-auto">
+        <div className="admin-page-content p-6 space-y-6">
           {/* Header */}
-          <div>
+          <div className="admin-page-header">
+            <p className="admin-kicker">Live service view</p>
             <h1 className="text-3xl font-bold">Kitchen Display</h1>
             <p className="text-muted-foreground">Real-time order management</p>
           </div>
@@ -256,6 +230,16 @@ export default function KitchenDisplayPage() {
                 </Card>
               ))}
             </div>
+          )}
+          {hasNextPage && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? 'Loading...' : 'Load older orders'}
+            </Button>
           )}
         </div>
       </div>

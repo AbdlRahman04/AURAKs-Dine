@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Users, Shield, User, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { AdminPageSkeleton } from "@/components/admin/AdminPageSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 
@@ -192,26 +193,24 @@ export default function UserManagementPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="admin-shell flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading users...</p>
-          </div>
+        <div className="admin-main min-w-0 flex-1">
+          <AdminPageSkeleton label="users" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="admin-shell flex min-h-screen bg-background">
       <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 md:p-6 lg:p-8">
+      <div className="admin-main flex-1 min-w-0 overflow-auto">
+        <div className="admin-page-content p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div>
+            <div className="admin-page-header">
+              <p className="admin-kicker">Access & identity</p>
               <h1 className="text-3xl font-bold">User Management</h1>
               <p className="text-muted-foreground mt-2">
                 Manage user accounts and roles
@@ -270,7 +269,7 @@ export default function UserManagementPage() {
                     <SelectTrigger className="w-full md:w-[200px]" data-testid="select-role-filter">
                       <SelectValue placeholder="Filter by role" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="admin-select-content">
                       <SelectItem value="all">All Roles</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="student">Student</SelectItem>
@@ -348,7 +347,7 @@ export default function UserManagementPage() {
                                 >
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="admin-select-content">
                                   <SelectItem 
                                     value="student"
                                     disabled={user.role === "admin"}
@@ -374,10 +373,11 @@ export default function UserManagementPage() {
 
             {/* Confirmation Dialog */}
             <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Confirm Role Change</DialogTitle>
-                  <DialogDescription>
+              <DialogContent className="admin-dialog admin-dialog-confirm">
+                <DialogHeader className="admin-dialog-header">
+                  <p className="admin-dialog-kicker admin-dialog-kicker-warning">Access change</p>
+                  <DialogTitle className="admin-dialog-title">Confirm Role Change</DialogTitle>
+                  <DialogDescription className="admin-dialog-description">
                     Are you sure you want to change the role for{" "}
                     <strong>
                       {userToUpdate?.firstName && userToUpdate?.lastName
@@ -393,7 +393,7 @@ export default function UserManagementPage() {
                     This action will be logged in the audit trail.
                   </p>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="admin-dialog-footer">
                   <Button
                     variant="outline"
                     onClick={() => {

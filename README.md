@@ -1,258 +1,186 @@
-# QuickDineFlow - Smart Ordering System
+# QuickDineFlow
 
-A web-based cafeteria ordering system that enables students to pre-order meals online, skip queues, and pick up orders at their convenience. The system features dual interfaces: a student-facing menu browsing and ordering system, and an admin panel for kitchen staff to manage menu items and track orders.
+QuickDineFlow is a full-stack cafeteria ordering app. Students can browse the menu, place orders, pay with Stripe, save favorites, and track order status. Staff can manage menu items, orders, feedback, and analytics from the admin dashboard.
 
-## 🚀 How to Run Locally
+The application uses React/Vite, Node.js/Express, PostgreSQL, Drizzle ORM, and Stripe.
 
-Follow these steps to get QuickDineFlow running on your machine. The same codebase works with **local PostgreSQL** (dev) and **Render Postgres** (deploy)—you only change `DATABASE_URL`.
+## Repository layout
 
-### Prerequisites
+| Path | Purpose |
+| --- | --- |
+| `client/` | React/Vite application, pages, reusable UI, and static assets. |
+| `server/` | Express startup, configuration, database, authentication, and shared infrastructure. |
+| `features/` | Business modules for authentication, menu, orders, payments, favorites, and feedback. |
+| `shared/` | Schemas and TypeScript types shared by the client and server. |
+| `migrations/` | Versioned database migrations. |
+| `scripts/` | Database setup, smoke checks, and maintenance commands. |
+| `docs/` | Maintained setup, architecture, operations, and project documentation. |
 
-Make sure you have the following ready before you begin:
+See the [documentation index](docs/README.md) for the recommended reading order.
 
-| Requirement | Details |
-|---|---|
-| **Node.js** (v18+) | Download from [nodejs.org](https://nodejs.org/) — this includes npm automatically |
-| **PostgreSQL Database** | Install [PostgreSQL](https://www.postgresql.org/download/) locally for dev; use **Render Postgres** (or Neon) for cloud deploy |
-| **Stripe Account** | Sign up free at [stripe.com](https://stripe.com) and grab your test API keys from the [dashboard](https://dashboard.stripe.com/test/apikeys) |
+## Run locally with PostgreSQL
 
----
+This is the recommended setup while developing QuickDineFlow. You need Node.js **20.19+** (or **22.12+**) and a local PostgreSQL server. Stripe keys are only needed to try Stripe payments.
 
-### Step 1 — Navigate to the Project Directory
+### 1. Install dependencies
 
-Open a terminal (PowerShell on Windows, Terminal on Mac/Linux) and `cd` into the project folder:
+From the project folder:
 
-```bash
-# Example — adjust the path to wherever you cloned/downloaded the project
-cd path/to/QuickDineFlow
-```
-
----
-
-### Step 2 — Install Dependencies
-
-Install all required packages via npm:
-
-```bash
+```powershell
 npm install
 ```
 
-> This may take a few minutes the first time. Packages live in `node_modules/` (Node.js does not use a Python `venv`).
+### 2. Create `.env.local`
 
----
+Create a file named `.env.local` in the project root and add the following. Replace `YOUR_POSTGRES_PASSWORD` with the password for your local PostgreSQL `postgres` user.
 
-### Step 3 — Configure Environment Variables
+```env
+DATABASE_URL=postgresql://postgres:YOUR_POSTGRES_PASSWORD@localhost:5432/quickdineflow
+SESSION_SECRET=replace-with-a-random-secret
+ADMIN_EMAIL=admin@quickdine.com
+ADMIN_PASSWORD=choose-a-local-admin-password
+PORT=5000
+```
 
-1. **Copy the example `.env` file:**
+Generate a random session secret with Node.js:
 
-   ```bash
-   # Windows (PowerShell)
-   Copy-Item .env.example .env
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
 
-   # Mac / Linux
-   cp .env.example .env
+Paste the generated value after `SESSION_SECRET=`. `.env.local` is loaded automatically and overrides `.env`; keep it private and do not commit it. If your PostgreSQL username is not `postgres`, use that username in `DATABASE_URL`. If the password contains URL-reserved characters such as `@` or `#`, URL-encode those characters.
+
+To test Stripe checkout, also add your Stripe **test** keys:
+
+```env
+STRIPE_SECRET_KEY=sk_test_...
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+```
+
+You can get test keys from the [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys). The app can start without them, but Stripe payments will not work.
+
+### 3. Create and initialize the database
+
+Start the PostgreSQL service, then run:
+
+```powershell
+npm run db:setup-local-full
+```
+
+This creates the `quickdineflow` database if needed, applies the schema, and adds sample menu data and an admin account. The database creation step connects to the default `postgres` database, so the PostgreSQL user in `DATABASE_URL` must be allowed to create databases. If the database already exists, use `npm run db:setup` to apply the schema and seed data.
+
+The seed script requires `ADMIN_EMAIL` and a unique `ADMIN_PASSWORD` of at least 12 characters. It will not create or reset an administrator when either value is missing.
+
+### 4. Start QuickDineFlow
+
+```powershell
+npm run dev
+```
+
+Open [http://localhost:5000](http://localhost:5000). Keep this terminal open while using the app. If port 5000 is already in use, stop the other process or change `PORT` in `.env.local` and open the matching port in your browser.
+
+To check the API, visit [http://localhost:5000/api/health](http://localhost:5000/api/health). To run the smoke check, leave the app running and use a second terminal:
+
+```powershell
+npm run smoke
+```
+
+`npm run dev:separate` is available for frontend/backend debugging, but most local development only needs `npm run dev`.
+
+## Hosted deployment (later)
+
+Local PostgreSQL is the primary development target. Set up hosted deployment after the local app and database workflows are working.
+
+### Render: recommended full-stack deployment
+
+The repository includes [`render.yaml`](render.yaml), which provisions a Render web service and Render PostgreSQL database.
+
+1. Push the repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com), choose **New → Blueprint** and select the repository.
+3. Confirm the services defined in `render.yaml`.
+4. Add these environment variables to the Render web service:
+
+   - `STRIPE_SECRET_KEY`
+   - `VITE_STRIPE_PUBLIC_KEY` — required during the frontend build
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD`
+
+   Render supplies `DATABASE_URL` from the linked PostgreSQL database and generates `SESSION_SECRET` from the blueprint.
+
+5. Deploy the service. The build and start commands are already configured:
+
+   ```text
+   npm install && npm run build
+   npm run start
    ```
 
-2. **Open `.env` in a text editor** and fill in your non-database values:
-
-   | Variable | What to put | Where to get it |
-   |---|---|---|
-   | `SESSION_SECRET` | Any long random string | Run `openssl rand -base64 32` or make one up |
-   | `STRIPE_SECRET_KEY` | Starts with `sk_test_...` | [Stripe API Keys](https://dashboard.stripe.com/test/apikeys) |
-   | `VITE_STRIPE_PUBLIC_KEY` | Starts with `pk_test_...` | Same Stripe page |
-   | `PORT` | Server port (default `5000`) | Leave as-is unless it conflicts |
-
-3. **Choose a database** (Option A or Option B below) and set `DATABASE_URL`.
-
-> **Tip:** Put a local URL in `.env.local` so it overrides `.env`. That way you can keep a Neon URL in `.env` for deployment without swapping files.
-
----
-
-### Step 4 — Database Setup
-
-#### Option A: Local PostgreSQL (development)
-
-1. Install PostgreSQL and make sure the service is running (Windows: check Services for `postgresql`).
-2. Create the app database and apply schema + seed data:
-
-   ```bash
-   # Creates the "quickdineflow" database if it does not exist
-   npm run db:setup-local
-   ```
-
-3. Create `.env.local` with your local connection string (adjust user/password if needed):
-
-   ```env
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/quickdineflow
-   ```
-
-4. Push schema and seed (admin user + menu items):
+6. After the first deploy, open the Render service shell and initialize the database:
 
    ```bash
    npm run db:setup
    ```
 
-   Or run the full local flow in one go (after `.env.local` exists):
+7. Verify the deployed health endpoint:
 
-   ```bash
-   npm run db:setup-local-full
+   ```text
+   https://<your-service>.onrender.com/api/health
    ```
 
-#### Option B: Render Postgres (cloud deploy)
-
-1. Push to GitHub and create a Render Blueprint from [`render.yaml`](render.yaml).
-2. Set Stripe keys on the Render service (see [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md)).
-3. After deploy, run `npm run db:setup` in the Render shell.
-4. Optionally promote local menu content with `npm run pack:import`.
-
-#### Option C: Neon (optional)
-
-1. Create a project at [neon.tech](https://neon.tech).
-2. Copy the **pooled** connection string.
-3. Set it in `.env`, then `npm run db:setup`.
-
-The app auto-detects Neon vs standard Postgres from the URL. Prefer **local Postgres** for day-to-day testing and **Render Postgres** for deployment.
-
----
-
-### Step 5 — Run the Website
-
-Start the development server:
+For a deployment smoke test from your local machine:
 
 ```bash
-npm run dev
+SMOKE_TARGET=render SMOKE_BASE_URL=https://<your-service>.onrender.com npm run smoke
 ```
 
-Then open your browser and go to **http://localhost:5000** — you should see QuickDineFlow! 🎉
+See [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) for Render-specific operational notes.
 
-#### Alternative: Separate Frontend & Backend
+### Vercel: frontend-only option
 
-If you prefer to run them on separate ports (useful for frontend development):
+The current repository is not configured for a complete Vercel deployment. The Express server starts a long-running process, uses server-side sessions, and supports WebSockets; the frontend also calls same-origin `/api` and `/ws` routes. There is no `vercel.json` or Vercel serverless adapter in the project.
+
+To use Vercel, deploy the backend and database on Render (or another Node-compatible host) first, then adapt the frontend to use the backend URL and configure CORS, cookies, API routing, and WebSockets. After that adaptation, deploy the Vite frontend to Vercel with:
 
 ```bash
-npm run dev:separate
+npm install
+npm run build
 ```
 
-The frontend will be at **http://localhost:5173** and the backend at **http://localhost:5000**.
+For the current codebase, deploy the combined application to Render instead.
 
-## 📱 Install QuickDineFlow like a Native App
+## Useful commands
 
-QuickDineFlow now ships as a Progressive Web App (PWA). After running the app locally or in production:
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Run the integrated development server |
+| `npm run dev:separate` | Run Vite and Express separately |
+| `npm run build` | Build the frontend and production server |
+| `npm run start` | Start the production build |
+| `npm run check` | Run the TypeScript compiler check |
+| `npm run db:push` | Push the database schema |
+| `npm run db:seed` | Seed or reset the admin and sample menu data |
+| `npm run db:setup` | Push the schema and seed the database |
+| `npm run db:setup-local-full` | Create the local database, push schema, and seed data |
+| `npm run smoke` | Run health, menu, and admin-login smoke tests |
+| `npm run make-admin -- <email>` | Promote an existing user to admin |
 
-1. Open the site in Chrome, Edge, Safari, or any modern mobile browser.
-2. Look for the **"Install"** / **"Add to Home Screen"** prompt in the address bar menu.
-3. Confirm the prompt, and the app will appear on your desktop or mobile home screen with offline support.
+## Menu images
 
-### Offline Support & Caching
+Place local menu images in `client/public/menu-images/`. Reference them in the admin form with paths such as `/menu-images/iced-latte.jpg`.
 
-- Core shell assets (HTML, manifest, favicon, and icons) are pre-cached, so the installer always loads instantly.
-- Dynamic requests fall back to cached responses if the network drops, and navigation requests fall back to the cached shell.
-- To clear cached data, remove the app from your device or clear the browser storage for the site.
+## Security notes
 
-## 📖 What You Can Do
+- Never commit `.env`, `.env.local`, database passwords, session secrets, or real Stripe keys.
+- Use Stripe test keys for local development.
+- Use a unique, strong admin password and session secret in deployed environments.
+- Do not treat the seeded development admin credentials as production credentials.
 
-### As a Student:
-- Browse the menu
-- Add items to your cart
-- Place orders
-- View your order history
-- Save favorite items
+## More documentation
 
-### As an Admin:
-- Manage menu items
-- View and update orders
-- Track kitchen display
-- View analytics
+- [`docs/README.md`](docs/README.md) — documentation index and maintained source of truth
+- [`docs/REPOSITORY_READINESS_CHECKLIST.md`](docs/REPOSITORY_READINESS_CHECKLIST.md) — GitHub-readiness phases and completion checks
 
-> **Test Admin Credentials:**  
-> Email: `admin@quickdine.com`  
-> Password: `admin`
-
-## 🛠️ Troubleshooting
-
-### "Cannot find module" error
-- Make sure you ran `npm install` first
-- Delete the `node_modules` folder and `package-lock.json`, then run `npm install` again
-
-### "DATABASE_URL must be set" error
-- Make sure you created a `.env` file (and/or `.env.local`) in the root directory
-- Check that `DATABASE_URL` is set correctly for local Postgres or Neon
-
-### "Port already in use" error
-- Another program might be using port 5000 or 5173
-- Change the `PORT` value in your `.env` file to a different number (like 3000 or 8000)
-
-### Website won't load
-- Make sure the server is running (you should see messages in the terminal)
-- Check that you're using the correct URL (http://localhost:5000 or http://localhost:5173)
-- Make sure your browser isn't blocking localhost
-
-### Database connection errors
-- Verify your `DATABASE_URL` is correct
-- For local Postgres: ensure the service is running and credentials match
-- For Neon: use the **pooled** connection string with `sslmode=require`
-- Make sure your database is accessible (not blocked by firewall)
-
-## 📚 Additional Resources
-
-- **Development Guide**: See [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md) for local workflow and feature modules
-- **Render Deploy**: See [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) for GitHub → Render + Postgres
-- **AI Feature Prompt**: See [`docs/FEATURE_DEVELOPMENT_PROMPT.md`](docs/FEATURE_DEVELOPMENT_PROMPT.md) for plug-and-play feature work
-
-## 🎯 Available Commands
-
-- `npm run dev` - Start the development server (integrated mode)
-- `npm run dev:separate` - Start frontend and backend separately
-- `npm run build` - Build the project for production
-- `npm run start` - Start the production server
-- `npm run check` - Check TypeScript types
-- `npm run db:push` - Push schema from feature schemas via Drizzle
-- `npm run db:seed` - Seed admin user and menu items (safe to re-run)
-- `npm run db:setup` - Run `db:push` then `db:seed` (works for local or Render Postgres)
-- `npm run db:setup-local` - Create the local `quickdineflow` database
-- `npm run db:setup-local-full` - Create local DB, then push + seed
-- `npm run smoke` - Smoke-test health, menu, and admin login
-- `npm run pack:export -- menu` - Export menu pack for staging
-- `npm run pack:import -- menu --file exports/menu-v1.0.0.json` - Import menu pack
-- `npm run make-admin` - Promote an existing user to admin by email
-
-## 💡 Tips for Beginners
-
-1. **Keep the terminal open**: The server needs to keep running. Don't close the terminal window while using the website.
-
-2. **Check the terminal for errors**: If something doesn't work, look at the terminal output - it usually shows helpful error messages.
-
-3. **Use test Stripe keys**: When developing, use Stripe's test keys (they start with `sk_test_` and `pk_test_`). These won't charge real money.
-
-4. **Database setup**: Use local PostgreSQL for day-to-day development. Deploy to Render with Postgres via `render.yaml` (see docs).
-
-5. **Feature modules**: Backend features live under `features/` with pack export/import for menu content. See [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md).
-
-6. **Hot reload**: When you make changes to the code, the website will automatically refresh in your browser.
-
-## 📝 Notes
-
-- The website runs on your local computer only (localhost) - it's not accessible from the internet
-- To deploy online, push to GitHub and use Render (see [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md))
-- This is a development version - for production use, you'll need additional security configurations
-
-## 📷 Local Menu Photos
-
-- Place all food/drink photos in `client/public/menu-images/`
-- Reference them from the admin form using a leading slash, e.g. `/menu-images/iced-latte.jpg`
-- Avoid spaces in filenames (use `arabic-coffee.jpg`) or URL-encode them (`Arabic%20Coffee.jpg`)
-- Files inside `public/` are copied to the final build, so these paths work in dev and production
-- Follow the design guideline recommendation of ~400×300 px (4:3) and keep file sizes optimized
-- You can still paste full URLs if you want to mix hosted and local images
-
-## 🤝 Getting Help
-
-If you encounter issues:
-1. Check the error messages in your terminal
-2. Review the troubleshooting section above
-3. Check that all environment variables are set correctly
-4. Make sure all dependencies are installed
-
----
-
-**Happy coding! 🎉**
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) — deployment and operations overview
+- [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) — Render deployment details
+- [`docs/guides/DEVELOPMENT_GUIDE.md`](docs/guides/DEVELOPMENT_GUIDE.md) — development workflow
+- [`docs/guides/ADMIN_ACCESS.md`](docs/guides/ADMIN_ACCESS.md) — admin access management
+- [`SECURITY.md`](SECURITY.md) — security and privacy notes

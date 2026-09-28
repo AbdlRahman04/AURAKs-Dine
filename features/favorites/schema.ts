@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { users } from "../auth/schema";
 import { menuItems } from "../menu/schema";
 
@@ -11,7 +11,9 @@ export const favorites = pgTable("favorites", {
     .notNull()
     .references(() => menuItems.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("favorites_user_id_idx").on(table.userId),
+]);
 
 export type InsertFavorite = typeof favorites.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;

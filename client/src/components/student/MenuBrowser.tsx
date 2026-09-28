@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Filter, Heart, AlertCircle, Info } from "lucide-react";
+import { Search, FilterX, Heart, AlertCircle, Info, ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
 import type { MenuItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,27 +14,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatCurrency, getCategoryColor } from "@/lib/utils";
+import { formatCurrency, getOptimizedImageUrl } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { MENU_PAGE_SIZE, useMenuItems } from "@/hooks/useMenuItems";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
-const CATEGORIES = ["All", "Breakfast", "Lunch", "Snacks", "Beverages"];
+const CATEGORIES = ["All", "Breakfast", "Lunch", "Regional Dishes", "Snacks", "Beverages"];
 
 export default function MenuBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [customizations, setCustomizations] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const itemDialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
   const { addItem } = useCart();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
 
   const getItemName = (item: MenuItem) =>
     language === "ar" && item.nameAr ? item.nameAr : item.name;
@@ -43,11 +52,66 @@ export default function MenuBrowser() {
       ? item.descriptionAr
       : item.description;
 
-  const { isAuthenticated } = useAuth();
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      All: t("all"),
+      Breakfast: t("breakfast"),
+      Lunch: t("lunch"),
+      "Regional Dishes": t("regionalDishes"),
+      Snacks: t("snacks"),
+      Beverages: t("beverages"),
+    };
+    return labels[category] ?? category;
+  };
 
-  const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
-    queryKey: ["/api/menu"],
+  const getNutritionLabel = (key: string) => {
+    const labels: Record<string, string> = {
+      carbs: t("carbs"),
+      carbohydrates: t("carbs"),
+      calories: t("calories"),
+      fat: t("fat"),
+      protein: t("protein"),
+    };
+    return labels[key.toLowerCase()] ?? key;
+  };
+
+  const getSizeLabel = (size: string) => {
+    if (language !== "ar") return size;
+    const labels: Record<string, string> = {
+      small: t("small"),
+      medium: t("medium"),
+      large: t("large"),
+      regular: t("regular"),
+    };
+    return labels[size.toLowerCase()] ?? size;
+  };
+
+  const getAllergenLabel = (allergen: string) => {
+    if (language !== "ar") return allergen;
+    const labels: Record<string, string> = {
+      gluten: "الجلوتين",
+      dairy: "منتجات الألبان",
+      sesame: "السمسم",
+      "tree nuts": "المكسرات الشجرية",
+      peanuts: "الفول السوداني",
+      eggs: "البيض",
+      soy: "الصويا",
+      fish: "السمك",
+      shellfish: "المحار والقشريات",
+    };
+    return labels[allergen.toLowerCase()] ?? allergen;
+  };
+
+  const { data, isLoading, isFetching, isError, refetch } = useMenuItems({
+    page,
+    search: debouncedSearchQuery,
+    category: selectedCategory,
   });
+  const menuItems = data?.items ?? [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, selectedCategory]);
 
   const { data: favorites } = useQuery<number[]>({
     queryKey: ["/api/favorites"],
@@ -58,10 +122,16 @@ export default function MenuBrowser() {
   type FavoritePayload = { menuItemId: number; itemName: string };
 
   const invalidateFavorites = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["/api/favorites"],
-      exact: true,
-    });
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["/api/favorites"],
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["/api/favorites/items"],
+        exact: true,
+      }),
+    ]);
   };
 
   const addFavoriteMutation = useMutation<void, Error, FavoritePayload>({
@@ -71,13 +141,13 @@ export default function MenuBrowser() {
     onSuccess: async (_, variables) => {
       await invalidateFavorites();
       toast({
-        title: "Added to Favorites",
-        description: `${variables.itemName} was added to your favorites.`,
+        title: t("addedToFavoritesTitle"),
+        description: `${variables.itemName} ${t("addedToFavoritesDescription")}`,
       });
     },
     onError: (error) => {
       toast({
-        title: "Unable to add favorite",
+        title: t("unableAddFavorite"),
         description: error.message,
         variant: "destructive",
       });
@@ -91,48 +161,49 @@ export default function MenuBrowser() {
     onSuccess: async (_, variables) => {
       await invalidateFavorites();
       toast({
-        title: "Removed from Favorites",
-        description: `${variables.itemName} was removed from your favorites.`,
+        title: t("removedFromFavoritesTitle"),
+        description: `${variables.itemName} ${t("removedFromFavoritesDescription")}`,
       });
     },
     onError: (error) => {
       toast({
-        title: "Unable to remove favorite",
+        title: t("unableRemoveFavorite"),
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const filteredItems = useMemo(() => {
-    if (!menuItems) return [];
+  const openItem = (item: MenuItem, trigger?: HTMLButtonElement) => {
+    itemDialogTriggerRef.current = trigger ?? null;
+    setSelectedItem(item);
+    setQuantity(1);
+    setCustomizations("");
+    setSelectedSize("");
+  };
 
-    return menuItems.filter((item) => {
-      const name = getItemName(item).toLowerCase();
-      const desc = getItemDescription(item)?.toLowerCase() || "";
-      const search = searchQuery.toLowerCase();
-
-      const matchesSearch = name.includes(search) || desc.includes(search);
-
-      const matchesCategory =
-        selectedCategory === "All" ||
-        item.category.toLowerCase() === selectedCategory.toLowerCase();
-
-      return matchesSearch && matchesCategory && item.isAvailable;
-    });
-  }, [menuItems, searchQuery, selectedCategory, language]);
+  const closeItemDialog = () => {
+    setSelectedItem(null);
+    window.setTimeout(() => itemDialogTriggerRef.current?.focus(), 0);
+  };
 
   const handleAddToCart = () => {
     if (!selectedItem) return;
+
+    if (!isAuthenticated) {
+      setSelectedItem(null);
+      setAuthPromptOpen(true);
+      return;
+    }
 
     addItem(
       selectedItem,
       quantity,
       customizations || undefined,
-      selectedSize || undefined
+      selectedSize || undefined,
     );
 
-    setSelectedItem(null);
+    closeItemDialog();
     setQuantity(1);
     setCustomizations("");
     setSelectedSize("");
@@ -145,313 +216,290 @@ export default function MenuBrowser() {
       : addFavoriteMutation.mutate(payload);
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("All");
+    setPage(1);
+  };
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="menu-browser menu-shell" aria-labelledby="menu-browser-title">
+        <div className="menu-loading-heading">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-12 w-full max-w-xl" />
+        </div>
+        <div className="menu-item-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" aria-label={language === "ar" ? "جارٍ تحميل أصناف القائمة" : "Loading menu items"}>
           {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <Skeleton className="w-full rounded-t-lg h-56 md:h-64" />
+            <Card key={i} className="menu-card menu-card-skeleton">
+              <Skeleton className="w-full aspect-[4/3] rounded-none" />
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-full mt-2" />
+                <Skeleton className="h-4 w-2/3 mt-1" />
               </CardHeader>
             </Card>
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Search Bar */}
-      <div className="mb-8 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+    <section id="menu-browser" className="menu-browser menu-shell" aria-labelledby="menu-browser-title">
+      <div className="menu-browser-heading">
+        <div className="menu-browser-heading-copy">
+          <p className="menu-kicker">{t("menuSectionKicker")}</p>
+          <h2 id="menu-browser-title">{t("menuSectionTitle")}</h2>
+          <p className="menu-browser-intro">
+            {t("menuSectionDescription")}
+          </p>
+        </div>
+      </div>
+
+      <div className="menu-controls" role="search">
+        <div className="menu-search-wrap">
+          <Search className="menu-search-icon" aria-hidden="true" />
           <Input
             type="search"
-            placeholder="Search menu items..."
-            className="pl-10 h-12"
+            placeholder={t("searchMenu")}
+            className="menu-search-input"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+            aria-label={t("searchMenuLabel")}
             data-testid="input-menu-search"
           />
         </div>
 
-        {/* Category Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 snap-x">
+        <div className="menu-category-list" aria-label={t("menuSectionKicker")}>
           {CATEGORIES.map((category) => (
             <Button
               key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category)}
-              className="snap-start flex-shrink-0"
+              variant="ghost"
+              onClick={() => {
+                setSelectedCategory(category);
+                setPage(1);
+              }}
+              className={`menu-filter-pill ${selectedCategory === category ? "is-active" : ""}`}
+              aria-pressed={selectedCategory === category}
               data-testid={`button-category-${category.toLowerCase()}`}
             >
-              {category}
+              {getCategoryLabel(category)}
             </Button>
           ))}
         </div>
       </div>
 
-      {/* Menu Items Grid */}
-      {filteredItems.length === 0 ? (
-        <div className="text-center py-16">
-          <Filter className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No items found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search or filter to find what you're looking for.
-          </p>
+      {isError ? (
+        <div className="menu-state-card" role="alert">
+          <div className="menu-state-icon" aria-hidden="true"><RefreshCw /></div>
+          <h3>{t("loadMenuError")}</h3>
+          <p>{t("notificationsLoadErrorHelp")}</p>
+          <Button onClick={() => refetch()}>{t("tryAgain")}</Button>
+        </div>
+      ) : menuItems.length === 0 ? (
+        <div className="menu-state-card" role="status">
+          <div className="menu-state-icon" aria-hidden="true"><FilterX /></div>
+          <h3>{t("noItemsFound")}</h3>
+          <p>{t("clearCurrentFilter")}</p>
+          <Button variant="outline" onClick={clearFilters}>{t("clearFilters")}</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => {
-            const isFavorite = favorites?.includes(item.id) ?? false;
-            const isMutating =
-              (addFavoriteMutation.isPending &&
-                addFavoriteMutation.variables?.menuItemId === item.id) ||
-              (removeFavoriteMutation.isPending &&
-                removeFavoriteMutation.variables?.menuItemId === item.id);
+        <div className={`menu-results ${isFetching ? "is-fetching" : ""}`} aria-busy={isFetching}>
+          <div className="menu-results-meta">
+            <span>{t("availableItems")}: {data?.total ?? menuItems.length}</span>
+            {isFetching && <span className="menu-fetching-label">{t("updatingResults")}</span>}
+          </div>
 
-            return (
-              <Card
-                key={item.id}
-                className="overflow-hidden hover-elevate cursor-pointer"
-                onClick={() => setSelectedItem(item)}
-              >
-                <div className="relative h-56 md:h-64 bg-muted overflow-hidden">
-                  {Boolean(item.imageUrl) ? (
-                    <img
-                      src={item.imageUrl!}
-                      alt={getItemName(item)}
-                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      No image
+          <div className="menu-item-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {menuItems.map((item, itemIndex) => {
+              const isFavorite = favorites?.includes(item.id) ?? false;
+              const isMutating =
+                (addFavoriteMutation.isPending && addFavoriteMutation.variables?.menuItemId === item.id) ||
+                (removeFavoriteMutation.isPending && removeFavoriteMutation.variables?.menuItemId === item.id);
+
+              return (
+                <Card
+                  key={item.id}
+                  className={`menu-card ${itemIndex === 0 ? "menu-card-featured" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className="menu-card-details-button"
+                    onClick={(event) => openItem(item, event.currentTarget)}
+                    aria-label={`${t("itemDetails")}: ${getItemName(item)}`}
+                  >
+                    <div className="menu-card-image">
+                      {Boolean(item.imageUrl) ? (
+                        <img
+                          src={getOptimizedImageUrl(item.imageUrl, 720)}
+                          alt={getItemName(item)}
+                          loading={itemIndex < 3 ? "eager" : "lazy"}
+                          decoding="async"
+                          width="720"
+                          height="540"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                            event.currentTarget.parentElement?.setAttribute("data-image-fallback", "true");
+                          }}
+                        />
+                      ) : (
+                        <span className="menu-image-fallback">{t("noImage")}</span>
+                      )}
                     </div>
-                  )}
 
-                  {item.isSpecial && (
-                    <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-                      Special Offer
-                    </Badge>
-                  )}
-                </div>
-
-                <CardHeader className="gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-lg font-semibold line-clamp-1">
-                      {getItemName(item)}
-                    </h3>
-                    <Badge
-                      className={getCategoryColor(item.category)}
-                      variant="secondary"
-                    >
-                      {item.category}
-                    </Badge>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {getItemDescription(item)}
-                  </p>
-                </CardHeader>
-
-                <CardFooter className="flex items-center justify-between gap-4">
-                  <div>
-                    {item.isSpecial && item.specialPrice ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold text-destructive">
-                          {formatCurrency(item.specialPrice)}
-                        </span>
-                        <span className="text-sm text-muted-foreground line-through">
-                          {formatCurrency(item.price)}
-                        </span>
+                    <CardHeader className="menu-card-header">
+                      <div className="menu-card-title-row">
+                        <div className="min-w-0">
+                          <h3>{getItemName(item)}</h3>
+                          {language === "ar" && item.nameAr && item.name !== item.nameAr && (
+                            <p className="menu-card-secondary-name">{item.name}</p>
+                          )}
+                        </div>
+                        <Badge className="menu-category-tag" variant="outline">{getCategoryLabel(item.category)}</Badge>
                       </div>
-                    ) : (
-                      <span className="text-lg font-semibold">
-                        {formatCurrency(item.price)}
-                      </span>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {item.preparationTime} min
-                    </p>
-                  </div>
+                      <p className="menu-card-description">{getItemDescription(item)}</p>
+                    </CardHeader>
+                  </button>
 
-                  {/* Favorite + Add Buttons */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFavoriteToggle(item, isFavorite);
-                      }}
-                      disabled={isMutating}
-                      className={`border ${
-                        isFavorite
-                          ? "text-red-500 border-red-200 dark:border-red-800 bg-red-500/10"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          isFavorite ? "fill-red-500 text-red-500" : ""
-                        }`}
-                      />
-                    </Button>
+                  <CardFooter className="menu-card-footer">
+                    <div className="menu-card-price-wrap">
+                      {item.isSpecial && item.specialPrice ? (
+                        <div className="menu-special-price">
+                          <span>{formatCurrency(item.specialPrice)}</span>
+                          <span>{formatCurrency(item.price)}</span>
+                        </div>
+                      ) : (
+                        <span className="menu-card-price">{formatCurrency(item.price)}</span>
+                      )}
+                      <span className="menu-card-prep">{item.preparationTime} {t("prepMinutes")}</span>
+                    </div>
 
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedItem(item);
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            );
-          })}
+                    <div className="menu-card-actions">
+                      {item.isSpecial && <span className="menu-special-label">{t("todaysSpecial")}</span>}
+                      {isAuthenticated && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`menu-favorite-button ${isFavorite ? "is-favorite" : ""}`}
+                          onClick={() => handleFavoriteToggle(item, isFavorite)}
+                          disabled={isMutating}
+                          aria-label={isFavorite ? `${t("removeFromFavorites")}: ${getItemName(item)}` : `${t("addToFavorites")}: ${getItemName(item)}`}
+                        >
+                          <Heart className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        className="menu-add-button"
+                        onClick={(event) => openItem(item, event.currentTarget)}
+                      >
+                        {t("add")}
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Item Detail Dialog */}
       <Dialog
         open={!!selectedItem}
         onOpenChange={(open) => {
-          if (!open) setSelectedItem(null);
+          if (!open) closeItemDialog();
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="menu-item-dialog max-w-2xl max-h-[90vh] overflow-y-auto">
           {!!selectedItem && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">
-                  {getItemName(selectedItem)}
-                </DialogTitle>
-                <DialogDescription>
-                  {getItemDescription(selectedItem)}
-                </DialogDescription>
+              <DialogHeader className="menu-dialog-header">
+                <p className="menu-kicker">{t("itemDetails")}</p>
+                <DialogTitle>{getItemName(selectedItem)}</DialogTitle>
+                <DialogDescription>{getItemDescription(selectedItem)}</DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-6">
-                {/* Image */}
+              <div className="menu-dialog-body">
                 {!!selectedItem.imageUrl && (
-                  <div className="relative h-64 rounded-lg overflow-hidden bg-muted">
+                  <div className="menu-dialog-image">
                     <img
-                      src={selectedItem.imageUrl}
+                      src={getOptimizedImageUrl(selectedItem.imageUrl, 1024)}
                       alt={getItemName(selectedItem)}
-                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                      loading="eager"
+                      decoding="async"
+                      width="1024"
+                      height="768"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                        event.currentTarget.parentElement?.setAttribute("data-image-fallback", "true");
+                      }}
                     />
                   </div>
                 )}
 
-                {/* Nutritional Info */}
                 {!!selectedItem.nutritionalInfo && (
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Info className="w-5 h-5 text-primary" />
-                      <h4 className="font-semibold">Nutritional Information</h4>
+                  <div className="menu-dialog-panel">
+                    <div className="menu-dialog-panel-heading">
+                      <Info className="w-5 h-5" aria-hidden="true" />
+                      <h4>{t("nutritionalInformation")}</h4>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                      {Object.entries(
-                        selectedItem.nutritionalInfo as Record<string, number>
-                      ).map(([key, value]) => (
+                    <div className="menu-nutrition-grid">
+                      {Object.entries(selectedItem.nutritionalInfo as Record<string, number>).map(([key, value]) => (
                         <div key={key}>
-                          <p className="text-muted-foreground capitalize">
-                            {key}
-                          </p>
-                          <p className="font-medium">{value}g</p>
+                          <p>{getNutritionLabel(key)}</p>
+                          <strong>
+                            {value}{key.toLowerCase() === "calories"
+                              ? (language === "ar" ? " سعرة حرارية" : " kcal")
+                              : (language === "ar" ? " غ" : "g")}
+                          </strong>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Allergens */}
-                {!!(
-                  selectedItem.allergens &&
-                  selectedItem.allergens.length > 0
-                ) && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="w-5 h-5 text-amber-600" />
-                      <h4 className="font-semibold text-amber-900 dark:text-amber-100">
-                        Allergen Warning
-                      </h4>
+                {!!(selectedItem.allergens && selectedItem.allergens.length > 0) && (
+                  <div className="menu-allergen-panel">
+                    <div className="menu-dialog-panel-heading">
+                      <AlertCircle className="w-5 h-5" aria-hidden="true" />
+                      <h4>{t("allergenWarning")}</h4>
                     </div>
-
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      Contains: {selectedItem.allergens.join(", ")}
-                    </p>
+                    <p>{t("containsLabel")} {selectedItem.allergens.map(getAllergenLabel).join("، ")}</p>
                   </div>
                 )}
 
-                {/* Dietary Tags */}
-                {!!(
-                  selectedItem.dietaryTags &&
-                  selectedItem.dietaryTags.length > 0
-                ) && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedItem.dietaryTags.map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
+                {!!(selectedItem.dietaryTags && selectedItem.dietaryTags.length > 0) && (
+                  <div className="menu-dietary-tags" aria-label={t("dietaryTags")}>
+                    {selectedItem.dietaryTags.map((tag) => {
+                      const label = tag.toLowerCase() === "vegetarian" ? t("vegetarian")
+                        : tag.toLowerCase() === "vegan" ? t("vegan")
+                        : tag.toLowerCase() === "halal" ? t("halal")
+                        : tag;
+                      return <Badge key={tag} variant="outline">{label}</Badge>;
+                    })}
                   </div>
                 )}
 
-                {/* Size Selection */}
-                {!!(
-                  selectedItem.sizeVariants &&
-                  Array.isArray(selectedItem.sizeVariants) &&
-                  selectedItem.sizeVariants.length > 0
-                ) && (
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium">
-                      Select Size
-                    </label>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {(
-                        selectedItem
-                          .sizeVariants as Array<{
-                          name: string;
-                          priceModifier: string;
-                        }>
-                      ).map((variant) => {
-                        const basePrice = Number(
-                          selectedItem.isSpecial &&
-                            selectedItem.specialPrice
-                            ? selectedItem.specialPrice
-                            : selectedItem.price
-                        );
-
-                        const sizePrice =
-                          basePrice + Number(variant.priceModifier);
-
+                {!!(selectedItem.sizeVariants && Array.isArray(selectedItem.sizeVariants) && selectedItem.sizeVariants.length > 0) && (
+                  <div className="menu-dialog-field">
+                    <label>{t("selectSize")}</label>
+                    <div className="menu-size-grid">
+                      {(selectedItem.sizeVariants as Array<{ name: string; priceModifier: string }>).map((variant) => {
+                        const basePrice = Number(selectedItem.isSpecial && selectedItem.specialPrice ? selectedItem.specialPrice : selectedItem.price);
+                        const sizePrice = basePrice + Number(variant.priceModifier);
                         return (
                           <Button
                             key={variant.name}
-                            variant={
-                              selectedSize === variant.name
-                                ? "default"
-                                : "outline"
-                            }
-                            className="flex flex-col h-auto py-3"
+                            variant={selectedSize === variant.name ? "default" : "outline"}
+                            className="menu-size-button"
                             onClick={() => setSelectedSize(variant.name)}
                           >
-                            <span className="font-semibold">
-                              {variant.name}
-                            </span>
-                            <span className="text-xs opacity-80">
-                              {formatCurrency(sizePrice)}
-                            </span>
+                            <span>{getSizeLabel(variant.name)}</span>
+                            <small>{formatCurrency(sizePrice)}</small>
                           </Button>
                         );
                       })}
@@ -459,90 +507,93 @@ export default function MenuBrowser() {
                   </div>
                 )}
 
-                {/* Quantity + Customizations */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Quantity
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      >
-                        -
-                      </Button>
-
-                      <span className="text-lg font-semibold w-12 text-center">
-                        {quantity}
-                      </span>
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity(quantity + 1)}
-                      >
-                        +
-                      </Button>
+                <div className="menu-dialog-fields">
+                  <div className="menu-dialog-field">
+                    <label>{t("quantity")}</label>
+                    <div className="student-quantity-control menu-dialog-quantity">
+                      <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label={t("decreaseQuantity")}>-</Button>
+                      <span>{quantity}</span>
+                      <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)} aria-label={t("increaseQuantity")}>+</Button>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Special Instructions (Optional)
-                    </label>
+                  <div className="menu-dialog-field menu-dialog-customization">
+                    <label htmlFor="menu-customizations">{t("specialInstructionsOptional")}</label>
                     <Input
-                      placeholder="e.g., No onions, extra sauce..."
+                      id="menu-customizations"
+                      placeholder={t("instructionsPlaceholder")}
                       value={customizations}
                       onChange={(e) => setCustomizations(e.target.value)}
                     />
                   </div>
                 </div>
 
-                {/* Price + Add Button */}
-                <div className="flex items-center justify-between gap-4 pt-4 border-t">
+                <div className="menu-dialog-footer">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="text-2xl font-bold">
+                    <p>{t("total")}</p>
+                    <strong>
                       {(() => {
-                        const basePrice = Number(
-                          selectedItem.isSpecial &&
-                            selectedItem.specialPrice
-                            ? selectedItem.specialPrice
-                            : selectedItem.price
-                        );
-
+                        const basePrice = Number(selectedItem.isSpecial && selectedItem.specialPrice ? selectedItem.specialPrice : selectedItem.price);
                         let finalPrice = basePrice;
-
-                        if (
-                          selectedSize &&
-                          selectedItem.sizeVariants &&
-                          Array.isArray(selectedItem.sizeVariants)
-                        ) {
-                          const variant = selectedItem.sizeVariants.find(
-                            (v) => v.name === selectedSize
-                          );
-
-                          if (variant) {
-                            finalPrice += Number(variant.priceModifier);
-                          }
+                        if (selectedSize && selectedItem.sizeVariants && Array.isArray(selectedItem.sizeVariants)) {
+                          const variant = selectedItem.sizeVariants.find((v) => v.name === selectedSize);
+                          if (variant) finalPrice += Number(variant.priceModifier);
                         }
-
                         return formatCurrency(finalPrice * quantity);
                       })()}
-                    </p>
+                    </strong>
                   </div>
-
-                  <Button size="lg" onClick={handleAddToCart}>
-                    Add to Cart
-                  </Button>
+                  <Button size="lg" className="menu-dialog-add" onClick={handleAddToCart}>{t("addToCart")}</Button>
                 </div>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+
+      <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
+        <DialogContent className="auth-gate-dialog max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("signInToOrder")}</DialogTitle>
+            <DialogDescription>{t("accountRequiredForCart")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button className="auth-gate-browse" variant="outline" onClick={() => setAuthPromptOpen(false)}>
+              {t("browseMenu")}
+            </Button>
+            <Button className="auth-gate-sign-up" variant="outline" onClick={() => setLocation("/register")}>
+              {t("signUp")}
+            </Button>
+            <Button className="auth-gate-sign-in" onClick={() => setLocation("/login")}>
+              {t("signIn")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {data && data.total > 0 && (
+        <div className="menu-pagination" aria-live="polite">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={page === 1 || isFetching}
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            {t("previous")}
+          </Button>
+          <span>{t("page")} {page} {t("of")} {Math.max(1, Math.ceil(data.total / MENU_PAGE_SIZE))}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((current) => current + 1)}
+            disabled={!data.hasMore || isFetching}
+          >
+            {t("nextPage")}
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </Button>
+        </div>
+      )}
+    </section>
   );
 }

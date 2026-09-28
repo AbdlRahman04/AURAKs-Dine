@@ -40,6 +40,54 @@ function stripeClient(): Stripe {
 }
 
 export function registerPaymentsRoutes(app: Express) {
+  app.post("/api/payments/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const paymentIntentId = req.body?.paymentIntentId;
+      if (typeof paymentIntentId !== "string" || !paymentIntentId.startsWith("pi_")) {
+        return res.status(400).json({ message: "A valid payment intent is required" });
+      }
+
+      const order = await ordersStorage.getOrderByPaymentIntentId(paymentIntentId);
+      if (!order || order.userId !== req.user.id) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const paymentIntent = await stripeClient().paymentIntents.retrieve(paymentIntentId);
+      const expectedAmount = Math.round(Number(order.total) * 100);
+      if (
+        paymentIntent.metadata.userId !== req.user.id ||
+        paymentIntent.metadata.orderNumber !== order.orderNumber ||
+        paymentIntent.amount !== expectedAmount ||
+        paymentIntent.currency !== "aed"
+      ) {
+        return res.status(400).json({ message: "Payment details do not match this order" });
+      }
+
+      if (paymentIntent.status !== "succeeded") {
+        return res.status(409).json({
+          message: "Payment has not completed",
+          paymentStatus: paymentIntent.status,
+        });
+      }
+
+      const updatedOrder = order.paymentStatus === "succeeded"
+        ? order
+        : await ordersStorage.updateOrderPaymentStatus(order.id, "succeeded");
+      if (!updatedOrder) {
+        return res.status(500).json({ message: "Could not update payment status" });
+      }
+
+      broadcastWs({ type: "ORDER_PAYMENT_UPDATE", orderId: order.id });
+      res.json({
+        orderNumber: updatedOrder.orderNumber,
+        paymentStatus: updatedOrder.paymentStatus,
+      });
+    } catch (error) {
+      console.error("Error confirming Stripe payment:", error);
+      res.status(500).json({ message: "Failed to confirm payment" });
+    }
+  });
+
   app.get("/api/payment-methods", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -218,7 +266,7 @@ export function registerPaymentsRoutes(app: Express) {
 
         const orderItemsData = await Promise.all(
           items.map(async (item: any) => {
-            const menuItem = await menuStorage.getMenuItemById(item.menuItemId);
+            const menuItem = await menuStorage.getOrderMenuItemById(item.menuItemId);
             if (!menuItem)
               throw new Error(`Menu item ${item.menuItemId} not found`);
 
@@ -241,6 +289,7 @@ export function registerPaymentsRoutes(app: Express) {
               menuItemName: menuItem.name,
               quantity: item.quantity,
               unitPrice: unitPrice.toFixed(2),
+              unitCostSnapshot: menuItem.unitCost,
               selectedSize: item.selectedSize,
               customizations: item.customizations,
               subtotal: (unitPrice * item.quantity).toFixed(2),
@@ -267,7 +316,11 @@ export function registerPaymentsRoutes(app: Express) {
 
         broadcastWs({ type: "NEW_ORDER", orderId: order.id });
 
-        res.json({ clientSecret: paymentIntent.client_secret });
+        res.json({
+          clientSecret: paymentIntent.client_secret,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+        });
       } catch (error: any) {
         console.error("Error creating payment intent:", error);
         res.status(500).json({

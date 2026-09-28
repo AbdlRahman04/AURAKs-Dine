@@ -1,5 +1,16 @@
 import { Link, useLocation } from 'wouter';
-import { LayoutDashboard, UtensilsCrossed, Package, BarChart3, MessageSquare, LogOut, Home, Users } from 'lucide-react';
+import {
+  BarChart3,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Activity,
+  Package,
+  Users,
+  UtensilsCrossed,
+} from 'lucide-react';
+import aurakLogo from '@/assets/aurak-logo.png';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,14 +18,16 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { apiRequest } from '@/lib/queryClient';
+import { prefetchAdminRoute } from '@/lib/adminRoutePrefetch';
 
 const navItems = [
-  { href: '/admin', label: 'Kitchen Display', icon: LayoutDashboard },
-  { href: '/admin/menu', label: 'Menu Management', icon: UtensilsCrossed },
-  { href: '/admin/orders', label: 'All Orders', icon: Package },
-  { href: '/admin/feedback', label: 'Customer Feedback', icon: MessageSquare },
-  { href: '/admin/users', label: 'User Management', icon: Users },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin', label: 'Kitchen Display', shortLabel: 'Kitchen', icon: LayoutDashboard },
+  { href: '/admin/menu', label: 'Menu Management', shortLabel: 'Menu', icon: UtensilsCrossed },
+  { href: '/admin/orders', label: 'All Orders', shortLabel: 'Orders', icon: Package },
+  { href: '/admin/feedback', label: 'Customer Feedback', shortLabel: 'Feedback', icon: MessageSquare },
+  { href: '/admin/users', label: 'User Management', shortLabel: 'Users', icon: Users },
+  { href: '/admin/analytics', label: 'Analytics', shortLabel: 'Analytics', icon: BarChart3 },
+  { href: '/admin/monitoring', label: 'System Health', shortLabel: 'Health', icon: Activity },
 ];
 
 export default function AdminSidebar() {
@@ -41,21 +54,27 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-64 border-r bg-card flex flex-col h-full">
-      {/* Header */}
-      <div className="p-6 border-b space-y-3">
-        <div>
-          <h2 className="text-xl font-bold">Admin Panel</h2>
-          <p className="text-sm text-muted-foreground">AURAK'S Dine</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <aside className="admin-sidebar" aria-label="Admin navigation">
+      <div className="admin-sidebar-brand">
+        <Link href="/admin">
+          <a className="admin-brand-lockup" aria-label="AURAK's Dine admin home">
+            <span className="admin-brand-mark">
+              <img src={aurakLogo} alt="" />
+            </span>
+            <span className="admin-brand-copy">
+              <span className="admin-brand-name">AURAK'S Dine</span>
+              <span className="admin-brand-label">Operations desk</span>
+            </span>
+          </a>
+        </Link>
+        <div className="admin-sidebar-controls">
           <ThemeToggle />
           <LanguageToggle />
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <div className="admin-sidebar-section-label">Workspace</div>
+      <nav className="admin-sidebar-nav">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
@@ -63,62 +82,51 @@ export default function AdminSidebar() {
           return (
             <Link key={item.href} href={item.href}>
               <a
-                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                }`}
+                className={`admin-nav-link ${isActive ? 'is-active' : ''}`}
                 data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                aria-current={isActive ? 'page' : undefined}
+                onMouseEnter={() => prefetchAdminRoute(item.href)}
+                onFocus={() => prefetchAdminRoute(item.href)}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <Icon className="admin-nav-icon" aria-hidden="true" />
+                <span className="admin-nav-label">{item.label}</span>
+                <span className="admin-nav-short-label">{item.shortLabel}</span>
               </a>
             </Link>
           );
         })}
-        
-        {/* Home Link to User Menu */}
-        <Link href="/menu">
-          <a
-            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors mt-4 border border-destructive/50 ${
-              location === '/menu' || location === '/'
-                ? 'bg-destructive/10 text-destructive border-destructive'
-                : 'text-destructive hover:bg-destructive/10 hover:text-destructive'
-            }`}
-            data-testid="link-home"
-          >
-            <Home className="w-5 h-5" />
-            <span className="font-medium">Home</span>
-          </a>
-        </Link>
       </nav>
 
-      {/* User Info */}
-      <div className="p-4 border-t">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.profileImageUrl || undefined} alt="Admin" />
+      <div className="admin-sidebar-footer">
+        <Link href="/menu">
+          <a
+            className={`admin-home-link ${location === '/menu' || location === '/' ? 'is-active' : ''}`}
+            data-testid="link-home"
+          >
+            <Home className="admin-nav-icon" aria-hidden="true" />
+            <span className="admin-nav-label">Customer menu</span>
+            <span className="admin-nav-short-label">Menu</span>
+          </a>
+        </Link>
+
+        <div className="admin-account">
+          <Avatar className="admin-account-avatar">
+            <AvatarImage src={user?.profileImageUrl || undefined} alt="Admin profile" />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {user?.firstName && user?.lastName
-                ? `${user.firstName} ${user.lastName}`
-                : 'Admin'}
+          <div className="admin-account-copy">
+            <p className="admin-account-name">
+              {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Admin'}
             </p>
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            <p className="admin-account-email">{user?.email}</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={handleLogout}
-          data-testid="button-logout"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          {t('logout')}
+        <Button className="admin-logout-button" variant="outline" onClick={handleLogout} data-testid="button-logout">
+          <LogOut className="admin-nav-icon" aria-hidden="true" />
+          <span className="admin-nav-label">{t('logout')}</span>
+          <span className="admin-nav-short-label">Exit</span>
         </Button>
       </div>
-    </div>
+    </aside>
   );
 }

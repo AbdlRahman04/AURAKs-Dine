@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart, MessageSquare, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart as ShoppingCartIcon, User, LogOut, Package, Heart, MessageSquare, LayoutDashboard, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,14 +18,16 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { apiRequest } from '@/lib/queryClient';
+import { preloadStudentPage } from '@/lib/studentRoutePrefetch';
 import aurakLogo from '@/assets/aurak-logo.png';
 
 export default function StudentHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isAuthenticated } = useAuth();
   const { getItemCount } = useCart();
-  const { t } = useLanguage();
+  const { dir, t } = useLanguage();
   const [location] = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
+  const cartTriggerRef = useRef<HTMLButtonElement>(null);
 
   const itemCount = getItemCount();
 
@@ -52,72 +54,85 @@ export default function StudentHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 sm:h-20 items-center justify-between">
+      <header className="student-header sticky top-0 z-40 w-full">
+        <div className="menu-shell">
+          <div className="student-header-row">
             {/* Logo */}
             <Link 
               href="/menu" 
-              className="flex items-center gap-2 sm:gap-3 text-xl sm:text-2xl font-bold text-brand-red hover:opacity-90 transition-opacity"
+              className="student-brand"
+              onMouseEnter={() => preloadStudentPage('/menu')}
+              onFocus={() => preloadStudentPage('/menu')}
             >
               <img
                 src={aurakLogo}
                   alt="AURAK's Dine logo"
-                   className="
-              h-10 w-10 sm:h-12 sm:w-12
-              object-contain drop-shadow 
-              rounded-xl
-              transition-all duration-300
-              hover:scale-110 hover:shadow-[0_0_10px_rgba(255,60,40,0.5)]
-"
-            />
+                  className="student-brand-mark"
+              />
 
-              <span>AURAK'S Dine</span>
+              <span className="student-brand-copy">
+                <span>AURAK&apos;S Dine</span>
+                <small>Campus kitchen</small>
+              </span>
             </Link>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="student-nav hidden md:flex" aria-label="Primary navigation">
               <Link 
                 href="/menu"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location === '/menu' ? 'text-foreground' : 'text-muted-foreground'
+                className={`student-nav-link ${
+                  location === '/menu' ? 'is-active' : ''
                 }`}
                 data-testid="link-menu"
+                onMouseEnter={() => preloadStudentPage('/menu')}
+                onFocus={() => preloadStudentPage('/menu')}
               >
                 {t('menu')}
               </Link>
-              <Link 
-                href="/orders"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location === '/orders' ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-                data-testid="link-orders"
-              >
-                {t('orders')}
-              </Link>
-              <Link 
-                href="/favorites"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location === '/favorites' ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-                data-testid="link-favorites"
-              >
-                {t('favorites')}
-              </Link>
-              <Link 
-                href="/feedback"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location === '/feedback' ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-                data-testid="link-feedback"
-              >
-                {t('feedback')}
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/orders"
+                  className={`student-nav-link ${
+                    location === '/orders' ? 'is-active' : ''
+                  }`}
+                  data-testid="link-orders"
+                  onMouseEnter={() => preloadStudentPage('/orders')}
+                  onFocus={() => preloadStudentPage('/orders')}
+                >
+                  {t('orders')}
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
+                  href="/favorites"
+                  className={`student-nav-link ${
+                    location === '/favorites' ? 'is-active' : ''
+                  }`}
+                  data-testid="link-favorites"
+                  onMouseEnter={() => preloadStudentPage('/favorites')}
+                  onFocus={() => preloadStudentPage('/favorites')}
+                >
+                  {t('favorites')}
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
+                  href="/feedback"
+                  className={`student-nav-link ${
+                    location === '/feedback' ? 'is-active' : ''
+                  }`}
+                  data-testid="link-feedback"
+                  onMouseEnter={() => preloadStudentPage('/feedback')}
+                  onFocus={() => preloadStudentPage('/feedback')}
+                >
+                  {t('feedback')}
+                </Link>
+              )}
               {isAdmin && (
                 <Link 
                   href="/admin"
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    location.startsWith('/admin') ? 'text-foreground' : 'text-muted-foreground'
+                  className={`student-nav-link ${
+                    location.startsWith('/admin') ? 'is-active' : ''
                   }`}
                   data-testid="link-admin"
                 >
@@ -127,25 +142,27 @@ export default function StudentHeader() {
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="student-header-actions">
               {/* Language and Theme Toggles */}
-              <div className="flex items-center gap-1">
+              <div className="student-header-toggles">
                 <ThemeToggle />
                 <LanguageToggle />
               </div>
               
               {/* Cart Button */}
               <Button
+                ref={cartTriggerRef}
                 variant="ghost"
                 size="icon"
-                className="relative"
+                className="student-icon-button student-cart-trigger relative"
                 onClick={() => setCartOpen(true)}
                 data-testid="button-cart"
+                aria-label={`${t('openCart')} (${itemCount} ${t('cartItemCount')})`}
               >
-                <ShoppingCartIcon className="w-5 h-5" />
+                <ShoppingCartIcon className="w-5 h-5" aria-hidden="true" />
                 {itemCount > 0 && (
                   <Badge
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    className="student-cart-count absolute flex items-center justify-center"
                     data-testid="badge-cart-count"
                   >
                     {itemCount}
@@ -156,14 +173,14 @@ export default function StudentHeader() {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full" data-testid="button-user-menu">
-                    <Avatar className="h-10 w-10">
+                  <Button variant="ghost" className="student-user-button relative" data-testid="button-user-menu" aria-label={t('openAccountMenu')}>
+                    <Avatar className="student-avatar">
                       <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.email || 'User'} />
                       <AvatarFallback>{getInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align={dir === 'rtl' ? 'start' : 'end'} className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
@@ -180,26 +197,36 @@ export default function StudentHeader() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center w-full" data-testid="link-profile">
-                      <User className="mr-2 h-4 w-4" />
+                    <Link href="/profile" className="flex w-full items-center gap-2" data-testid="link-profile" onMouseEnter={() => preloadStudentPage('/profile')} onFocus={() => preloadStudentPage('/profile')}>
+                      <User className="h-4 w-4" />
                       <span>{t('profile')}</span>
                     </Link>
                   </DropdownMenuItem>
+                  {isAuthenticated && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="flex w-full items-center gap-2" data-testid="link-orders-menu" onMouseEnter={() => preloadStudentPage('/orders')} onFocus={() => preloadStudentPage('/orders')}>
+                        <Package className="h-4 w-4" />
+                        <span>{t('myOrders')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
-                    <Link href="/orders" className="flex items-center w-full" data-testid="link-orders-menu">
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>{t('myOrders')}</span>
+                    <Link href="/notifications" className="flex w-full items-center gap-2" data-testid="link-notifications-menu" onMouseEnter={() => preloadStudentPage('/notifications')} onFocus={() => preloadStudentPage('/notifications')}>
+                      <Bell className="h-4 w-4" />
+                      <span>{t('notifications')}</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/favorites" className="flex items-center w-full" data-testid="link-favorites-menu">
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>{t('favorites')}</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  {isAuthenticated && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/favorites" className="flex w-full items-center gap-2" data-testid="link-favorites-menu" onMouseEnter={() => preloadStudentPage('/favorites')} onFocus={() => preloadStudentPage('/favorites')}>
+                        <Heart className="h-4 w-4" />
+                        <span>{t('favorites')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} data-testid="link-logout">
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleLogout} data-testid="link-logout" className="gap-2">
+                    <LogOut className="h-4 w-4" />
                     <span>{t('logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -208,60 +235,86 @@ export default function StudentHeader() {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center justify-around pb-3 border-t pt-3 -mx-4 px-4">
+          <div className="student-mobile-nav flex md:hidden" aria-label="Mobile navigation">
             <Link 
               href="/menu"
-              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                location === '/menu' ? 'text-primary' : 'text-muted-foreground'
+              className={`student-mobile-link ${
+                location === '/menu' ? 'is-active' : ''
               }`}
+              onMouseEnter={() => preloadStudentPage('/menu')}
+              onFocus={() => preloadStudentPage('/menu')}
             >
               <span>{t('menu')}</span>
             </Link>
-            <Link 
-              href="/orders"
-              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                location === '/orders' ? 'text-primary' : 'text-muted-foreground'
-              }`}
+            {isAuthenticated && (
+              <Link
+                href="/orders"
+                className={`student-mobile-link ${
+                  location === '/orders' ? 'is-active' : ''
+                }`}
+                onMouseEnter={() => preloadStudentPage('/orders')}
+                onFocus={() => preloadStudentPage('/orders')}
+              >
+                <Package className="w-5 h-5" aria-hidden="true" />
+                <span>{t('orders')}</span>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                href="/favorites"
+                className={`student-mobile-link ${
+                  location === '/favorites' ? 'is-active' : ''
+                }`}
+                onMouseEnter={() => preloadStudentPage('/favorites')}
+                onFocus={() => preloadStudentPage('/favorites')}
+              >
+                <Heart className="w-5 h-5" aria-hidden="true" />
+                <span>{t('favorites')}</span>
+              </Link>
+            )}
+            <Link
+              href="/notifications"
+              className={`student-mobile-link ${location === '/notifications' ? 'is-active' : ''}`}
+              data-testid="link-notifications-mobile"
+              onMouseEnter={() => preloadStudentPage('/notifications')}
+              onFocus={() => preloadStudentPage('/notifications')}
             >
-              <Package className="w-5 h-5" />
-              <span>{t('orders')}</span>
+              <Bell className="w-5 h-5" aria-hidden="true" />
+              <span>{t('notifications')}</span>
             </Link>
-            <Link 
-              href="/favorites"
-              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                location === '/favorites' ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              <Heart className="w-5 h-5" />
-              <span>{t('favorites')}</span>
-            </Link>
-            <Link 
-              href="/feedback"
-              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                location === '/feedback' ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              <MessageSquare className="w-5 h-5" />
-              <span>{t('feedback')}</span>
-            </Link>
+            {isAuthenticated && (
+              <Link
+                href="/feedback"
+                className={`student-mobile-link ${
+                  location === '/feedback' ? 'is-active' : ''
+                }`}
+                onMouseEnter={() => preloadStudentPage('/feedback')}
+                onFocus={() => preloadStudentPage('/feedback')}
+              >
+                <MessageSquare className="w-5 h-5" aria-hidden="true" />
+                <span>{t('feedback')}</span>
+              </Link>
+            )}
             <Link 
               href="/profile"
-              className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                location === '/profile' ? 'text-primary' : 'text-muted-foreground'
+              className={`student-mobile-link ${
+                location === '/profile' ? 'is-active' : ''
               }`}
+              onMouseEnter={() => preloadStudentPage('/profile')}
+              onFocus={() => preloadStudentPage('/profile')}
             >
-              <User className="w-5 h-5" />
+              <User className="w-5 h-5" aria-hidden="true" />
               <span>{t('profile')}</span>
             </Link>
             {isAdmin && (
               <Link 
                 href="/admin"
-                className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
-                  location.startsWith('/admin') ? 'text-primary' : 'text-muted-foreground'
+                className={`student-mobile-link ${
+                  location.startsWith('/admin') ? 'is-active' : ''
                 }`}
                 data-testid="link-admin-mobile"
               >
-                <LayoutDashboard className="w-5 h-5" />
+                <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
                 <span>{t('admin')}</span>
               </Link>
             )}
@@ -270,7 +323,7 @@ export default function StudentHeader() {
       </header>
 
       {/* Shopping Cart Drawer */}
-      <ShoppingCart open={cartOpen} onOpenChange={setCartOpen} />
+      <ShoppingCart open={cartOpen} onOpenChange={setCartOpen} triggerRef={cartTriggerRef} />
     </>
   );
 }

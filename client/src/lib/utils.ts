@@ -5,6 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function getOptimizedImageUrl(url: string | null | undefined, width = 640) {
+  if (!url) return undefined;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith("unsplash.com")) {
+      parsed.searchParams.set("auto", "format");
+      parsed.searchParams.set("fit", "crop");
+      parsed.searchParams.set("w", String(width));
+      parsed.searchParams.set("q", "72");
+      return parsed.toString();
+    }
+  } catch {
+    // Keep relative and malformed-but-existing URLs unchanged for the image fallback.
+  }
+
+  return url;
+}
+
 export function formatCurrency(amount: number | string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   return `${num.toFixed(2)} د.إ`;
@@ -105,6 +124,8 @@ export function getCategoryColor(category: string): string {
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
     case 'beverages':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+    case 'regional dishes':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   }

@@ -3,22 +3,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getOptimizedImageUrl } from '@/lib/utils';
+import { useEffect, type RefObject } from 'react';
 import { useLocation } from 'wouter';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { preloadStudentPage } from '@/lib/studentRoutePrefetch';
 import type { MenuItem } from '@shared/schema';
 
 interface ShoppingCartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  triggerRef: RefObject<HTMLButtonElement>;
 }
 
-export default function ShoppingCart({ open, onOpenChange }: ShoppingCartProps) {
+export default function ShoppingCart({ open, onOpenChange, triggerRef }: ShoppingCartProps) {
   const { items, updateQuantity, removeItem, getSubtotal, getTax, getTotal, getItemCount } = useCart();
   const [, setLocation] = useLocation();
-  const { language } = useLanguage();
+  const { language, dir, t } = useLanguage();
 
-  // Helper functions to get localized item names
+  useEffect(() => {
+    if (open && items.length > 0) {
+      preloadStudentPage('/checkout');
+    }
+  }, [items.length, open]);
+
   const getItemName = (item: MenuItem) => {
     if (language === 'ar' && item.nameAr) {
       return item.nameAr;
@@ -33,128 +41,154 @@ export default function ShoppingCart({ open, onOpenChange }: ShoppingCartProps) 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5" />
-            Your Cart ({getItemCount()} items)
+      <SheetContent
+        side={dir === 'rtl' ? 'left' : 'right'}
+        className="student-cart-sheet w-full sm:max-w-lg flex flex-col"
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          onOpenChange(false);
+        }}
+        onKeyDownCapture={(event) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenChange(false);
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          triggerRef.current?.focus();
+        }}
+      >
+        <SheetHeader className="student-cart-header">
+          <p className="menu-kicker">{t('readyWhenYouAre')}</p>
+          <SheetTitle className="flex items-center gap-3">
+            <span className="student-cart-title-icon" aria-hidden="true">
+              <ShoppingBag className="w-5 h-5" />
+            </span>
+            <span>{t('yourCart')}</span>
+            <Badge variant="secondary" className="student-cart-items-badge">
+              {getItemCount()} {t('cartItemCount')}
+            </Badge>
           </SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <ShoppingBag className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
-            <p className="text-muted-foreground mb-4">
-              Add items from the menu to get started
-            </p>
+          <div className="student-cart-empty flex-1 flex flex-col items-center justify-center text-center">
+            <div className="student-cart-empty-icon" aria-hidden="true">
+              <ShoppingBag className="w-8 h-8" />
+            </div>
+            <h3>{t('cartEmpty')}</h3>
+            <p>{t('cartEmptyDescription')}</p>
             <Button onClick={() => onOpenChange(false)} data-testid="button-continue-shopping">
-              Continue Shopping
+              {t('continueShopping')}
             </Button>
           </div>
         ) : (
           <>
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-4">
+            <div className="student-cart-items flex-1 overflow-y-auto py-4">
               {items.map((item, index) => (
-                <div
+                <article
                   key={`${item.menuItem.id}-${index}`}
-                  className="flex gap-4 p-4 bg-card rounded-lg border"
+                  className="student-cart-item"
                   data-testid={`cart-item-${item.menuItem.id}`}
                 >
-                  {/* Thumbnail */}
-                  <div className="w-20 h-20 flex-shrink-0 bg-muted rounded-md overflow-hidden">
+                  <div className="student-cart-thumbnail">
                     {item.menuItem.imageUrl ? (
                       <img
-                        src={item.menuItem.imageUrl}
+                        src={getOptimizedImageUrl(item.menuItem.imageUrl, 240)}
                         alt={getItemName(item.menuItem)}
-                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                        loading="lazy"
+                        decoding="async"
+                        width="240"
+                        height="180"
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                          event.currentTarget.parentElement?.setAttribute('data-image-fallback', 'true');
+                        }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                        No image
-                      </div>
+                      <span>{t('noImage')}</span>
                     )}
                   </div>
 
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold truncate">{getItemName(item.menuItem)}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {formatCurrency(item.menuItem.price)}
-                    </p>
-                    {item.customizations && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Note: {item.customizations}
+                  <div className="student-cart-item-details">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4>{getItemName(item.menuItem)}</h4>
+                        <p>{formatCurrency(item.menuItem.price)}</p>
+                      </div>
+                      <p className="student-cart-item-total">
+                        {formatCurrency(parseFloat(item.menuItem.price) * item.quantity)}
                       </p>
+                    </div>
+
+                    {item.customizations && (
+                      <p className="student-cart-note">{t('cartNote')}: {item.customizations}</p>
                     )}
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                        data-testid={`button-decrease-${item.menuItem.id}`}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                        data-testid={`button-increase-${item.menuItem.id}`}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                    <div className="student-cart-controls">
+                      <div className="student-quantity-control" aria-label={`${t('quantityFor')} ${getItemName(item.menuItem)}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                          aria-label={`${t('decreaseItemQuantity')} ${getItemName(item.menuItem)}`}
+                          data-testid={`button-decrease-${item.menuItem.id}`}
+                        >
+                          <Minus className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                        <span>{item.quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                          aria-label={`${t('increaseItemQuantity')} ${getItemName(item.menuItem)}`}
+                          data-testid={`button-increase-${item.menuItem.id}`}
+                        >
+                          <Plus className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 ml-auto"
+                        className="student-remove-button"
                         onClick={() => removeItem(item.menuItem.id)}
+                        aria-label={`${t('removeItem')} ${getItemName(item.menuItem)}`}
                         data-testid={`button-remove-${item.menuItem.id}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
-
-                  {/* Item Total */}
-                  <div className="flex-shrink-0 text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(parseFloat(item.menuItem.price) * item.quantity)}
-                    </p>
-                  </div>
-                </div>
+                </article>
               ))}
             </div>
 
-            {/* Cart Summary */}
-            <SheetFooter className="flex-col gap-4 border-t pt-4">
-              <div className="space-y-2 w-full">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
+            <SheetFooter className="student-cart-footer flex-col gap-4">
+              <div className="student-cart-summary w-full">
+                <div>
+                  <span>{t('subtotal')}</span>
                   <span data-testid="text-subtotal">{formatCurrency(getSubtotal())}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (8%)</span>
+                <div>
+                  <span>{t('tax')}</span>
                   <span data-testid="text-tax">{formatCurrency(getTax())}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                  <span>Total</span>
+                <div className="student-cart-total">
+                  <span>{t('total')}</span>
                   <span data-testid="text-total">{formatCurrency(getTotal())}</span>
                 </div>
               </div>
               <Button
-                className="w-full"
+                className="student-cart-checkout w-full"
                 size="lg"
                 onClick={handleCheckout}
+                onPointerDown={() => preloadStudentPage('/checkout')}
+                onMouseEnter={() => preloadStudentPage('/checkout')}
+                onFocus={() => preloadStudentPage('/checkout')}
                 data-testid="button-checkout"
               >
-                Proceed to Checkout
+                {t('proceedToCheckout')}
               </Button>
             </SheetFooter>
           </>

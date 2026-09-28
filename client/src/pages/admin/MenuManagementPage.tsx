@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -22,17 +23,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, Package, Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, Package, Search } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { formatCurrency } from '@/lib/utils';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminMenuCard from '@/components/admin/AdminMenuCard';
+import MenuImageDropzone from '@/components/admin/MenuImageDropzone';
 import type { MenuItem, InsertMenuItem } from '@shared/schema';
+import { MENU_PAGE_SIZE, useMenuItems } from '@/hooks/useMenuItems';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const categories = [
   'Breakfast',
   'Lunch',
   'Dinner',
+  'Regional Dishes',
   'Beverages',
   'Snacks',
   'Desserts',
@@ -49,6 +55,7 @@ type MenuItemFormData = {
   description: string;
   descriptionAr: string;
   price: string;
+  unitCost: string;
   category: string;
   imageUrl: string;
   isAvailable: boolean;
@@ -59,6 +66,8 @@ type MenuItemFormData = {
   allergens: string[];
   nutritionalInfo: unknown | null;
 };
+
+type MenuImageAction = 'keep' | 'upload' | 'remove' | 'url';
 
 function MenuItemForm({
   item,
@@ -74,6 +83,7 @@ function MenuItemForm({
     description: item?.description || '',
     descriptionAr: item?.descriptionAr || '',
     price: item?.price || '0.00',
+    unitCost: item?.unitCost ?? '',
     category: item?.category || 'Breakfast',
     imageUrl: item?.imageUrl || '',
     isAvailable: item?.isAvailable ?? true,
@@ -84,24 +94,47 @@ function MenuItemForm({
     allergens: item?.allergens || [],
     nutritionalInfo: item?.nutritionalInfo || null,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imageError, setImageError] = useState('');
+  const [imageAction, setImageAction] = useState<MenuImageAction>('keep');
+
+  const buildSubmission = (data: InsertMenuItem) => {
+    const body = new FormData();
+    body.append('data', JSON.stringify(data));
+    body.append('imageAction', imageAction);
+    if (selectedImage) body.append('image', selectedImage);
+    return body;
+  };
+
+  const getMutationError = (error: unknown) => {
+    if (!(error instanceof Error)) return 'The menu item could not be saved.';
+    const rawMessage = error.message.replace(/^\d+:\s*/, '');
+    try {
+      const parsed = JSON.parse(rawMessage) as { message?: string };
+      return parsed.message || rawMessage;
+    } catch {
+      return rawMessage;
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertMenuItem) => {
-      const response = await apiRequest('POST', '/api/menu', data);
+      const response = await apiRequest('POST', '/api/menu', buildSubmission(data));
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/menu'] });
       toast({
         title: 'Success',
         description: 'Menu item created successfully',
       });
       onClose();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to create menu item',
+        description: getMutationError(error),
         variant: 'destructive',
       });
     },
@@ -109,21 +142,22 @@ function MenuItemForm({
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<MenuItem>) => {
-      const response = await apiRequest('PATCH', `/api/menu/${item!.id}`, data);
+      const response = await apiRequest('PATCH', `/api/menu/${item!.id}`, buildSubmission(data as InsertMenuItem));
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/menu'] });
       toast({
         title: 'Success',
         description: 'Menu item updated successfully',
       });
       onClose();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to update menu item',
+        description: getMutationError(error),
         variant: 'destructive',
       });
     },
@@ -149,6 +183,7 @@ function MenuItemForm({
       description: formData.description || undefined,
       descriptionAr: formData.descriptionAr || undefined,
       price: formData.price,
+      unitCost: formData.unitCost.trim() ? formData.unitCost : null,
       category: formData.category,
       imageUrl: formData.imageUrl || undefined,
       isAvailable: formData.isAvailable,
@@ -159,6 +194,11 @@ function MenuItemForm({
       allergens: formData.allergens,
       nutritionalInfo: formData.nutritionalInfo || undefined,
     };
+
+    if (imageAction === 'upload' && !selectedImage) {
+      setImageError('Choose an image before saving, or remove the image selection.');
+      return;
+    }
 
     if (item) {
       updateMutation.mutate(submitData);
@@ -175,9 +215,20 @@ function MenuItemForm({
     setFormData({ ...formData, dietaryTags: updated });
   };
 
+  const handleImageChange = (file: File | null) => {
+    setSelectedImage(file);
+    setImageError('');
+    if (file) {
+      setImageAction('upload');
+      return;
+    }
+    setImageAction(item?.imageUrl ? 'remove' : 'keep');
+    setFormData((current) => ({ ...current, imageUrl: '' }));
+  };
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form onSubmit={handleSubmit} noValidate className="admin-menu-form space-y-6">
+      <div className="admin-form-grid grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="name">Name (English) *</Label>
           <Input
@@ -232,7 +283,7 @@ function MenuItemForm({
             <SelectTrigger data-testid="select-menu-category">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="admin-select-content">
               {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
@@ -257,15 +308,47 @@ function MenuItemForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
+          <Label htmlFor="unitCost">Unit cost (AED)</Label>
+          <Input
+            id="unitCost"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.unitCost}
+            onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
+            placeholder="Leave blank if unknown"
+            data-testid="input-menu-unit-cost"
+          />
+          <p className="text-xs text-muted-foreground">Used for gross contribution estimates; labor and overhead are excluded.</p>
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <Label>Menu Image</Label>
+          <MenuImageDropzone
+            imageUrl={formData.imageUrl}
+            selectedFile={selectedImage}
+            disabled={createMutation.isPending || updateMutation.isPending}
+            error={imageError}
+            onFileChange={handleImageChange}
+            onError={setImageError}
+          />
+          <Label htmlFor="imageUrl">Image URL fallback</Label>
           <Input
             id="imageUrl"
             type="url"
             value={formData.imageUrl || ''}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+            disabled={Boolean(selectedImage)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({ ...formData, imageUrl: value });
+              setImageAction(value.trim() ? 'url' : (item ? 'remove' : 'keep'));
+            }}
             placeholder="https://… or /menu-images/iced-latte.jpg"
             data-testid="input-menu-image"
           />
+          <p className="text-xs text-muted-foreground">
+            Uploads are preferred. Use a URL only for an existing hosted or bundled image.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -284,7 +367,7 @@ function MenuItemForm({
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="admin-form-section space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label htmlFor="isAvailable">Available for Order</Label>
@@ -333,7 +416,7 @@ function MenuItemForm({
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="admin-form-section space-y-2">
         <Label>Dietary Information</Label>
         <div className="flex flex-wrap gap-2">
           {dietaryTags.map((tag) => (
@@ -350,7 +433,7 @@ function MenuItemForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="admin-dialog-footer flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onClose} data-testid="button-cancel">
           Cancel
         </Button>
@@ -359,7 +442,9 @@ function MenuItemForm({
           disabled={createMutation.isPending || updateMutation.isPending}
           data-testid="button-save-menu-item"
         >
-          {item ? 'Update' : 'Create'} Menu Item
+          {createMutation.isPending || updateMutation.isPending
+            ? 'Saving image...'
+            : `${item ? 'Update' : 'Create'} Menu Item`}
         </Button>
       </div>
     </form>
@@ -372,22 +457,38 @@ export default function MenuManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<{ id: number; name: string } | null>(null);
   const [createFormKey, setCreateFormKey] = useState(0);
+  const [page, setPage] = useState(1);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
-  const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
-    queryKey: ['/api/menu'],
+  const { data, isLoading, isFetching } = useMenuItems({
+    admin: true,
+    page,
+    search: debouncedSearchQuery,
+    category: selectedCategory,
   });
+  const menuItems = data?.items ?? [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, selectedCategory]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/menu/${id}`);
+      const response = await apiRequest('DELETE', `/api/menu/${id}`);
+      return response.json() as Promise<{ archived?: boolean }>;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/menu'] });
       toast({
         title: 'Success',
-        description: 'Menu item deleted successfully',
+        description: result.archived
+          ? 'Item archived because it is used in historical orders.'
+          : 'Menu item deleted successfully',
       });
+      setDeletingItem(null);
     },
     onError: () => {
       toast({
@@ -398,28 +499,41 @@ export default function MenuManagementPage() {
     },
   });
 
-  const filteredItems = menuItems.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.nameAr && item.nameAr.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   const handleDelete = (id: number, name: string) => {
-    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeletingItem({ id, name });
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="admin-shell flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading menu items...</p>
+        <div className="admin-main flex-1 min-w-0 overflow-auto">
+          <div className="admin-page-content p-6 space-y-6" aria-label="Loading menu management">
+            <div className="admin-page-header flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-4 w-80" />
+              </div>
+              <Skeleton className="h-10 w-36" />
+            </div>
+            <div className="admin-menu-filters flex flex-col sm:flex-row gap-4">
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 w-full sm:w-48" />
+            </div>
+            <div className="admin-menu-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="admin-menu-card overflow-hidden rounded-xl border bg-card">
+                  <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                  <div className="space-y-3 p-6">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -427,14 +541,15 @@ export default function MenuManagementPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="admin-shell flex min-h-screen bg-background">
       <AdminSidebar />
 
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6">
+      <div className="admin-main admin-menu-page flex-1 min-w-0 overflow-auto">
+        <div className="admin-page-content p-6 space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="admin-page-header flex items-center justify-between">
             <div>
+              <p className="admin-kicker">Catalog control</p>
               <h1 className="text-3xl font-bold">Menu Management</h1>
               <p className="text-muted-foreground">Create, edit, and manage menu items</p>
             </div>
@@ -453,35 +568,103 @@ export default function MenuManagementPage() {
                   Add Menu Item
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Menu Item</DialogTitle>
-                  <DialogDescription>
+              <DialogContent className="admin-dialog admin-dialog-form max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="admin-dialog-header">
+                  <p className="admin-dialog-kicker">Catalog control</p>
+                  <DialogTitle className="admin-dialog-title">Create New Menu Item</DialogTitle>
+                  <DialogDescription className="admin-dialog-description">
                     Add a new item to the cafeteria menu
                   </DialogDescription>
                 </DialogHeader>
                 <MenuItemForm key={createFormKey} onClose={() => setIsCreateDialogOpen(false)} />
               </DialogContent>
             </Dialog>
+
+            <Dialog
+              open={editingItem !== null}
+              onOpenChange={(open) => {
+                if (!open) setEditingItem(null);
+              }}
+            >
+              <DialogContent className="admin-dialog admin-dialog-form max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="admin-dialog-header">
+                  <p className="admin-dialog-kicker">Catalog control</p>
+                  <DialogTitle className="admin-dialog-title">Edit Menu Item</DialogTitle>
+                  <DialogDescription className="admin-dialog-description">
+                    Update menu item details
+                  </DialogDescription>
+                </DialogHeader>
+                {editingItem && (
+                  <MenuItemForm item={editingItem} onClose={() => setEditingItem(null)} />
+                )}
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={deletingItem !== null}
+              onOpenChange={(open) => {
+                if (!open && !deleteMutation.isPending) setDeletingItem(null);
+              }}
+            >
+              <DialogContent className="admin-dialog admin-dialog-confirm max-w-md">
+                <DialogHeader className="admin-dialog-header">
+                  <p className="admin-dialog-kicker admin-dialog-kicker-danger">Archive or remove</p>
+                  <DialogTitle className="admin-dialog-title">Delete menu item?</DialogTitle>
+                  <DialogDescription className="admin-dialog-description">
+                    Are you sure you want to delete{' '}
+                    <span className="font-medium text-foreground">{deletingItem?.name}</span>?{' '}
+                    This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="admin-dialog-footer">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDeletingItem(null)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => deletingItem && deleteMutation.mutate(deletingItem.id)}
+                    disabled={!deletingItem || deleteMutation.isPending}
+                    data-testid="button-confirm-delete"
+                  >
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete item'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
+          <div className="admin-menu-filters flex flex-col sm:flex-row gap-4">
+            <div className="admin-menu-search flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search menu items..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-10"
                 data-testid="input-search-menu"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => {
+                setSelectedCategory(value);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-full sm:w-48" data-testid="select-filter-category">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="admin-select-content">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
@@ -493,7 +676,7 @@ export default function MenuManagementPage() {
           </div>
 
           {/* Menu Items Grid */}
-          {filteredItems.length === 0 ? (
+          {menuItems.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -506,109 +689,39 @@ export default function MenuManagementPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden">
-                  {item.imageUrl && (
-                    <div className="overflow-hidden bg-muted h-56 md:h-64">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                      />
-                    </div>
-                  )}
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg truncate">{item.name}</CardTitle>
-                        {item.nameAr && (
-                          <p className="text-sm text-muted-foreground truncate" dir="rtl">
-                            {item.nameAr}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-1">
-                        <Dialog
-                          open={editingItem?.id === item.id}
-                          onOpenChange={(open) => {
-                            if (!open) setEditingItem(null);
-                          }}
-                        >
-                          <DialogTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setEditingItem(item)}
-                              data-testid={`button-edit-${item.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Edit Menu Item</DialogTitle>
-                              <DialogDescription>Update menu item details</DialogDescription>
-                            </DialogHeader>
-                            <MenuItemForm item={editingItem!} onClose={() => setEditingItem(null)} />
-                          </DialogContent>
-                        </Dialog>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDelete(item.id, item.name)}
-                          data-testid={`button-delete-${item.id}`}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        {item.isSpecial && item.specialPrice ? (
-                          <>
-                            <span className="text-sm line-through text-muted-foreground">
-                              {formatCurrency(parseFloat(item.price || '0'))}
-                            </span>
-                            <span className="text-lg font-bold text-vibrant-orange">
-                              {formatCurrency(parseFloat(item.specialPrice || '0'))}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-lg font-bold">
-                            {formatCurrency(parseFloat(item.price || '0'))}
-                          </span>
-                        )}
-                      </div>
-                      <Badge variant={item.isAvailable ? 'default' : 'secondary'}>
-                        {item.isAvailable ? 'Available' : 'Unavailable'}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant="outline" className="text-xs">
-                        {item.category}
-                      </Badge>
-                      {item.isSpecial && (
-                        <Badge className="text-xs bg-vibrant-orange/10 text-vibrant-orange border-vibrant-orange/20">
-                          Special
-                        </Badge>
-                      )}
-                      {item.dietaryTags?.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="admin-menu-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {menuItems.map((item) => (
+                <AdminMenuCard
+                  key={item.id}
+                  item={item}
+                  onEdit={setEditingItem}
+                  onDelete={(menuItem) => handleDelete(menuItem.id, menuItem.name)}
+                />
               ))}
+            </div>
+          )}
+
+          {data && data.total > 0 && (
+            <div className="flex items-center justify-center gap-4" aria-live="polite">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1 || isFetching}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {Math.max(1, Math.ceil(data.total / MENU_PAGE_SIZE))}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!data.hasMore || isFetching}
+              >
+                Next
+              </Button>
             </div>
           )}
         </div>

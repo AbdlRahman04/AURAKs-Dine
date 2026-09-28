@@ -15,7 +15,7 @@ Deploy QuickDineFlow from GitHub to Render (web service + Postgres).
 3. Set manual env vars on the web service:
    - `STRIPE_SECRET_KEY`
    - `VITE_STRIPE_PUBLIC_KEY` (needed at **build** time for Vite)
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` (optional, for seed)
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` (required before running the seed; use a unique password of at least 12 characters)
 4. After first deploy, open the Render shell (or use a one-off job) and run:
 
    ```bash
@@ -31,7 +31,7 @@ Deploy QuickDineFlow from GitHub to Render (web service + Postgres).
 6. Verify:
 
    ```bash
-   SMOKE_BASE_URL=https://YOUR-SERVICE.onrender.com npm run smoke
+   SMOKE_TARGET=render SMOKE_BASE_URL=https://YOUR-SERVICE.onrender.com npm run smoke
    ```
 
 ## Environment variables
@@ -49,4 +49,5 @@ Deploy QuickDineFlow from GitHub to Render (web service + Postgres).
 
 - Free Postgres may sleep; first request can be slow.
 - Do not commit `.env` or `.env.local`.
-- After schema changes, run `npm run db:push` against the Render database (shell or local with Render URL temporarily — prefer shell).
+- Before deploying the admin cost and analytics update, apply `migrations/20260927_admin_analytics_cost_snapshots.sql` to the Render database. It only adds nullable columns and leaves historical costs unknown. Do not use `db:push` if it prompts to truncate or otherwise modify unrelated data; resolve that schema drift separately.
+- For other schema changes, run `npm run db:push` against the Render database (shell or local with Render URL temporarily — prefer shell).

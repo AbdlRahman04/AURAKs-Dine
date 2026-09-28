@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { AdminPageSkeleton } from "@/components/admin/AdminPageSkeleton";
 
 interface FeedbackItem {
   id: number;
@@ -135,25 +136,23 @@ export default function FeedbackManagementPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="admin-shell flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading feedback...</p>
-          </div>
+        <div className="admin-main min-w-0 flex-1">
+          <AdminPageSkeleton label="feedback" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="admin-shell flex min-h-screen bg-background">
       <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 md:p-6 lg:p-8">
+      <div className="admin-main flex-1 min-w-0 overflow-auto">
+        <div className="admin-page-content p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
-        <div>
+        <div className="admin-page-header">
+          <p className="admin-kicker">Voice of the customer</p>
           <h1 className="text-3xl font-bold">Customer Feedback</h1>
           <p className="text-muted-foreground mt-2">
             Review and manage customer feedback submissions
@@ -211,7 +210,7 @@ export default function FeedbackManagementPage() {
                 <SelectTrigger data-testid="select-category-filter">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-select-content">
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="food_quality">Food Quality</SelectItem>
                   <SelectItem value="service">Service</SelectItem>
@@ -225,7 +224,7 @@ export default function FeedbackManagementPage() {
                 <SelectTrigger data-testid="select-status-filter">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-select-content">
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="reviewed">Reviewed</SelectItem>
@@ -249,7 +248,7 @@ export default function FeedbackManagementPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-24 bg-muted/50 rounded-md animate-pulse" />
+                  <div key={i} className="skeleton-shimmer h-24 rounded-md bg-muted/50" />
                 ))}
               </div>
             ) : filteredFeedback && filteredFeedback.length > 0 ? (
@@ -319,7 +318,7 @@ export default function FeedbackManagementPage() {
                             <SelectTrigger className="w-32" data-testid={`select-status-${feedback.id}`}>
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="admin-select-content">
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="reviewed">Reviewed</SelectItem>
                               <SelectItem value="resolved">Resolved</SelectItem>
@@ -345,10 +344,11 @@ export default function FeedbackManagementPage() {
 
       {/* Feedback Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Feedback Details</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="admin-dialog admin-dialog-details max-w-2xl">
+          <DialogHeader className="admin-dialog-header">
+            <p className="admin-dialog-kicker">Voice of the customer</p>
+            <DialogTitle className="admin-dialog-title">Feedback Details</DialogTitle>
+            <DialogDescription className="admin-dialog-description">
               View complete feedback information
             </DialogDescription>
           </DialogHeader>
@@ -427,7 +427,7 @@ export default function FeedbackManagementPage() {
                   <SelectTrigger className="flex-1" data-testid="select-status-dialog">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-select-content">
                     <SelectItem value="pending">Mark as Pending</SelectItem>
                     <SelectItem value="reviewed">Mark as Reviewed</SelectItem>
                     <SelectItem value="resolved">Mark as Resolved</SelectItem>

@@ -233,7 +233,7 @@ QuickDineFlow/
 │   └── schema.ts             # Database schema (used by both frontend & backend)
 │
 ├── database/                  # Database Documentation
-│   └── mysql_schema.sql      # SQL reference (for documentation)
+│   └── PostgreSQL setup and design notes
 │
 └── docs/                      # Project Documentation
 ```

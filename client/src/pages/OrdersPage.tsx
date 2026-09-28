@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import type { OrderWithItems } from '@shared/schema';
+import { flattenOrderPages, useOrders } from '@/hooks/useOrders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,13 +8,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatDateTime, getOrderStatusColor, getOrderStatusLabel } from '@/lib/utils';
 import StudentHeader from '@/components/student/StudentHeader';
 import Footer from '@/components/Footer';
+import { useOrderRealtime } from '@/hooks/useOrderRealtime';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function OrdersPage() {
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
 
-  const { data: orders, isLoading } = useQuery<OrderWithItems[]>({
-    queryKey: ['/api/orders'],
-  });
+  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } = useOrders({ refetchInterval: 30_000 });
+  const { isConnected } = useOrderRealtime();
+  const { t } = useLanguage();
+  const orders = flattenOrderPages(data);
+  const progressStages = [
+    { status: 'received', label: t('stageOrderPlaced') },
+    { status: 'preparing', label: t('stagePreparing') },
+    { status: 'ready', label: t('stageReadyForPickup') },
+    { status: 'completed', label: t('stageCollected') },
+  ];
 
   const toggleOrderExpand = (orderId: number) => {
     setExpandedOrders(prev => {
@@ -30,7 +38,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-page-shell student-orders-page min-h-screen bg-background flex flex-col">
       <StudentHeader />
       <div className="flex-grow">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -38,6 +46,9 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold mb-2">My Orders</h1>
           <p className="text-muted-foreground">
             Track your current and past orders
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {isConnected ? t('notificationsLiveNote') : t('notificationsRefreshNote')}
           </p>
         </div>
 
@@ -55,10 +66,20 @@ export default function OrdersPage() {
               </Card>
             ))}
           </div>
+        ) : isError && !data ? (
+          <Card role="alert" className="p-8 text-center">
+            <h2 className="mb-2 text-lg font-semibold">We couldn&apos;t load your orders</h2>
+            <p className="mb-5 text-sm text-muted-foreground">Check your connection and try again.</p>
+            <Button variant="outline" onClick={() => refetch()}>Try again</Button>
+          </Card>
         ) : orders && orders.length > 0 ? (
           <div className="space-y-4">
             {orders.map((order) => {
               const isExpanded = expandedOrders.has(order.id);
+              const currentStageIndex = Math.max(
+                0,
+                progressStages.findIndex((stage) => stage.status === order.status),
+              );
 
               return (
                 <Card key={order.id} data-testid={`card-order-${order.id}`}>
@@ -105,6 +126,55 @@ export default function OrdersPage() {
                     </div>
                   </CardHeader>
 
+                  {order.status === 'cancelled' ? (
+                    <CardContent className="border-t pt-4" role="status">
+                      <p className="text-sm text-destructive">
+                        {t('orderCancelledMessage')} <span className="font-medium">{order.orderNumber}</span>
+                      </p>
+                    </CardContent>
+                  ) : (
+                    <CardContent className="border-t pt-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-sm font-semibold">{t('orderProgress')}</h2>
+                        {order.paymentMethod === 'card' ? (
+                          <Badge
+                            variant="secondary"
+                            className={order.paymentStatus === 'succeeded'
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-muted text-muted-foreground'}
+                          >
+                            {order.paymentStatus === 'succeeded' ? t('paymentSuccessful') : t('paymentPending')}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">{t('cashPaymentAtPickup')}</Badge>
+                        )}
+                      </div>
+                      <ol
+                        aria-label={t('orderProgress')}
+                        className="grid grid-cols-4 gap-1"
+                        data-testid={`progress-order-${order.id}`}
+                      >
+                        {progressStages.map((stage, index) => {
+                          const isReached = index <= currentStageIndex;
+                          const isCurrent = index === currentStageIndex;
+                          return (
+                            <li key={stage.status} className="min-w-0 text-center">
+                              <div className="flex w-full items-center">
+                                <span className={`h-3 w-3 shrink-0 rounded-full ring-4 ring-background ${isReached ? 'bg-primary' : 'bg-muted-foreground/25'}`} />
+                                {index < progressStages.length - 1 && (
+                                  <span className={`h-1 flex-1 ${index < currentStageIndex ? 'bg-primary' : 'bg-muted'}`} />
+                                )}
+                              </div>
+                              <span className={`mt-2 block text-[11px] leading-tight sm:text-xs ${isCurrent ? 'font-semibold text-foreground' : isReached ? 'text-foreground/75' : 'text-muted-foreground'}`}>
+                                {stage.label}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </CardContent>
+                  )}
+
                   {isExpanded && (
                     <CardContent className="border-t pt-4">
                       <div className="space-y-3">
@@ -150,6 +220,16 @@ export default function OrdersPage() {
                 </Card>
               );
             })}
+            {hasNextPage && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'Loading...' : 'Load older orders'}
+              </Button>
+            )}
           </div>
         ) : (
           <Card className="text-center py-16">

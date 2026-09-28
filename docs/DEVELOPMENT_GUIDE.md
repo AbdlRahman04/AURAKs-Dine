@@ -4,8 +4,8 @@ Local-first workflow for building and testing features before deploying to Rende
 
 ## Stack
 
-- **Runtime:** Node.js 18+ (packages in `node_modules/` via `npm install` — not a Python venv)
-- **Database:** PostgreSQL (local for dev, Render Postgres for deploy)
+- **Runtime:** Node.js 20.19+ or 22.12+ (packages in `node_modules/` via `npm install`)
+- **Database:** PostgreSQL (local for development, Render Postgres for deployment)
 - **ORM:** Drizzle (`shared/schema.ts` re-exports feature schemas)
 - **Auth:** Email/password via Passport (`server/localAuth.ts`)
 
@@ -25,21 +25,21 @@ npm run dev
 npm run smoke
 ```
 
-`.env.local` overrides `.env`. Keep cloud credentials in `.env` if you want; local URL in `.env.local`.
+`.env.local` overrides `.env`. Keep all environment files private; production values belong in the deployment provider's secret configuration.
 
-## Feature modules (plug-and-play)
+## Feature modules
 
 Features live under `features/{name}/`:
 
 | Path | Role |
-|------|------|
-| `schema.ts` | Drizzle tables for this feature |
-| `storage.ts` | DB access |
-| `routes.ts` | Express routes |
-| `index.ts` | `registerXFeature(app)` |
-| `pack/manifest.json` | Version + portability metadata |
+| --- | --- |
+| `schema.ts` | Drizzle tables for the feature. |
+| `storage.ts` | Database access. |
+| `routes.ts` | Express routes. |
+| `index.ts` | `registerXFeature(app)`. |
+| `pack/manifest.json` | Version and portability metadata, where applicable. |
 
-**Core files** (avoid editing unless the plan requires it):
+Core infrastructure files:
 
 - `server/index.ts`
 - `server/config.ts`
@@ -47,38 +47,38 @@ Features live under `features/{name}/`:
 - `server/database.ts`
 - `server/registerFeatures.ts`
 
-New features must be registered in `server/registerFeatures.ts`.
+Register every new feature in `server/registerFeatures.ts`.
 
-## Pack export / import (menu)
+## Menu content packs
 
-Promote menu content from local → staging without copying the whole database:
+Promote menu content between environments without copying the entire database:
 
 ```bash
-# On local (exports JSON + bumps features/menu/pack/manifest.json)
+# On local (exports JSON and bumps features/menu/pack/manifest.json)
 npm run pack:export -- menu
 
-# On staging / against Render DATABASE_URL
+# On the target environment
 npm run pack:import -- menu --file exports/menu-v1.0.0.json
 ```
 
-Images under `client/public/menu-images/` are copied with the pack. Paths are stored in Postgres; binary files stay on disk.
+Images under `client/public/menu-images/` are copied with a pack. Admin-uploaded menu images are converted to WebP and stored in PostgreSQL; pack export/import preserves those database-backed files.
 
-**Not exported:** users/passwords, sessions, live orders, Stripe payment methods.
+Packs do not export users, passwords, sessions, live orders, or Stripe payment methods.
 
 ## Database commands
 
 | Script | Purpose |
-|--------|---------|
-| `db:setup-local` | Create local `quickdineflow` database |
-| `db:push` | Push schema via Drizzle |
-| `db:seed` | Seed admin + menu (idempotent) |
-| `db:setup` | push + seed (local or cloud URL) |
-| `db:setup-local-full` | create DB + setup |
+| --- | --- |
+| `db:setup-local` | Create the local `quickdineflow` database. |
+| `db:push` | Apply the Drizzle schema. |
+| `db:seed` | Seed the configured administrator and menu data. |
+| `db:setup` | Apply schema and seed the selected database. |
+| `db:setup-local-full` | Create the local database, then apply schema and seed data. |
 
-## AI feature workflow
+## Feature workflow
 
-Use the prompt in [FEATURE_DEVELOPMENT_PROMPT.md](./FEATURE_DEVELOPMENT_PROMPT.md).
+Use [FEATURE_DEVELOPMENT_PROMPT.md](FEATURE_DEVELOPMENT_PROMPT.md) for the project feature-development prompt.
 
 ## Deploy
 
-See [RENDER_DEPLOY.md](./RENDER_DEPLOY.md).
+See [RENDER_DEPLOY.md](RENDER_DEPLOY.md).

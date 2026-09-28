@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UtensilsCrossed, ArrowLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import aurakLogo from "@/assets/aurak-logo.png";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -51,14 +52,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-background p-4">
+    <div className="public-shell auth-shell auth-login min-h-screen w-full flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3">
+          <div className="auth-brand-mark">
+            <img src={aurakLogo} alt="AURAK'S Dine logo" />
+          </div>
           <div className="flex items-center justify-between">
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setLocation('/')}
+              onClick={() => setLocation('/menu')}
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -87,7 +91,18 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto p-0 text-sm"
+                  onClick={() => setLocation('/forgot-password')}
+                  data-testid="link-forgot-password"
+                >
+                  Forgot password?
+                </Button>
+              </div>
               <Input
                 id="password"
                 type="password"

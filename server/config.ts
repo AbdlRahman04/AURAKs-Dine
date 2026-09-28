@@ -11,7 +11,6 @@ import * as path from "path";
 
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
 if (fs.existsSync(envLocalPath)) {
-  dotenv.config({ path: envLocalPath });
-  console.log('[Config] Loaded .env.local');
+  dotenv.config({ path: envLocalPath, quiet: true });
 }
-dotenv.config(); // loads .env (won't override already-set vars)
+dotenv.config({ quiet: true }); // loads .env (won't override already-set vars)

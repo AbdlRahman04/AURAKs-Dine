@@ -1,19 +1,64 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Package, AlertCircle } from 'lucide-react';
+import { Clock, Package, AlertCircle, Download, Eye, MapPin, UserRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatCurrency, formatTime } from '@/lib/utils';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Order, OrderItem } from '@shared/schema';
+import { flattenOrderPages, useOrders } from '@/hooks/useOrders';
+import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { OrderWithItems } from '@shared/schema';
 
-type OrderWithItems = Order & {
-  items: OrderItem[];
-};
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character]!);
+}
+
+function downloadReceipt(order: OrderWithItems) {
+  const customerName = [order.customer?.firstName, order.customer?.lastName]
+    .filter(Boolean)
+    .join(' ') || 'Not provided';
+  const pickupLocation = order.customer?.preferredPickupLocation || 'Not provided';
+  const itemRows = order.items.map((item) => `
+    <tr><td>${item.quantity} × ${escapeHtml(item.menuItemName)}</td><td>${escapeHtml(formatCurrency(item.subtotal))}</td></tr>
+  `).join('');
+  const receipt = `<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Receipt ${escapeHtml(order.orderNumber)}</title>
+<style>body{font:16px/1.5 Arial,sans-serif;color:#18212f;max-width:680px;margin:40px auto;padding:0 24px}h1{margin-bottom:4px}p{margin:4px 0;color:#485466}.meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:28px 0;padding:16px;background:#f4f6f8}table{width:100%;border-collapse:collapse}td{padding:12px 0;border-bottom:1px solid #dce1e7}td:last-child{text-align:right}.total{font-size:20px;font-weight:700;margin-top:18px;text-align:right}.note{margin-top:24px}@media print{body{margin:0 auto}}</style>
+<h1>QuickDineFlow receipt</h1><p>Order ${escapeHtml(order.orderNumber)}</p>
+<div class="meta"><div><strong>Customer</strong><p>${escapeHtml(customerName)}</p></div><div><strong>Pickup location</strong><p>${escapeHtml(pickupLocation)}</p></div><div><strong>Pickup time</strong><p>${escapeHtml(format(new Date(order.pickupTime), 'MMM dd, yyyy HH:mm'))}</p></div><div><strong>Status</strong><p>${escapeHtml(statusLabels[order.status as keyof typeof statusLabels] ?? order.status)}</p></div></div>
+<table><tbody>${itemRows}</tbody></table>
+<p class="note">Subtotal: ${escapeHtml(formatCurrency(order.subtotal))}<br>Tax: ${escapeHtml(formatCurrency(order.tax))}</p>
+<p class="total">Total: ${escapeHtml(formatCurrency(order.total))}</p>
+${order.specialInstructions ? `<p class="note"><strong>Special instructions:</strong> ${escapeHtml(order.specialInstructions)}</p>` : ''}
+</html>`;
+  const url = URL.createObjectURL(new Blob([receipt], { type: 'text/html;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `receipt-${order.orderNumber}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 const statusColors = {
   received: 'bg-blue-500',
@@ -34,35 +79,14 @@ const statusLabels = {
 export default function AllOrdersPage() {
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
+  const { isConnected } = useOrderRealtime();
 
   // Fetch all orders (including completed and cancelled)
-  const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
-    queryKey: ['/api/orders'],
-    refetchInterval: 5000, // Poll every 5 seconds for real-time updates
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useOrders({
+    refetchInterval: isConnected ? false : 30_000,
   });
-
-  // Setup WebSocket for real-time updates
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'ORDER_STATUS_UPDATE') {
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-          toast({
-            title: 'Order Updated',
-            description: `Order status changed`,
-          });
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    };
-
-    return () => ws.close();
-  }, [toast]);
+  const orders = flattenOrderPages(data);
 
   // Update order status mutation
   const updateStatusMutation = useMutation({
@@ -105,26 +129,24 @@ export default function AllOrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="admin-shell flex min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading orders...</p>
-          </div>
+        <div className="admin-main min-w-0 flex-1">
+          <AdminPageSkeleton label="all orders" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="admin-shell flex min-h-screen bg-background">
       <AdminSidebar />
       
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6">
+      <div className="admin-main flex-1 min-w-0 overflow-auto">
+        <div className="admin-page-content p-6 space-y-6">
           {/* Header */}
-          <div>
+          <div className="admin-page-header">
+            <p className="admin-kicker">Order history</p>
             <h1 className="text-3xl font-bold">All Orders</h1>
             <p className="text-muted-foreground">Complete order history and management</p>
           </div>
@@ -243,6 +265,11 @@ export default function AllOrdersPage() {
                       <span>{formatCurrency(parseFloat(order.total))}</span>
                     </div>
 
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => setSelectedOrder(order)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Order details
+                    </Button>
+
                     {/* Status Actions - Only show for active orders */}
                     {order.status !== 'completed' && order.status !== 'cancelled' && (
                       <div className="flex gap-2">
@@ -295,9 +322,68 @@ export default function AllOrdersPage() {
               ))}
             </div>
           )}
+          {hasNextPage && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? 'Loading...' : 'Load older orders'}
+            </Button>
+          )}
         </div>
       </div>
+      <Dialog open={selectedOrder !== null} onOpenChange={(open) => { if (!open) setSelectedOrder(null); }}>
+        {selectedOrder && (
+          <DialogContent className="admin-dialog admin-dialog-details admin-order-dialog max-w-2xl">
+            <DialogHeader className="admin-dialog-header">
+              <p className="admin-dialog-kicker">Order handoff</p>
+              <DialogTitle className="admin-dialog-title">Order details</DialogTitle>
+              <DialogDescription>Customer and pickup information for the delivery handoff.</DialogDescription>
+            </DialogHeader>
+            <div className="admin-order-reference">
+              <span>Order number</span>
+              <strong>{selectedOrder.orderNumber}</strong>
+            </div>
+            <section className="admin-order-meta" aria-label="Order handoff information">
+              <div className="admin-order-meta-item">
+                <UserRound aria-hidden="true" />
+                <div><p>Customer</p><strong>{[selectedOrder.customer?.firstName, selectedOrder.customer?.lastName].filter(Boolean).join(' ') || 'Not provided'}</strong></div>
+              </div>
+              <div className="admin-order-meta-item">
+                <MapPin aria-hidden="true" />
+                <div><p>Pickup location</p><strong>{selectedOrder.customer?.preferredPickupLocation || 'Not provided'}</strong></div>
+              </div>
+              <div className="admin-order-meta-item">
+                <Clock aria-hidden="true" />
+                <div><p>Pickup time</p><strong>{format(new Date(selectedOrder.pickupTime), 'MMM dd, yyyy HH:mm')}</strong></div>
+              </div>
+              <div className="admin-order-meta-item">
+                <Package aria-hidden="true" />
+                <div><p>Status</p><strong className={`admin-order-status admin-order-status-${selectedOrder.status}`}>{statusLabels[selectedOrder.status as keyof typeof statusLabels] ?? selectedOrder.status}</strong></div>
+              </div>
+            </section>
+            <section className="admin-order-items" aria-labelledby="admin-order-items-heading">
+              <div className="admin-order-section-heading">
+                <h3 id="admin-order-items-heading">Items</h3>
+                <span>{selectedOrder.items.length} {selectedOrder.items.length === 1 ? 'item' : 'items'}</span>
+              </div>
+              {selectedOrder.items.map((item) => (
+                <div key={item.id} className="admin-order-line">
+                  <span><strong>{item.quantity} ×</strong> {item.menuItemName}</span><strong>{formatCurrency(item.subtotal)}</strong>
+                </div>
+              ))}
+              <div className="admin-order-total"><span>Total</span><strong>{formatCurrency(selectedOrder.total)}</strong></div>
+            </section>
+            {selectedOrder.specialInstructions && <div className="admin-order-instructions"><span>Special instructions</span><p>{selectedOrder.specialInstructions}</p></div>}
+            <Button className="admin-order-receipt" onClick={() => downloadReceipt(selectedOrder)}>
+              <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+              Download receipt
+            </Button>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
-

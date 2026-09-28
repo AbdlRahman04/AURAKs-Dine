@@ -13,8 +13,10 @@ export async function importMenuPack(filePath: string) {
   const items = (pack.data?.menu_items || []) as InsertMenuItem[];
 
   let upserted = 0;
+  const importedItems = new Map<string, Awaited<ReturnType<typeof menuStorage.upsertMenuItemByName>>>();
   for (const item of items) {
-    await menuStorage.upsertMenuItemByName(item);
+    const imported = await menuStorage.upsertMenuItemByName(item);
+    importedItems.set(imported.name, imported);
     upserted++;
   }
 
@@ -43,6 +45,16 @@ export async function importMenuPack(filePath: string) {
         path.join(dest, file),
       );
       copiedFiles++;
+    }
+
+    for (const image of (pack.image_files || []) as Array<{ name?: string; file?: string }>) {
+      if (!image.name || !image.file) continue;
+      const importedItem = importedItems.get(image.name);
+      const imagePath = path.join(sourceImages, path.basename(image.file));
+      if (!importedItem || !fs.existsSync(imagePath)) continue;
+
+      const imageData = fs.readFileSync(imagePath);
+      await menuStorage.updateMenuItem(importedItem.id, {}, "upload", imageData);
     }
   }
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { MenuItem } from '@shared/schema';
 
 interface CartProviderProps {
@@ -28,9 +28,39 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const TAX_RATE = 0.08; // 8% tax
+const CART_STORAGE_KEY = 'quickdineflow-cart';
+
+function loadCartItems(): CartItem[] {
+  try {
+    const savedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+    if (!savedCart) return [];
+
+    const parsed: unknown = JSON.parse(savedCart);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter((item): item is CartItem =>
+      typeof item === 'object' && item !== null &&
+      typeof item.quantity === 'number' && Number.isFinite(item.quantity) && item.quantity > 0 &&
+      typeof item.menuItem === 'object' && item.menuItem !== null &&
+      typeof item.menuItem.id === 'number' &&
+      typeof item.menuItem.name === 'string' &&
+      typeof item.menuItem.price === 'string'
+    );
+  } catch {
+    return [];
+  }
+}
 
 export function CartProvider({ children }: CartProviderProps) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(loadCartItems);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // Keep the in-memory cart usable if browser storage is unavailable or full.
+    }
+  }, [items]);
 
   const addItem = (menuItem: MenuItem, quantity: number = 1, customizations?: string, selectedSize?: string) => {
     setItems(prev => {

@@ -1,10 +1,10 @@
 # How to Change Role from Student to Admin (Without Neon)
 
-This guide shows you how to change a user's role from `student` to `admin` using different database options (local PostgreSQL, MySQL, or other providers).
+This guide shows you how to change a user's role from `student` to `admin` in QuickDineFlow's PostgreSQL database.
 
 ## Method 1: Using the make-admin Script (Recommended)
 
-The `make-admin.ts` script works with **any database** as long as your `DATABASE_URL` is configured correctly.
+The `make-admin.ts` script uses the PostgreSQL database configured by `DATABASE_URL`.
 
 ### Steps:
 
@@ -13,11 +13,6 @@ The `make-admin.ts` script works with **any database** as long as your `DATABASE
    # For local PostgreSQL
    DATABASE_URL=postgresql://username:password@localhost:5432/quickdineflow
    
-   # For MySQL (if you've configured it)
-   DATABASE_URL=mysql://username:password@localhost:3306/quickdineflow
-   
-   # For any other PostgreSQL provider
-   DATABASE_URL=postgresql://user:pass@host:port/database
    ```
 
 2. **Run the make-admin script:**
@@ -57,23 +52,6 @@ WHERE email = 'user@example.com';
 psql -U your_username -d quickdineflow -c "UPDATE users SET role = 'admin', updated_at = NOW() WHERE email = 'user@example.com';"
 ```
 
-### For MySQL
-
-If you're using MySQL:
-
-```sql
-UPDATE users 
-SET role = 'admin', updated_at = NOW() 
-WHERE email = 'user@example.com';
-```
-
-**Using MySQL command line:**
-```bash
-mysql -u your_username -p quickdineflow -e "UPDATE users SET role = 'admin', updated_at = NOW() WHERE email = 'user@example.com';"
-```
-
----
-
 ## Method 3: Using Database Management Tools
 
 ### Option A: pgAdmin (for PostgreSQL)
@@ -89,28 +67,15 @@ mysql -u your_username -p quickdineflow -e "UPDATE users SET role = 'admin', upd
    ```
 5. Click **Execute** (F5)
 
-### Option B: MySQL Workbench (for MySQL)
-
-1. Open MySQL Workbench
-2. Connect to your database
-3. Open a new SQL tab
-4. Run:
-   ```sql
-   UPDATE users 
-   SET role = 'admin', updated_at = NOW() 
-   WHERE email = 'user@example.com';
-   ```
-5. Click **Execute** (Ctrl+Enter)
-
-### Option C: DBeaver (Universal Database Tool)
+### Option B: DBeaver
 
 1. Open DBeaver
-2. Connect to your database (PostgreSQL or MySQL)
+2. Connect to your PostgreSQL database
 3. Open SQL Editor
 4. Run the UPDATE query
 5. Execute
 
-### Option D: VS Code Database Extensions
+### Option C: VS Code Database Extensions
 
 If you have a database extension in VS Code (like "SQLTools"):
 
@@ -237,23 +202,6 @@ If you're using local PostgreSQL:
    ```env
    DATABASE_URL=postgresql://your_username@localhost:5432/quickdineflow
    ```
-
-### MySQL Setup
-
-If you want to use MySQL instead:
-
-1. Install MySQL
-2. Create database:
-   ```sql
-   CREATE DATABASE quickdineflow;
-   ```
-3. Run the MySQL schema:
-   ```bash
-   mysql -u root -p quickdineflow < database/mysql_schema.sql
-   ```
-4. Update `server/db.ts` to use MySQL driver (you'll need to modify the connection)
-
----
 
 ## Security Note
 

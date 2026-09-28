@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CreditCard, Package, Wallet, Banknote, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, CreditCard, Package, Wallet, Banknote, Sparkles } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency, formatTime, generatePickupTimeSlots } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -16,83 +13,10 @@ import { apiRequest } from '@/lib/queryClient';
 import StudentHeader from '@/components/student/StudentHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { OrderWithItems, MenuItem } from '@shared/schema';
+import type { MenuItem } from '@shared/schema';
+import { useOrderSummary } from '@/hooks/useOrders';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-function CheckoutForm({ pickupTime, onSuccess }: { pickupTime: Date; onSuccess: () => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + '/orders',
-        },
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        toast({
-          title: 'Payment Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Order Placed Successfully',
-          description: 'You will receive a confirmation shortly.',
-        });
-        onSuccess();
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement 
-        options={{
-          fields: {
-            billingDetails: {
-              address: 'never'
-            }
-          },
-          wallets: {
-            applePay: 'auto',
-            googlePay: 'auto',
-          }
-        }}
-      />
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        disabled={!stripe || isProcessing}
-        data-testid="button-place-order"
-      >
-        {isProcessing ? 'Processing...' : 'Place Order'}
-      </Button>
-    </form>
-  );
-}
+const CardPaymentForm = lazy(() => import('@/components/student/CardPaymentForm'));
 
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
@@ -101,10 +25,16 @@ export default function CheckoutPage() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [clientSecret, setClientSecret] = useState('');
+  const [checkoutOrderId, setCheckoutOrderId] = useState<number | null>(null);
+  const [checkoutOrderNumber, setCheckoutOrderNumber] = useState<string | undefined>();
   const [step, setStep] = useState<'pickup' | 'payment'>('pickup');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const paymentStepRef = useRef<HTMLDivElement>(null);
+  const pickupSelectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { language } = useLanguage();
+  const { dir, language, t } = useLanguage();
 
   // Helper function to get localized item name
   const getItemName = (item: MenuItem) => {
@@ -114,13 +44,9 @@ export default function CheckoutPage() {
     return item.name;
   };
 
-  // Check if user is a first-time customer (10% discount)
-  const { data: orders, isLoading: isLoadingOrders } = useQuery<OrderWithItems[]>({
-    queryKey: ['/api/orders'],
-  });
-
-  // Only apply discount after orders have loaded and confirmed count is 0
-  const isFirstTimeCustomer = !isLoadingOrders && (!orders || orders.length === 0);
+  // Keep the existing discount policy without loading a full order history at checkout.
+  const { data: orderSummary, isLoading: isLoadingOrderSummary } = useOrderSummary();
+  const isFirstTimeCustomer = !isLoadingOrderSummary && orderSummary?.hasOrders === false;
   const FIRST_TIME_DISCOUNT = 0.10; // 10%
 
   const getDiscountAmount = () => {
@@ -148,11 +74,20 @@ export default function CheckoutPage() {
     }
   }, [items, setLocation]);
 
+  useEffect(() => {
+    if (step === 'payment') {
+      paymentStepRef.current?.focus();
+    }
+  }, [step]);
+
   const handleContinueToPayment = async () => {
+    setCheckoutError(null);
     if (!pickupTime) {
+      const message = t('selectPickupTimeDescription');
+      setCheckoutError(message);
       toast({
-        title: 'Select Pickup Time',
-        description: 'Please select a pickup time to continue',
+        title: t('selectPickupTime'),
+        description: message,
         variant: 'destructive',
       });
       return;
@@ -164,8 +99,19 @@ export default function CheckoutPage() {
       return;
     }
 
+    setIsPreparingPayment(true);
+
     // If card payment, create payment intent
     try {
+      if (checkoutOrderId && clientSecret) {
+        await apiRequest('PATCH', `/api/orders/${checkoutOrderId}/checkout-details`, {
+          pickupTime: pickupTime.toISOString(),
+          specialInstructions,
+        });
+        setStep('payment');
+        return;
+      }
+
       const orderData = {
         items: items.map(item => ({
           menuItemId: item.menuItem.id,
@@ -185,19 +131,33 @@ export default function CheckoutPage() {
       const response = await apiRequest('POST', '/api/create-payment-intent', orderData);
       const data = await response.json();
       setClientSecret(data.clientSecret);
+      setCheckoutOrderId(data.orderId);
+      setCheckoutOrderNumber(data.orderNumber);
       setStep('payment');
     } catch (error) {
+      const message = checkoutOrderId
+        ? t('checkoutDetailsSaveFailed')
+        : t('checkoutInitializationFailed');
+      setCheckoutError(message);
       toast({
-        title: 'Error',
-        description: 'Failed to initialize payment',
+        title: t('error'),
+        description: message,
         variant: 'destructive',
       });
+    } finally {
+      setIsPreparingPayment(false);
     }
+  };
+
+  const retryPickupSelection = () => {
+    setCheckoutError(null);
+    pickupSelectionRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])')?.focus();
   };
 
   const handleCashPayment = async () => {
     if (!pickupTime) return;
 
+    setCheckoutError(null);
     setIsPlacingOrder(true);
 
     try {
@@ -217,19 +177,24 @@ export default function CheckoutPage() {
         paymentMethod: 'cash',
       };
 
-      await apiRequest('POST', '/api/orders/cash', orderData);
+      const response = await apiRequest('POST', '/api/orders/cash', orderData);
+      const data = await response.json();
 
       toast({
-        title: 'Order Placed Successfully',
-        description: 'Pay cash when you pick up your order',
+        title: t('orderPlaced'),
+        description: data.orderNumber
+          ? `${t('orderNumber')} ${data.orderNumber}. ${t('cashPaymentDescription')}`
+          : t('cashPaymentDescription'),
       });
 
       clearCart();
       setLocation('/orders');
     } catch (error) {
+      const message = t('cashOrderFailed');
+      setCheckoutError(message);
       toast({
-        title: 'Error',
-        description: 'Failed to place order',
+        title: t('error'),
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -243,9 +208,9 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-page-shell student-checkout-page min-h-screen bg-background flex flex-col">
       <StudentHeader />
-      <div className="flex-grow">
+      <main id="main-content" className="flex-grow">
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Steps */}
@@ -254,14 +219,14 @@ export default function CheckoutPage() {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'pickup' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               1
             </div>
-            <span className="font-medium">Pickup Time</span>
+            <span className="font-medium">{t('pickupStep')}</span>
           </div>
           <div className="w-12 border-t border-muted" />
           <div className={`flex items-center gap-2 ${step === 'payment' ? 'text-primary' : 'text-muted-foreground'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'payment' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               2
             </div>
-            <span className="font-medium">Payment</span>
+            <span className="font-medium">{t('paymentStep')}</span>
           </div>
         </div>
 
@@ -274,16 +239,19 @@ export default function CheckoutPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="w-5 h-5" />
-                      Select Pickup Time
+                      {t('selectPickupTime')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    <div ref={pickupSelectionRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {timeSlots.map((slot) => (
                         <Button
                           key={slot.toISOString()}
                           variant={pickupTime?.getTime() === slot.getTime() ? 'default' : 'outline'}
-                          onClick={() => setPickupTime(slot)}
+                          onClick={() => {
+                            setPickupTime(slot);
+                            setCheckoutError(null);
+                          }}
                           className="h-auto py-3"
                           data-testid={`button-timeslot-${formatTime(slot)}`}
                         >
@@ -296,51 +264,56 @@ export default function CheckoutPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Payment Method</CardTitle>
+                    <CardTitle>{t('paymentMethod')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <RadioGroup value={paymentMethod} onValueChange={(value: 'card' | 'cash') => setPaymentMethod(value)}>
-                      <div className="flex items-center space-x-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => setPaymentMethod('card')}>
-                        <RadioGroupItem value="card" id="card" data-testid="radio-payment-card" />
+                      <div className="flex items-center gap-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => !checkoutOrderId && setPaymentMethod('card')}>
+                        <RadioGroupItem value="card" id="card" disabled={Boolean(checkoutOrderId)} data-testid="radio-payment-card" />
                         <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1">
                           <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
                             <Wallet className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <p className="font-medium">Card Payment</p>
-                            <p className="text-sm text-muted-foreground">Pay with credit/debit card or Apple Pay</p>
+                            <p className="font-medium">{t('cardPayment')}</p>
+                            <p className="text-sm text-muted-foreground">{t('cardPaymentDescription')}</p>
                           </div>
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => setPaymentMethod('cash')}>
-                        <RadioGroupItem value="cash" id="cash" data-testid="radio-payment-cash" />
+                      <div className="flex items-center gap-3 p-4 rounded-lg border hover-elevate cursor-pointer" onClick={() => !checkoutOrderId && setPaymentMethod('cash')}>
+                        <RadioGroupItem value="cash" id="cash" disabled={Boolean(checkoutOrderId)} data-testid="radio-payment-cash" />
                         <Label htmlFor="cash" className="flex items-center gap-3 cursor-pointer flex-1">
                           <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-green-500/10">
                             <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
                           </div>
                           <div>
-                            <p className="font-medium">Cash on Pickup</p>
-                            <p className="text-sm text-muted-foreground">Pay when you collect your order</p>
+                            <p className="font-medium">{t('cashPayment')}</p>
+                            <p className="text-sm text-muted-foreground">{t('cashPaymentDescription')}</p>
                           </div>
                         </Label>
                       </div>
                     </RadioGroup>
+                    {checkoutOrderId && (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {t('paymentMethodLocked')}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Special Instructions</CardTitle>
+                    <CardTitle>{t('specialInstructions')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Label htmlFor="instructions" className="sr-only">
-                      Special Instructions
+                      {t('specialInstructions')}
                     </Label>
                     <textarea
                       id="instructions"
                       className="w-full min-h-24 px-3 py-2 rounded-md border bg-background"
-                      placeholder="Any special requests or dietary requirements..."
+                      placeholder={t('addInstructions')}
                       value={specialInstructions}
                       onChange={(e) => setSpecialInstructions(e.target.value)}
                       data-testid="textarea-special-instructions"
@@ -348,54 +321,89 @@ export default function CheckoutPage() {
                   </CardContent>
                 </Card>
 
+                {checkoutError && step === 'pickup' && (
+                  <div className="checkout-status checkout-status-error" role="alert" aria-live="assertive">
+                    <p>{checkoutError}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={retryPickupSelection}>
+                      {t('tryAgain')}
+                    </Button>
+                  </div>
+                )}
                 <Button
                   className="w-full"
                   size="lg"
                   onClick={handleContinueToPayment}
+                  disabled={isPreparingPayment}
+                  aria-busy={isPreparingPayment}
                   data-testid="button-continue-payment"
                 >
-                  Continue to Payment
+                  {isPreparingPayment ? t('preparingPayment') : t('continueToPayment')}
                 </Button>
               </>
             )}
 
-            {step === 'payment' && (
-              <Card>
+            {(step === 'payment' || Boolean(clientSecret)) && (
+              <Card hidden={step !== 'payment'}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {paymentMethod === 'card' ? (
-                      <>
-                        <CreditCard className="w-5 h-5" />
-                        Payment Details
-                      </>
-                    ) : (
-                      <>
-                        <Banknote className="w-5 h-5" />
-                        Confirm Cash Payment
-                      </>
-                    )}
-                  </CardTitle>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <CardTitle ref={paymentStepRef} tabIndex={-1} className="checkout-payment-title flex items-center gap-2">
+                      {paymentMethod === 'card' ? (
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          {t('paymentDetails')}
+                        </>
+                      ) : (
+                        <>
+                          <Banknote className="w-5 h-5" />
+                          {t('confirmCashPayment')}
+                        </>
+                      )}
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setStep('pickup')}
+                      className="text-muted-foreground hover:text-foreground"
+                      data-testid="button-edit-checkout-details"
+                    >
+                      {dir === 'rtl' ? <ArrowRight className="h-4 w-4" aria-hidden="true" /> : <ArrowLeft className="h-4 w-4" aria-hidden="true" />}
+                      <span>{t('editPickupDetails')}</span>
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
+                  <p className="mb-5 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                    {t('checkoutDetailsHelp')}
+                  </p>
                   {paymentMethod === 'card' && clientSecret ? (
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
-                      <CheckoutForm pickupTime={pickupTime!} onSuccess={handleOrderSuccess} />
-                    </Elements>
+                    <Suspense fallback={<div className="checkout-status" role="status" aria-live="polite" aria-busy="true"><p>{t('paymentDetailsLoading')}</p></div>}>
+                      <CardPaymentForm clientSecret={clientSecret} orderNumber={checkoutOrderNumber} onSuccess={handleOrderSuccess} />
+                    </Suspense>
                   ) : paymentMethod === 'cash' ? (
                     <div className="space-y-4">
                       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
                         <p className="text-sm text-amber-900 dark:text-amber-100">
-                          Please have the exact amount ready when you pick up your order.
+                          {t('cashPaymentNotice')}
                         </p>
                       </div>
+                      {checkoutError && (
+                        <div className="checkout-status checkout-status-error" role="alert" aria-live="assertive">
+                          <p>{checkoutError}</p>
+                          <Button type="button" variant="outline" size="sm" onClick={() => void handleCashPayment()} disabled={isPlacingOrder}>
+                            {t('tryAgain')}
+                          </Button>
+                        </div>
+                      )}
                       <Button
                         className="w-full"
                         size="lg"
                         onClick={handleCashPayment}
                         disabled={isPlacingOrder}
+                        aria-busy={isPlacingOrder}
                         data-testid="button-confirm-cash-order"
                       >
-                        {isPlacingOrder ? 'Placing Order...' : 'Confirm Order'}
+                        {isPlacingOrder ? t('placingOrder') : t('confirmOrder')}
                       </Button>
                     </div>
                   ) : null}
@@ -411,12 +419,12 @@ export default function CheckoutPage() {
                 <CardTitle className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5" />
-                    Order Summary
+                    {t('orderSummary')}
                   </div>
                   {isFirstTimeCustomer && (
-                    <Badge variant="secondary" className="bg-vibrant-orange/10 text-vibrant-orange border-vibrant-orange/20">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      10% OFF
+                    <Badge variant="secondary" className="gap-1 bg-vibrant-orange/10 text-vibrant-orange border-vibrant-orange/20">
+                      <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      10% {t('discount')}
                     </Badge>
                   )}
                 </CardTitle>
@@ -448,42 +456,56 @@ export default function CheckoutPage() {
 
                 <div className="border-t pt-6 space-y-4">
                   <div className="flex justify-between text-sm py-1">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">{t('subtotal')}</span>
                     <span>{formatCurrency(getSubtotal())}</span>
                   </div>
                   {isFirstTimeCustomer && getDiscountAmount() > 0 && (
                     <div className="flex justify-between text-sm text-vibrant-orange py-1">
                       <span className="flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
-                        First-Time Discount (10%)
+                        {t('firstTimeDiscount')}
                       </span>
                       <span>-{formatCurrency(getDiscountAmount())}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm py-1">
-                    <span className="text-muted-foreground">Tax</span>
+                    <span className="text-muted-foreground">{t('tax')}</span>
                     <span>{formatCurrency(getDiscountedTax())}</span>
                   </div>
                   {pickupTime && (
                     <div className="flex justify-between text-sm py-1">
-                      <span className="text-muted-foreground">Pickup Time</span>
-                      <span className="font-medium">{formatTime(pickupTime)}</span>
+                      <span className="text-muted-foreground">{t('pickupTime')}</span>
+                      <span className="flex items-center gap-2 font-medium">
+                        {formatTime(pickupTime)}
+                        {step === 'payment' && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 text-primary underline-offset-4 hover:underline"
+                            onClick={() => setStep('pickup')}
+                            data-testid="button-change-pickup-time"
+                          >
+                            {t('change')}
+                          </Button>
+                        )}
+                      </span>
                     </div>
                   )}
                   {step === 'payment' && (
                     <div className="flex justify-between text-sm py-1">
-                      <span className="text-muted-foreground">Payment Method</span>
-                      <span className="font-medium">{paymentMethod === 'card' ? 'Card' : 'Cash on Pickup'}</span>
+                      <span className="text-muted-foreground">{t('paymentMethod')}</span>
+                      <span className="font-medium">{paymentMethod === 'card' ? t('cardPayment') : t('cashPayment')}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold pt-4 mt-4 border-t">
-                    <span>Total</span>
+                    <span>{t('total')}</span>
                     <span>{formatCurrency(getDiscountedTotal())}</span>
                   </div>
                   {isFirstTimeCustomer && (
                     <div className="bg-vibrant-orange/10 border border-vibrant-orange/20 rounded-md p-4 mt-4">
                       <p className="text-xs text-vibrant-orange font-medium">
-                        Welcome! Enjoy 10% off your first order 🎉
+                        {t('firstTimeDiscount')}
                       </p>
                     </div>
                   )}
@@ -493,7 +515,7 @@ export default function CheckoutPage() {
           </div>
         </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

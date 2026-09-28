@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MessageSquare, ChefHat, Star, Info, CheckCircle2 } from "lucide-react";
-import type { OrderWithItems } from "@shared/schema";
+import { flattenOrderPages, useOrders } from "@/hooks/useOrders";
 import StudentHeader from '@/components/student/StudentHeader';
 import Footer from '@/components/Footer';
 
@@ -29,9 +29,8 @@ export default function FeedbackPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const { data: recentOrders } = useQuery<OrderWithItems[]>({
-    queryKey: ["/api/orders"],
-  });
+  const { data: orderPages } = useOrders();
+  const recentOrders = flattenOrderPages(orderPages);
 
   const form = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackFormSchema),
@@ -93,7 +92,7 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="student-page-shell student-feedback-page min-h-screen bg-background flex flex-col">
       <StudentHeader />
       <div className="flex-grow p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -306,16 +305,26 @@ export default function FeedbackPage() {
 }
 
 function MyFeedbackList() {
-  const { data: myFeedback, isLoading } = useQuery<any[]>({
+  const { data: myFeedback, isLoading, isError, refetch } = useQuery<any[]>({
     queryKey: ["/api/feedback/my"],
   });
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" role="status" aria-label="Loading previous feedback" aria-busy="true">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-muted/50 rounded-md animate-pulse" />
+          <div key={i} className="skeleton-shimmer h-20 rounded-md bg-muted/50" />
         ))}
+        <span className="sr-only">Loading previous feedback</span>
+      </div>
+    );
+  }
+
+  if (isError && !myFeedback) {
+    return (
+      <div className="py-6 text-center" role="alert">
+        <p className="mb-4 text-sm text-muted-foreground">We couldn&apos;t load your previous feedback.</p>
+        <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
       </div>
     );
   }

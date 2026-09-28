@@ -6,6 +6,7 @@ import {
   timestamp,
   varchar,
   text,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 
 /** Session storage for connect-pg-simple */
@@ -37,6 +38,26 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+/** One-time password reset credentials; only the SHA-256 token hash is stored. */
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    tokenHash: varchar("token_hash", { length: 64 }).primaryKey(),
+    userId: varchar("user_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [users.id],
+      name: "password_reset_tokens_user_id_users_id_fk",
+    }).onDelete("cascade"),
+    index("password_reset_tokens_user_id_idx").on(table.userId),
+    index("password_reset_tokens_expires_at_idx").on(table.expiresAt),
+  ],
+);
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
