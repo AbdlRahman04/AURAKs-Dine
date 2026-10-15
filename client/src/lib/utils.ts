@@ -8,6 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 export function getOptimizedImageUrl(url: string | null | undefined, width = 640) {
   if (!url) return undefined;
 
+  const apiBaseUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  if (url.startsWith("/api/") && apiBaseUrl) {
+    url = `${apiBaseUrl}${url}`;
+  }
+
   try {
     const parsed = new URL(url);
     if (parsed.hostname.endsWith("unsplash.com")) {

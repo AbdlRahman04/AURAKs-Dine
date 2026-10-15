@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, getCategoryColor } from '@/lib/utils';
+import { formatCurrency, getCategoryColor, getOptimizedImageUrl } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -82,7 +82,7 @@ export default function FavoritesPage() {
                 <div className="relative h-56 md:h-64 bg-muted overflow-hidden">
                   {item.imageUrl ? (
                     <img
-                      src={item.imageUrl}
+                      src={getOptimizedImageUrl(item.imageUrl, 640)}
                       alt={item.name}
                       className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                     />
